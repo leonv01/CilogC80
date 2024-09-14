@@ -18,47 +18,29 @@ file(GLOB_RECURSE APP_SOURCES
         src/main.c
 )
 
-# Gather header files (not directly used but useful)
-file(GLOB_RECURSE APP_HEADERS
-        src/cpu/*.h
-        src/memory/*.h
-        src/utils/*.h
-)
-
-# Gather test source files
-file(GLOB_RECURSE TEST_CPU_SOURCES
-        tests/cpu/*.c
-)
-
-file(GLOB_RECURSE TEST_REGISTER_SOURCES
-        tests/register/*.c
-)
+# Create the main executable
+add_executable(CilogC80 ${APP_SOURCES})
 
 # Gather Unity source files
-file(GLOB_RECURSE UNITY_SOURCE
-        extern/unity/src/*.c
+file(GLOB UNITY_SOURCE
+        extern/unity/src/unity.c
 )
 
-# Create the main executable
-add_executable(CilogC80
-        ${APP_SOURCES}
+# Test for CPU
+file(GLOB TEST_CPU_SOURCES
+        tests/cpu/test_cpu.c  # This should point to the CPU test file that contains main()
 )
 
-# Create test executables
-add_executable(test_cpu
-        ${TEST_CPU_SOURCES}
-        ${UNITY_SOURCE}
-        src/cpu/zilogZ80.c
-        src/cpu/register.c
+add_executable(test_cpu ${TEST_CPU_SOURCES} ${UNITY_SOURCE} src/cpu/cpu.c)
+
+# Test for Memory
+file(GLOB TEST_MEMORY_SOURCES
+        tests/memory/test_mem.c  # This should point to the Memory test file that contains main()
 )
 
-add_executable(test_register
-        ${TEST_REGISTER_SOURCES}
-        ${UNITY_SOURCE}
-        src/cpu/register.c
-)
+add_executable(test_memory ${TEST_MEMORY_SOURCES} ${UNITY_SOURCE} src/memory/mem.c)
 
 # Enable testing and add tests
 enable_testing()
 add_test(NAME test_cpu COMMAND test_cpu)
-add_test(NAME test_register COMMAND test_register)
+add_test(NAME test_memory COMMAND test_memory)
