@@ -46,6 +46,7 @@ void test_memory_fetch_byte_function(void)
 
     for(int i = 0; i < MEMORY_SIZE; i++)
     {
+        byte_t cycle = 1;
         TEST_ASSERT_EQUAL(fetchByte(&memory, i), (byte_t)i);
     }
 }
@@ -63,6 +64,7 @@ void test_memory_fetch_word_function(void)
     for(int i = 0; i < MEMORY_SIZE; i++)
     {
         word_t word = TO_WORD(memory.data[i + 1], memory.data[i]);
+        byte_t cycle = 1;
         TEST_ASSERT_EQUAL(fetchWord(&memory, i), word);
     }
 }

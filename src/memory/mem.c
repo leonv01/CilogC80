@@ -61,5 +61,14 @@ word_t fetchWord(Memory_t* memory, word_t address)
     return ret;
 }
 
-void storeByte(Memory_t* memory, word_t address, byte_t value);
+void storeByte(Memory_t* memory, word_t address, byte_t value)
+{
+    if(memory == NULL || memory->data == NULL)
+    {
+        return;
+    }
+
+    memory->data[address] = value;
+}
+
 void storeWord(Memory_t* memory, word_t address, word_t value);

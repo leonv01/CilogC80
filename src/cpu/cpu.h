@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "utils.h"
+#include "mem.h"
 
 typedef struct F_t
 {
@@ -24,11 +25,15 @@ typedef struct CPU_t
 
     word_t IX, IY;
     byte_t I, R;
+
+    int cyclesInFrame;
+    float frequency;
 } CPU_t;
 
 void cpuInit(CPU_t* cpu);
 void cpuReset(CPU_t* cpu);
-void cpuStep(CPU_t* cpu);
+void cpuEmulate(CPU_t* cpu, Memory_t* memory);
+int cpuExecute(CPU_t* cpu, Memory_t* memory);
 
 #endif
 

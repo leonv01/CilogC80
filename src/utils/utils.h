@@ -12,8 +12,8 @@
 #define TO_WORD(x, y)(((x << 8) & 0xFF00) | (y & 0x00FF))
 
 typedef int8_t bool_t;
-#define true 0
-#define false 1
+#define true 1
+#define false 0
 
 typedef uint8_t byte_t;
 typedef uint16_t word_t;
