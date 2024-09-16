@@ -67,9 +67,6 @@ void test_cpu_add_a_immediate(void)
 
     storeByte(&memory, 0x0000, ADD_A_n);
     storeByte(&memory, 0x0001, 0x42);
-    storeByte(&memory, 0x0002, ADD_A_n);
-    storeByte(&memory, 0x0003, 0xFF);
-    
 
     cpuExecute(&cpu, &memory);
 
@@ -78,11 +75,14 @@ void test_cpu_add_a_immediate(void)
 
     TEST_ASSERT_EQUAL(cpu.F.C, 0);
     TEST_ASSERT_EQUAL(cpu.F.N, 0);
-    TEST_ASSERT_EQUAL(cpu.F.P, 0);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
     TEST_ASSERT_EQUAL(cpu.F.H, 0);
     TEST_ASSERT_EQUAL(cpu.F.Z, 0);
     TEST_ASSERT_EQUAL(cpu.F.S, 0);
 
+    storeByte(&memory, 0x0002, ADD_A_n);
+    storeByte(&memory, 0x0003, 0xFF);
+    
     cpu.A = 0x01;
     cpuExecute(&cpu, &memory);
 
@@ -96,7 +96,6 @@ void test_cpu_add_a_immediate(void)
     TEST_ASSERT_EQUAL(cpu.F.Z, 1);
     TEST_ASSERT_EQUAL(cpu.F.S, 0);
 }
-
 void test_cpu_add_a_hl(void)
 {
     CPU_t cpu;
@@ -120,7 +119,7 @@ void test_cpu_add_a_hl(void)
 
     TEST_ASSERT_EQUAL(cpu.F.C, 0);
     TEST_ASSERT_EQUAL(cpu.F.N, 0);
-    TEST_ASSERT_EQUAL(cpu.F.P, 0);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
     TEST_ASSERT_EQUAL(cpu.F.H, 0);
     TEST_ASSERT_EQUAL(cpu.F.Z, 0);
     TEST_ASSERT_EQUAL(cpu.F.S, 0);
@@ -141,7 +140,6 @@ void test_cpu_add_a_hl(void)
     TEST_ASSERT_EQUAL(cpu.F.Z, 1);
     TEST_ASSERT_EQUAL(cpu.F.S, 0);
 }
-
 void test_cpu_add_a_b(void)
 {
     CPU_t cpu;
@@ -160,7 +158,6 @@ void test_cpu_add_a_b(void)
     TEST_ASSERT_EQUAL(cpu.A, 0x42);
     TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
 }
-
 void test_cpu_add_a_c(void)
 {
     CPU_t cpu;
@@ -179,7 +176,6 @@ void test_cpu_add_a_c(void)
     TEST_ASSERT_EQUAL(cpu.A, 0x42);
     TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
 }
-
 void test_cpu_add_a_d(void)
 {
     CPU_t cpu;
@@ -216,7 +212,6 @@ void test_cpu_add_a_e(void)
     TEST_ASSERT_EQUAL(cpu.A, 0x42);
     TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
 }
-
 void test_cpu_add_a_h(void)
 {
     CPU_t cpu;
@@ -235,7 +230,6 @@ void test_cpu_add_a_h(void)
     TEST_ASSERT_EQUAL(cpu.A, 0x42);
     TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
 }
-
 void test_cpu_add_a_l(void)
 {
     CPU_t cpu;
@@ -254,7 +248,6 @@ void test_cpu_add_a_l(void)
     TEST_ASSERT_EQUAL(cpu.A, 0x42);
     TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
 }
-
 void test_cpu_add_a_a(void)
 {
     CPU_t cpu;
@@ -290,9 +283,300 @@ void test_cpu_sub_n(void)
 
     TEST_ASSERT_EQUAL(cpu.A, 0x00);
     TEST_ASSERT_EQUAL(cpu.PC, 0x0002);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 0);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 0);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 1);
+    TEST_ASSERT_EQUAL(cpu.F.S, 0);
+
+    storeByte(&memory, 0x0002, SUB_n);
+    storeByte(&memory, 0x0003, 0x43);
+    cpu.A = 0x42;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0xFF);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0004);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 1);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 1);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 0);
+    TEST_ASSERT_EQUAL(cpu.F.S, 1);
 }
+void test_cpu_sub_b(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
 
+    Memory_t memory;
+    memoryInit(&memory);
 
+    storeByte(&memory, 0x0000, SUB_B);
+
+    cpu.A = 0x42;
+    cpu.B = 0x42;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0x00);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 0);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 0);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 1);
+    TEST_ASSERT_EQUAL(cpu.F.S, 0);
+
+    storeByte(&memory, 0x0001, SUB_B);
+    cpu.A = 0x42;
+    cpu.B = 0x43;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0xFF);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0002);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 1);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 1);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 0);
+    TEST_ASSERT_EQUAL(cpu.F.S, 1);
+}
+void test_cpu_sub_c(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    storeByte(&memory, 0x0000, SUB_C);
+
+    cpu.A = 0x42;
+    cpu.C = 0x42;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0x00);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 0);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 0);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 1);
+    TEST_ASSERT_EQUAL(cpu.F.S, 0);
+
+    storeByte(&memory, 0x0001, SUB_C);
+    cpu.A = 0x42;
+    cpu.C = 0x43;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0xFF);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0002);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 1);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 1);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 0);
+    TEST_ASSERT_EQUAL(cpu.F.S, 1);
+}
+void test_cpu_sub_d(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    storeByte(&memory, 0x0000, SUB_D);
+
+    cpu.A = 0x42;
+    cpu.D = 0x42;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0x00);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 0);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 0);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 1);
+    TEST_ASSERT_EQUAL(cpu.F.S, 0);
+
+    storeByte(&memory, 0x0001, SUB_D);
+    cpu.A = 0x42;
+    cpu.D = 0x43;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0xFF);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0002);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 1);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 1);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 0);
+    TEST_ASSERT_EQUAL(cpu.F.S, 1);
+}
+void test_cpu_sub_e(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    storeByte(&memory, 0x0000, SUB_E);
+
+    cpu.A = 0x42;
+    cpu.E = 0x42;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0x00);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 0);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 0);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 1);
+    TEST_ASSERT_EQUAL(cpu.F.S, 0);
+
+    storeByte(&memory, 0x0001, SUB_E);
+    cpu.A = 0x42;
+    cpu.E = 0x43;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0xFF);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0002);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 1);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 1);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 0);
+    TEST_ASSERT_EQUAL(cpu.F.S, 1);
+}
+void test_cpu_sub_h(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    storeByte(&memory, 0x0000, SUB_H);
+
+    cpu.A = 0x42;
+    cpu.H = 0x42;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0x00);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 0);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 0);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 1);
+    TEST_ASSERT_EQUAL(cpu.F.S, 0);
+
+    storeByte(&memory, 0x0001, SUB_H);
+    cpu.A = 0x42;
+    cpu.H = 0x43;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0xFF);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0002);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 1);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 1);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 0);
+    TEST_ASSERT_EQUAL(cpu.F.S, 1);
+}
+void test_cpu_sub_l(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    storeByte(&memory, 0x0000, SUB_L);
+
+    cpu.A = 0x42;
+    cpu.L = 0x42;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0x00);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 0);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 0);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 1);
+    TEST_ASSERT_EQUAL(cpu.F.S, 0);
+
+    storeByte(&memory, 0x0001, SUB_L);
+    cpu.A = 0x42;
+    cpu.L = 0x43;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0xFF);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0002);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 1);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 1);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 0);
+    TEST_ASSERT_EQUAL(cpu.F.S, 1);
+}
+void test_cpu_sub_a(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    storeByte(&memory, 0x0000, SUB_A);
+
+    cpu.A = 0x42;
+
+    cpuExecute(&cpu, &memory);
+
+    TEST_ASSERT_EQUAL(cpu.A, 0x00);
+    TEST_ASSERT_EQUAL(cpu.PC, 0x0001);
+
+    TEST_ASSERT_EQUAL(cpu.F.C, 0);
+    TEST_ASSERT_EQUAL(cpu.F.N, 1);
+    TEST_ASSERT_EQUAL(cpu.F.P, 1);
+    TEST_ASSERT_EQUAL(cpu.F.H, 0);
+    TEST_ASSERT_EQUAL(cpu.F.Z, 1);
+    TEST_ASSERT_EQUAL(cpu.F.S, 0);
+}
 
 int main(void)
 {
@@ -312,7 +596,13 @@ int main(void)
 
     // SUB tests
     RUN_TEST(test_cpu_sub_n);
-
+    RUN_TEST(test_cpu_sub_b);
+    RUN_TEST(test_cpu_sub_c);
+    RUN_TEST(test_cpu_sub_d);
+    RUN_TEST(test_cpu_sub_e);
+    RUN_TEST(test_cpu_sub_h);
+    RUN_TEST(test_cpu_sub_l);
+    RUN_TEST(test_cpu_sub_a);
     RUN_TEST(test_cpu_load_a_immediate);
 
     return UNITY_END();
