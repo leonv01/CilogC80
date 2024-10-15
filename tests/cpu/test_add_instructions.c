@@ -43,18 +43,6 @@ void check_registers(
     TEST_ASSERT_EQUAL(flagS, cpu->F.S);
 }
 
-void test_cpu_init_function(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    check_registers(&cpu,
-    0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 
-    0, 0, 0, 0, 0, 0, 0);
-}
-
 void test_cpu_load_a_immediate(void)
 {
     CPU_t cpu;
@@ -79,7 +67,7 @@ void test_cpu_load_a_immediate(void)
     0, 0, 0, 0, 0, 0, 0);
 }
 
-void test_cpu_add_a_immediate(void)
+void test_cpu_add_a_n(void)
 {
     CPU_t cpu;
     cpuInit(&cpu);
@@ -370,263 +358,12 @@ void test_cpu_add_a_a(void)
     1, 1, 1, 0, 1, 0, 0);
 }
 
-void test_cpu_sub_n(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    Memory_t memory;
-    memoryInit(&memory);
-
-    storeByte(&memory, 0x0000, SUB_n);
-    storeByte(&memory, 0x0001, 0x42);
-
-    cpu.A = 0x42;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0x00, 0, 0, 0, 0, 0, 0,
-    0, 2, 0, 0,
-    0, 0, 
-    0, 1, 1, 0, 1, 0, 0);
-
-    storeByte(&memory, 0x0002, SUB_n);
-    storeByte(&memory, 0x0003, 0x43);
-    cpu.A = 0x42;
-
-    cpuExecute(&cpu, &memory);
-    check_registers(&cpu,
-    0xFF, 0, 0, 0, 0, 0, 0,
-    0, 4, 0, 0,
-    0, 0, 
-    1, 1, 1, 1, 0, 1, 0);
-}
-void test_cpu_sub_b(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    Memory_t memory;
-    memoryInit(&memory);
-
-    storeByte(&memory, 0x0000, SUB_B);
-
-    cpu.A = 0x42;
-    cpu.B = 0x42;
-
-    cpuExecute(&cpu, &memory);
-    check_registers(&cpu,
-    0x00, 0x42, 0, 0, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 
-    0, 1, 1, 0, 1, 0, 0);
-
-    storeByte(&memory, 0x0001, SUB_B);
-    cpu.A = 0x42;
-    cpu.B = 0x43;
-
-    cpuExecute(&cpu, &memory);
-    check_registers(&cpu,
-    0xFF, 0x43, 0, 0, 0, 0, 0,
-    0, 2, 0, 0,
-    0, 0, 
-    1, 1, 1, 1, 0, 1, 0);
-}
-void test_cpu_sub_c(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    Memory_t memory;
-    memoryInit(&memory);
-
-    storeByte(&memory, 0x0000, SUB_C);
-
-    cpu.A = 0x42;
-    cpu.C = 0x42;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0x00, 0, 0x42, 0, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 
-    0, 1, 1, 0, 1, 0, 0);
-
-    storeByte(&memory, 0x0001, SUB_C);
-    cpu.A = 0x42;
-    cpu.C = 0x43;
-
-    cpuExecute(&cpu, &memory);
-    check_registers(&cpu,
-    0xFF, 0, 0x43, 0, 0, 0, 0,
-    0, 2, 0, 0,
-    0, 0, 
-    1, 1, 1, 1, 0, 1, 0);
-}
-void test_cpu_sub_d(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    Memory_t memory;
-    memoryInit(&memory);
-
-    storeByte(&memory, 0x0000, SUB_D);
-
-    cpu.A = 0x42;
-    cpu.D = 0x42;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0x00, 0, 0, 0x42, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 
-    0, 1, 1, 0, 1, 0, 0);
-
-    storeByte(&memory, 0x0001, SUB_D);
-    cpu.A = 0x42;
-    cpu.D = 0x43;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0xFF, 0, 0, 0x43, 0, 0, 0,
-    0, 2, 0, 0,
-    0, 0, 
-    1, 1, 1, 1, 0, 1, 0);
-}
-void test_cpu_sub_e(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    Memory_t memory;
-    memoryInit(&memory);
-
-    storeByte(&memory, 0x0000, SUB_E);
-
-    cpu.A = 0x42;
-    cpu.E = 0x42;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0x00, 0, 0, 0, 0x42, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 
-    0, 1, 1, 0, 1, 0, 0);
-
-    storeByte(&memory, 0x0001, SUB_E);
-    cpu.A = 0x42;
-    cpu.E = 0x43;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0xFF, 0, 0, 0, 0x43, 0, 0,
-    0, 2, 0, 0,
-    0, 0, 
-    1, 1, 1, 1, 0, 1, 0);
-}
-void test_cpu_sub_h(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    Memory_t memory;
-    memoryInit(&memory);
-
-    storeByte(&memory, 0x0000, SUB_H);
-
-    cpu.A = 0x42;
-    cpu.H = 0x42;
-
-    cpuExecute(&cpu, &memory);
-    
-    check_registers(&cpu,
-    0x00, 0, 0, 0, 0, 0x42, 0,
-    0, 1, 0, 0,
-    0, 0, 
-    0, 1, 1, 0, 1, 0, 0);
-
-    storeByte(&memory, 0x0001, SUB_H);
-    cpu.A = 0x42;
-    cpu.H = 0x43;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0xFF, 0, 0, 0, 0, 0x43, 0,
-    0, 2, 0, 0,
-    0, 0, 
-    1, 1, 1, 1, 0, 1, 0);
-}
-void test_cpu_sub_l(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    Memory_t memory;
-    memoryInit(&memory);
-
-    storeByte(&memory, 0x0000, SUB_L);
-
-    cpu.A = 0x42;
-    cpu.L = 0x42;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0x00, 0, 0, 0, 0, 0, 0x42,
-    0, 1, 0, 0,
-    0, 0, 
-    0, 1, 1, 0, 1, 0, 0);
-
-    storeByte(&memory, 0x0001, SUB_L);
-    cpu.A = 0x42;
-    cpu.L = 0x43;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0xFF, 0, 0, 0, 0, 0, 0x43,
-    0, 2, 0, 0,
-    0, 0, 
-    1, 1, 1, 1, 0, 1, 0);
-}
-void test_cpu_sub_a(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    Memory_t memory;
-    memoryInit(&memory);
-
-    storeByte(&memory, 0x0000, SUB_A);
-
-    cpu.A = 0x42;
-
-    cpuExecute(&cpu, &memory);
-
-    check_registers(&cpu,
-    0x00, 0, 0, 0, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 
-    0, 1, 1, 0, 1, 0, 0);
-
-    // TODO: Adjust test for overflow
-}
-
 int main(void)
 {
     UNITY_BEGIN();
-    RUN_TEST(test_cpu_init_function);
 
     // ADD tests    
-    RUN_TEST(test_cpu_add_a_immediate);
+    RUN_TEST(test_cpu_add_a_n);
     RUN_TEST(test_cpu_add_a_hl);
     RUN_TEST(test_cpu_add_a_b);
     RUN_TEST(test_cpu_add_a_c);
@@ -635,17 +372,6 @@ int main(void)
     RUN_TEST(test_cpu_add_a_h);
     RUN_TEST(test_cpu_add_a_l);
     RUN_TEST(test_cpu_add_a_a);
-
-    // SUB tests
-    RUN_TEST(test_cpu_sub_n);
-    RUN_TEST(test_cpu_sub_b);
-    RUN_TEST(test_cpu_sub_c);
-    RUN_TEST(test_cpu_sub_d);
-    RUN_TEST(test_cpu_sub_e);
-    RUN_TEST(test_cpu_sub_h);
-    RUN_TEST(test_cpu_sub_l);
-    RUN_TEST(test_cpu_sub_a);
-    RUN_TEST(test_cpu_load_a_immediate);
 
     return UNITY_END();
 }

@@ -98,7 +98,7 @@ static void setFlags(CPU_t* cpu, byte_t regA, byte_t operand, word_t result, boo
 {
     cpu->F.Z = (result & 0xFF) == 0;
     cpu->F.S = (result & 0x80) >> 7;
-    cpu->F.H = isSubstraction ? ((regA & 0x0F) - (operand & 0x0F)) < 0 : ((regA & 0x0F) + (operand & 0x0F)) > 0x0F;    cpu->F.P = ((regA ^ result) & (operand ^ result) & 0x80) != 0;
+    cpu->F.H = isSubstraction ? ((regA & 0x0F) - (operand & 0x0F)) < 0 : ((regA & 0x0F) + (operand & 0x0F)) > 0x0F;    
     cpu->F.P = calculateParity(result & 0xFF);
     cpu->F.N = isSubstraction;
     cpu->F.C = result > 0xFF;
@@ -281,11 +281,82 @@ static int mainInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
             cycles = 4;
             break;
 
+        // LD IMMEDIATE
         case LD_A_n:
             cpu->A = fetchByte(memory, cpu->PC);
             cpu->PC++;
             cycles = 7;
             break;
+        case LD_B_n:
+            cpu->B = fetchByte(memory, cpu->PC);
+            cpu->PC++;
+            cycles = 7;
+            break;
+        case LD_C_n:
+            cpu->C = fetchByte(memory, cpu->PC);
+            cpu->PC++;
+            cycles = 7;
+            break;
+        case LD_D_n:
+            cpu->D = fetchByte(memory, cpu->PC);
+            cpu->PC++;
+            cycles = 7;
+            break;
+        case LD_E_n:
+            cpu->E = fetchByte(memory, cpu->PC);
+            cpu->PC++;
+            cycles = 7;
+            break;
+        case LD_H_n:
+            cpu->H = fetchByte(memory, cpu->PC);
+            cpu->PC++;
+            cycles = 7;
+            break;
+        case LD_L_n:
+            cpu->L = fetchByte(memory, cpu->PC);
+            cpu->PC++;
+            cycles = 7;
+            break;
+
+        // LD INDIRECT
+        case LD_A_nn:
+            address = fetchWord(memory, cpu->PC);
+            cpu->A = fetchByte(memory, address);
+            cpu->PC += 2;
+            cycles = 13;
+            break;
+        case LD_HL_nn:
+            cpu->H = fetchByte(memory, cpu->PC);
+            cpu->L = fetchByte(memory, cpu->PC + 1);
+            cpu->PC += 2;
+            cycles = 10;
+            break;
+        
+        // LD IMMEDIATE
+        case LD_BC_IMMEDIATE:
+            cpu->B = fetchByte(memory, cpu->PC + 1);
+            cpu->C = fetchByte(memory, cpu->PC);
+            cpu->PC += 2;
+            cycles = 10;
+            break;
+        case LD_DE_IMMEDIATE:
+            cpu->D = fetchByte(memory, cpu->PC + 1);
+            cpu->E = fetchByte(memory, cpu->PC);
+            cpu->PC += 2;
+            cycles = 10;
+            break;
+        case LD_HL_IMMEDIATE:
+            cpu->H = fetchByte(memory, cpu->PC + 1);
+            cpu->L = fetchByte(memory, cpu->PC);
+            cpu->PC += 2;
+            cycles = 10;
+            break;
+        case LD_SP_IMMEDIATE:
+            cpu->SP = fetchWord(memory, cpu->PC);
+            cpu->PC += 2;
+            cycles = 10;
+            break;
+        
     }
 }
 
@@ -305,5 +376,35 @@ static int iyInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
 
 static int miscInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
 {
+    int cycles = 0;
+
+    word_t result;
+    word_t address;
+    byte_t operand;
+
+    switch(instruction)
+    {
+        case MISC_LD_DE_IMMEDIATE:
+            address = TO_WORD(cpu->D, cpu->E);
+            operand = fetchByte(memory, cpu->PC);
+            storeByte(memory, address, operand);
+            cpu->PC++;
+            cycles = 10;
+            break;
+        case MISC_LD_BC_IMMEDIATE:
+            address = TO_WORD(cpu->B, cpu->C);
+            operand = fetchByte(memory, cpu->PC);
+            storeByte(memory, address, operand);
+            cpu->PC++;
+            cycles = 10;
+            break;
+        case MISC_LD_SP_IMMEDIATE:
+            address = fetchWord(memory, cpu->PC);
+            operand = fetchByte(memory, cpu->PC);
+            storeByte(memory, address, operand);
+            cpu->PC += 2;
+            cycles = 10;
+            break;
+    }
     return 0;
 }

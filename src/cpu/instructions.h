@@ -27,34 +27,33 @@
 #define SUB_A 0x97
 
 // Load instructions
-#define LD_BC_nn 0x01
-#define LD_DE_nn 0x11
-#define LD_HL_nn 0x21
-#define LD_SP_nn 0x31
-#define LD_A_BC 0x0A
-#define LD_A_DE 0x1A
-#define LD_A_nn 0x3A
-#define LD_BC_A 0x02
-#define LD_DE_A 0x12
-#define LD_nn_HL 0x22
-#define LD_nn_A 0x32
-
-
-
-#define LD_C_n 0x0E
-#define LD_E_n 0x1E
-#define LD_L_n 0x2E
+// Immediate
 #define LD_A_n 0x3E
-#define LD_C_HL 0x4E
-#define LD_E_HL 0x5E
-#define LD_L_HL 0x6E
-#define LD_A_HL 0x7E
+#define LD_B_n 0x06
+#define LD_C_n 0x0E
+#define LD_D_n 0x16
+#define LD_E_n 0x1E
+#define LD_H_n 0x26
+#define LD_L_n 0x2E
+
+#define LD_A_nn 0x3A
+#define LD_HL_nn 0x21
+
+#define LD_BC_IMMEDIATE 0x01
+#define LD_DE_IMMEDIATE 0x11
+#define LD_HL_IMMEDIATE 0x2A
+#define LD_SP_IMMEDIATE 0x31
 
 #define BIT_INSTRUCTIONS 0xCB
 
 #define IX_INSTRUCTIONS 0xDD
 #define IY_INSTRUCTIONS 0xFD
 #define MISC_INSTRUCTIONS 0xED
+
+#define MISC_LD_HL_IMMEDIATE 0x21
+#define MISC_LD_DE_IMMEDIATE 0x11
+#define MISC_LD_BC_IMMEDIATE 0x01
+#define MISC_LD_SP_IMMEDIATE 0x31
 
 
 #endif //CILOG_C80_INSTRUCTIONS_H
