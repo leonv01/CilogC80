@@ -9,7 +9,12 @@
 
 #define UPPER_NIBBLE(x) ((x >> 4) & 0x0F)
 #define LOWER_NIBBLE(x) (x & 0x0F)
+#define UPPER_BYTE(x) ((x >> 8) & 0xFF)
+#define LOWER_BYTE(x) (x & 0xFF)
 #define TO_WORD(x, y)(((x << 8) & 0xFF00) | (y & 0x00FF))
+
+#define ERROR_NONE 0x00
+#define ERROR_INSTRUCTION 0x01
 
 typedef int8_t bool_t;
 #define true 1

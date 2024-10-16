@@ -5,6 +5,21 @@
 #define CYCLES_PER_FRAME(x) ((int) ((x * 1000000 ) / 60)) 
 #define MAX_ITERATIONS 1000000
 
+
+static int instruction_add(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+static int instruction_adc(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+static int instruction_inc(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+
+static int instruction_sub(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+static int instruction_sbc(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+static int instruction_dec(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+
+static int instruction_and(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+static int instruction_or(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+static int instruction_xor(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+
+static int instruction_ld(CPU_t* cpu, Memory_t* memory, byte_t instruction);
+
 void cpuInit(CPU_t* cpu)
 {
     if(cpu == NULL)
@@ -154,6 +169,9 @@ static int mainInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
     word_t address;
     byte_t operand;
 
+    typedef int (*InstructionHandler)(CPU_t*, Memory_t*, byte_t);
+    InstructionHandler handler = NULL;
+
     switch(instruction)
     {
         // NOP
@@ -162,6 +180,211 @@ static int mainInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
             break;
 
         // ADD
+        case ADD_A_A:
+        case ADD_A_B:
+        case ADD_A_C:
+        case ADD_A_D:
+        case ADD_A_E:
+        case ADD_A_H:
+        case ADD_A_L:
+        case ADD_A_HL:
+        case ADD_A_n:
+            handler = &instruction_add;
+            break;
+
+        // ADC
+        case ADC_A_A:
+        case ADC_A_B:
+        case ADC_A_C:
+        case ADC_A_D:
+        case ADC_A_E:
+        case ADC_A_H:
+        case ADC_A_L:
+        case ADC_A_HL:
+        case ADC_A_n:
+            handler = &instruction_adc;
+            break;
+
+        // INC
+        case INC_A:
+        case INC_B:
+        case INC_C:
+        case INC_D:
+        case INC_E:
+        case INC_H:
+        case INC_L:
+        case INC_HL:
+            handler = &instruction_inc;
+            break;
+
+        // SUB
+        case SUB_n:
+        case SUB_HL:
+        case SUB_B:
+        case SUB_C:
+        case SUB_D:
+        case SUB_E:
+        case SUB_H:
+        case SUB_L:
+        case SUB_A:
+            handler = &instruction_sub;
+            break;
+
+        // SBC
+        case SBC_A_A:
+        case SBC_A_B:
+        case SBC_A_C:
+        case SBC_A_D:
+        case SBC_A_E:
+        case SBC_A_H:
+        case SBC_A_L:
+        case SBC_A_HL:
+        case SBC_A_n:
+            handler = &instruction_sbc;
+            break;
+
+        // DEC
+        case DEC_A:
+        case DEC_B:
+        case DEC_C:
+        case DEC_D:
+        case DEC_E:
+        case DEC_H:
+        case DEC_L:
+        case DEC_HL:
+            handler = &instruction_dec;
+            break;
+
+        case LD_A_n:
+        case LD_B_n:
+        case LD_C_n:
+        case LD_D_n:
+        case LD_E_n:
+        case LD_H_n:
+        case LD_L_n:
+        case LD_B_B:
+        case LD_B_C:
+        case LD_B_D:  
+        case LD_B_E:
+        case LD_B_H:
+        case LD_B_L:
+        case LD_B_HL:
+        case LD_B_A:
+        case LD_C_B:
+        case LD_C_C:
+        case LD_C_D:
+        case LD_C_E:
+        case LD_C_H:
+        case LD_C_L:
+        case LD_C_HL:
+        case LD_C_A:
+        case LD_D_B:
+        case LD_D_C:
+        case LD_D_D:
+        case LD_D_E:
+        case LD_D_H:
+        case LD_D_L:
+        case LD_D_HL:
+        case LD_D_A:
+        case LD_E_B:
+        case LD_E_C:
+        case LD_E_D:
+        case LD_E_E:
+        case LD_E_H:
+        case LD_E_L:
+        case LD_E_HL:
+        case LD_E_A:
+        case LD_H_B:
+        case LD_H_C:
+        case LD_H_D:
+        case LD_H_E:
+        case LD_H_H:
+        case LD_H_L:
+        case LD_H_HL:
+        case LD_H_A:
+        case LD_L_B:
+        case LD_L_C:
+        case LD_L_D:
+        case LD_L_E:
+        case LD_L_H:
+        case LD_L_L:
+        case LD_L_HL:
+        case LD_L_A:
+        case LD_A_nn:
+        case LD_HL_nn:
+        case LD_BC_IMMEDIATE:
+        case LD_DE_IMMEDIATE:
+        case LD_HL_IMMEDIATE:
+        case LD_SP_IMMEDIATE:
+            handler = &instruction_ld;
+            break;
+        
+    }
+    if(handler != NULL)
+    {
+        cycles = handler(cpu, memory, instruction);
+    }
+}
+
+static int bitInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    return 0;
+}
+static int ixInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    return 0;
+}
+
+static int iyInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    return 0;
+}
+
+static int miscInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    int cycles = 0;
+
+    word_t result;
+    word_t address;
+    byte_t operand;
+
+    switch(instruction)
+    {
+        case MISC_LD_DE_IMMEDIATE:
+            address = TO_WORD(cpu->D, cpu->E);
+            operand = fetchByte(memory, cpu->PC);
+            storeByte(memory, address, operand);
+            cpu->PC++;
+            cycles = 10;
+            break;
+        case MISC_LD_BC_IMMEDIATE:
+            address = TO_WORD(cpu->B, cpu->C);
+            operand = fetchByte(memory, cpu->PC);
+            storeByte(memory, address, operand);
+            cpu->PC++;
+            cycles = 10;
+            break;
+        case MISC_LD_SP_IMMEDIATE:
+            address = fetchWord(memory, cpu->PC);
+            operand = fetchByte(memory, cpu->PC);
+            storeByte(memory, address, operand);
+            cpu->PC += 2;
+            cycles = 10;
+            break;
+    }
+    return 0;
+}
+
+static int instruction_add(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    int cycles = 0;
+
+    word_t result;
+    word_t address;
+    byte_t operand;
+
+    switch(instruction)
+    {
         case ADD_A_n:
             operand = fetchByte(memory, cpu->PC);
             result = (word_t)(cpu->A + operand);
@@ -220,8 +443,32 @@ static int mainInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
             cpu->A = result & 0xFF;
             cycles = 4;
             break;
+        default:
+            break;
+    }
+    return cycles;
+}
 
-        // SUB
+static int instruction_adc(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    return 0;
+}
+
+static int instruction_inc(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    return 0;
+}
+
+static int instruction_sub(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    int cycles = 0;
+
+    word_t result;
+    word_t address;
+    byte_t operand;
+
+    switch(instruction)
+    {
         case SUB_n:
             operand = fetchByte(memory, cpu->PC);
             result = cpu->A - operand;
@@ -280,9 +527,38 @@ static int mainInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
             cpu->A = result & 0xFF;
             cycles = 4;
             break;
+        default:
+            break;
+    }
+    return cycles;
+}
 
-        // LD IMMEDIATE
-        case LD_A_n:
+static int instruction_and(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    return 0;
+}
+
+static int instruction_or(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    return 0;
+}
+
+static int instruction_xor(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    return 0;
+}
+
+
+static int instruction_ld(CPU_t* cpu, Memory_t* memory, byte_t instruction)
+{
+    int cycles = 0;
+
+    word_t address;
+    byte_t operand;
+
+    switch(instruction)
+    {
+                case LD_A_n:
             cpu->A = fetchByte(memory, cpu->PC);
             cpu->PC++;
             cycles = 7;
@@ -316,6 +592,210 @@ static int mainInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
             cpu->L = fetchByte(memory, cpu->PC);
             cpu->PC++;
             cycles = 7;
+            break;
+
+        case LD_B_B:
+            cpu->B = cpu->B;
+            cycles = 4;
+            break;
+        case LD_B_C:
+            cpu->B = cpu->C;
+            cycles = 4;
+            break;
+        case LD_B_D:    
+            cpu->B = cpu->D;
+            cycles = 4;
+            break;
+        case LD_B_E:
+            cpu->B = cpu->E;
+            cycles = 4;
+            break;
+        case LD_B_H:
+            cpu->B = cpu->H;
+            cycles = 4;
+            break;
+        case LD_B_L:
+            cpu->B = cpu->L;
+            cycles = 4;
+            break;
+        case LD_B_HL:
+            address = TO_WORD(cpu->H, cpu->L);
+            cpu->B = fetchByte(memory, address);
+            cycles = 7;
+            break;
+        case LD_B_A:
+            cpu->B = cpu->A;
+            cycles = 4;
+            break;
+
+        case LD_C_B:
+            cpu->C = cpu->B;
+            cycles = 4;
+            break;
+        case LD_C_C:
+            cpu->C = cpu->C;
+            cycles = 4;
+            break;
+        case LD_C_D:
+            cpu->C = cpu->D;
+            cycles = 4;
+            break;
+        case LD_C_E:
+            cpu->C = cpu->E;
+            cycles = 4;
+            break;
+        case LD_C_H:
+            cpu->C = cpu->H;
+            cycles = 4;
+            break;
+        case LD_C_L:
+            cpu->C = cpu->L;
+            cycles = 4;
+            break;
+        case LD_C_HL:
+            address = TO_WORD(cpu->H, cpu->L);
+            cpu->C = fetchByte(memory, address);
+            cycles = 7;
+            break;
+        case LD_C_A:
+            cpu->C = cpu->A;
+            cycles = 4;
+            break;
+
+        case LD_D_B:
+            cpu->D = cpu->B;
+            cycles = 4;
+            break;
+        case LD_D_C:
+            cpu->D = cpu->C;
+            cycles = 4;
+            break;
+        case LD_D_D:
+            cpu->D = cpu->D;
+            cycles = 4;
+            break;
+        case LD_D_E:
+            cpu->D = cpu->E;
+            cycles = 4;
+            break;
+        case LD_D_H:
+            cpu->D = cpu->H;
+            cycles = 4;
+            break;
+        case LD_D_L:
+            cpu->D = cpu->L;
+            cycles = 4;
+            break;
+        case LD_D_HL:
+            address = TO_WORD(cpu->H, cpu->L);
+            cpu->D = fetchByte(memory, address);
+            cycles = 7;
+            break;
+        case LD_D_A:
+            cpu->D = cpu->A;
+            cycles = 4;
+            break;
+
+        case LD_E_B:
+            cpu->E = cpu->B;
+            cycles = 4;
+            break;
+        case LD_E_C:
+            cpu->E = cpu->C;
+            cycles = 4;
+            break;
+        case LD_E_D:
+            cpu->E = cpu->D;
+            cycles = 4;
+            break;
+        case LD_E_E:
+            cpu->E = cpu->E;
+            cycles = 4;
+            break;
+        case LD_E_H:
+            cpu->E = cpu->H;
+            cycles = 4;
+            break;
+        case LD_E_L:
+            cpu->E = cpu->L;
+            cycles = 4;
+            break;
+        case LD_E_HL:
+            address = TO_WORD(cpu->H, cpu->L);
+            cpu->E = fetchByte(memory, address);
+            cycles = 7;
+            break;
+        case LD_E_A:
+            cpu->E = cpu->A;
+            cycles = 4;
+            break;
+
+        case LD_H_B:
+            cpu->H = cpu->B;
+            cycles = 4;
+            break;
+        case LD_H_C:
+            cpu->H = cpu->C;
+            cycles = 4;
+            break;
+        case LD_H_D:
+            cpu->H = cpu->D;
+            cycles = 4;
+            break;
+        case LD_H_E:
+            cpu->H = cpu->E;
+            cycles = 4;
+            break;
+        case LD_H_H:
+            cpu->H = cpu->H;
+            cycles = 4;
+            break;
+        case LD_H_L:
+            cpu->H = cpu->L;
+            cycles = 4;
+            break;
+        case LD_H_HL:
+            address = TO_WORD(cpu->H, cpu->L);
+            cpu->H = fetchByte(memory, address);
+            cycles = 7;
+            break;
+        case LD_H_A:
+            cpu->H = cpu->A;
+            cycles = 4;
+            break;
+
+        case LD_L_B:
+            cpu->L = cpu->B;
+            cycles = 4;
+            break;
+        case LD_L_C:
+            cpu->L = cpu->C;
+            cycles = 4;
+            break;
+        case LD_L_D:
+            cpu->L = cpu->D;
+            cycles = 4;
+            break;
+        case LD_L_E:
+            cpu->L = cpu->E;
+            cycles = 4;
+            break;
+        case LD_L_H:
+            cpu->L = cpu->H;
+            cycles = 4;
+            break;
+        case LD_L_L:
+            cpu->L = cpu->L;
+            cycles = 4;
+            break;
+        case LD_L_HL:
+            address = TO_WORD(cpu->H, cpu->L);
+            cpu->L = fetchByte(memory, address);
+            cycles = 7;
+            break;
+        case LD_L_A:
+            cpu->L = cpu->A;
+            cycles = 4;
             break;
 
         // LD INDIRECT
@@ -357,55 +837,6 @@ static int mainInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
             cpu->PC += 2;
             cycles = 10;
             break;
-        
     }
-}
-
-static int bitInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
-{
-    return 0;
-}
-static int ixInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
-{
-    return 0;
-}
-
-static int iyInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
-{
-    return 0;
-}
-
-static int miscInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
-{
-    int cycles = 0;
-
-    word_t result;
-    word_t address;
-    byte_t operand;
-
-    switch(instruction)
-    {
-        case MISC_LD_DE_IMMEDIATE:
-            address = TO_WORD(cpu->D, cpu->E);
-            operand = fetchByte(memory, cpu->PC);
-            storeByte(memory, address, operand);
-            cpu->PC++;
-            cycles = 10;
-            break;
-        case MISC_LD_BC_IMMEDIATE:
-            address = TO_WORD(cpu->B, cpu->C);
-            operand = fetchByte(memory, cpu->PC);
-            storeByte(memory, address, operand);
-            cpu->PC++;
-            cycles = 10;
-            break;
-        case MISC_LD_SP_IMMEDIATE:
-            address = fetchWord(memory, cpu->PC);
-            operand = fetchByte(memory, cpu->PC);
-            storeByte(memory, address, operand);
-            cpu->PC += 2;
-            cycles = 10;
-            break;
-    }
-    return 0;
+    return cycles;
 }
