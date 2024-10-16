@@ -326,10 +326,11 @@ static int mainInstructions(CPU_t* cpu, Memory_t* memory, byte_t instruction)
             cycles = 13;
             break;
         case LD_HL_nn:
-            cpu->H = fetchByte(memory, cpu->PC);
-            cpu->L = fetchByte(memory, cpu->PC + 1);
+            address = fetchWord(memory, cpu->PC);
+            cpu->H = fetchByte(memory, address);
+            cpu->L = fetchByte(memory, address + 1);
             cpu->PC += 2;
-            cycles = 10;
+            cycles = 16;
             break;
         
         // LD IMMEDIATE

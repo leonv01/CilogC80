@@ -37,11 +37,11 @@
 #define LD_L_n 0x2E
 
 #define LD_A_nn 0x3A
-#define LD_HL_nn 0x21
+#define LD_HL_nn 0x2A
 
 #define LD_BC_IMMEDIATE 0x01
 #define LD_DE_IMMEDIATE 0x11
-#define LD_HL_IMMEDIATE 0x2A
+#define LD_HL_IMMEDIATE 0x21
 #define LD_SP_IMMEDIATE 0x31
 
 #define BIT_INSTRUCTIONS 0xCB

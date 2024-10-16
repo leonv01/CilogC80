@@ -209,7 +209,7 @@ void test_cpu_load_a_nn(void)
     byte_t value = 0x42;
     word_t expectedPC = 0x0003;
     
-    storeByte(&memory, 0x0000, LD_L_n);
+    storeByte(&memory, 0x0000, LD_A_nn);
     storeByte(&memory, 0x0001, 0x00);
     storeByte(&memory, 0x0002, 0x01);
     storeByte(&memory, 0x0100, value);
@@ -222,6 +222,33 @@ void test_cpu_load_a_nn(void)
     0, 0, 
     0, 0, 0, 0, 0, 0, 0);
 }
+
+void test_cpu_load_hl_nn(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    byte_t value = 0x42;
+    word_t expectedPC = 0x0003;
+    
+    storeByte(&memory, 0x0000, LD_HL_nn);
+    storeByte(&memory, 0x0001, 0x00);
+    storeByte(&memory, 0x0002, 0x01);
+    storeByte(&memory, 0x0100, value);
+    storeByte(&memory, 0x0101, value + 1);
+
+    cpuExecute(&cpu, &memory);
+
+    check_registers(&cpu,
+    0, 0, 0, 0, 0, value, value + 1,
+    0, expectedPC, 0, 0,
+    0, 0, 
+    0, 0, 0, 0, 0, 0, 0);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -235,6 +262,7 @@ int main(void)
     RUN_TEST(test_cpu_load_l_n);
 
     RUN_TEST(test_cpu_load_a_nn);
+    RUN_TEST(test_cpu_load_hl_nn);
 
     return UNITY_END();
 }
