@@ -249,6 +249,101 @@ void test_cpu_load_hl_nn(void)
     0, 0, 0, 0, 0, 0, 0);
 }
 
+void test_cpu_load_bc_immediate(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    byte_t value = 0x42;
+    word_t expectedPC = 0x0003;
+    
+    storeByte(&memory, 0x0000, LD_BC_IMMEDIATE);
+    storeByte(&memory, 0x0001, 0x12);
+    storeByte(&memory, 0x0002, 0x34);
+
+    cpuExecute(&cpu, &memory);
+
+    check_registers(&cpu,
+    0, 0x34, 0x12, 0, 0, 0, 0,
+    0, expectedPC, 0, 0,
+    0, 0, 
+    0, 0, 0, 0, 0, 0, 0);
+}
+
+void test_cpu_load_de_immediate(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    word_t expectedPC = 0x0003;
+    
+    storeByte(&memory, 0x0000, LD_DE_IMMEDIATE);
+    storeByte(&memory, 0x0001, 0x12);
+    storeByte(&memory, 0x0002, 0x34);
+
+    cpuExecute(&cpu, &memory);
+
+    check_registers(&cpu,
+    0, 0, 0, 0x34, 0x12, 0, 0,
+    0, expectedPC, 0, 0,
+    0, 0, 
+    0, 0, 0, 0, 0, 0, 0);
+}
+
+void test_cpu_load_hl_immediate(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    byte_t value = 0x42;
+    word_t expectedPC = 0x0003;
+    
+    storeByte(&memory, 0x0000, LD_HL_IMMEDIATE);
+    storeByte(&memory, 0x0001, 0x12);
+    storeByte(&memory, 0x0002, 0x34);
+
+    cpuExecute(&cpu, &memory);
+
+    check_registers(&cpu,
+    0, 0, 0, 0, 0, 0x34, 0x12,
+    0, expectedPC, 0, 0,
+    0, 0, 
+    0, 0, 0, 0, 0, 0, 0);
+}
+
+void test_cpu_load_sp_immediate(void)
+{
+    CPU_t cpu;
+    cpuInit(&cpu);
+
+    Memory_t memory;
+    memoryInit(&memory);
+
+    byte_t value = 0x42;
+    word_t expectedPC = 0x0003;
+    
+    storeByte(&memory, 0x0000, LD_BC_IMMEDIATE);
+    storeByte(&memory, 0x0001, 0x12);
+    storeByte(&memory, 0x0002, 0x34);
+
+    cpuExecute(&cpu, &memory);
+
+    check_registers(&cpu,
+    0, 0, 0, 0, 0, 0, 0,
+    0x1234, expectedPC, 0, 0,
+    0, 0, 
+    0, 0, 0, 0, 0, 0, 0);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -264,5 +359,9 @@ int main(void)
     RUN_TEST(test_cpu_load_a_nn);
     RUN_TEST(test_cpu_load_hl_nn);
 
+    RUN_TEST(test_cpu_load_bc_immediate);
+    RUN_TEST(test_cpu_load_de_immediate);
+    RUN_TEST(test_cpu_load_hl_immediate);
+    RUN_TEST(test_cpu_load_sp_immediate);
     return UNITY_END();
 }
