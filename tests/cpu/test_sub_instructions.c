@@ -51,7 +51,7 @@ void test_cpu_sub_n(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, SUB_n);
+    storeByte(&memory, 0x0000, SUB_A_n);
     storeByte(&memory, 0x0001, 0x42);
 
     cpu.A = 0x42;
@@ -64,7 +64,7 @@ void test_cpu_sub_n(void)
     0, 0, 
     0, 1, 1, 0, 1, 0, 0);
 
-    storeByte(&memory, 0x0002, SUB_n);
+    storeByte(&memory, 0x0002, SUB_A_n);
     storeByte(&memory, 0x0003, 0x43);
     cpu.A = 0x42;
 
@@ -83,7 +83,7 @@ void test_cpu_sub_b(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, SUB_B);
+    storeByte(&memory, 0x0000, SUB_A_B);
 
     cpu.A = 0x42;
     cpu.B = 0x42;
@@ -95,7 +95,7 @@ void test_cpu_sub_b(void)
     0, 0, 
     0, 1, 1, 0, 1, 0, 0);
 
-    storeByte(&memory, 0x0001, SUB_B);
+    storeByte(&memory, 0x0001, SUB_A_B);
     cpu.A = 0x42;
     cpu.B = 0x43;
 
@@ -114,7 +114,7 @@ void test_cpu_sub_c(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, SUB_C);
+    storeByte(&memory, 0x0000, SUB_A_C);
 
     cpu.A = 0x42;
     cpu.C = 0x42;
@@ -127,7 +127,7 @@ void test_cpu_sub_c(void)
     0, 0, 
     0, 1, 1, 0, 1, 0, 0);
 
-    storeByte(&memory, 0x0001, SUB_C);
+    storeByte(&memory, 0x0001, SUB_A_C);
     cpu.A = 0x42;
     cpu.C = 0x43;
 
@@ -146,7 +146,7 @@ void test_cpu_sub_d(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, SUB_D);
+    storeByte(&memory, 0x0000, SUB_A_D);
 
     cpu.A = 0x42;
     cpu.D = 0x42;
@@ -159,7 +159,7 @@ void test_cpu_sub_d(void)
     0, 0, 
     0, 1, 1, 0, 1, 0, 0);
 
-    storeByte(&memory, 0x0001, SUB_D);
+    storeByte(&memory, 0x0001, SUB_A_D);
     cpu.A = 0x42;
     cpu.D = 0x43;
 
@@ -179,7 +179,7 @@ void test_cpu_sub_e(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, SUB_E);
+    storeByte(&memory, 0x0000, SUB_A_E);
 
     cpu.A = 0x42;
     cpu.E = 0x42;
@@ -192,7 +192,7 @@ void test_cpu_sub_e(void)
     0, 0, 
     0, 1, 1, 0, 1, 0, 0);
 
-    storeByte(&memory, 0x0001, SUB_E);
+    storeByte(&memory, 0x0001, SUB_A_E);
     cpu.A = 0x42;
     cpu.E = 0x43;
 
@@ -212,7 +212,7 @@ void test_cpu_sub_h(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, SUB_H);
+    storeByte(&memory, 0x0000, SUB_A_H);
 
     cpu.A = 0x42;
     cpu.H = 0x42;
@@ -225,7 +225,7 @@ void test_cpu_sub_h(void)
     0, 0, 
     0, 1, 1, 0, 1, 0, 0);
 
-    storeByte(&memory, 0x0001, SUB_H);
+    storeByte(&memory, 0x0001, SUB_A_H);
     cpu.A = 0x42;
     cpu.H = 0x43;
 
@@ -245,7 +245,7 @@ void test_cpu_sub_l(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, SUB_L);
+    storeByte(&memory, 0x0000, SUB_A_L);
 
     cpu.A = 0x42;
     cpu.L = 0x42;
@@ -258,7 +258,7 @@ void test_cpu_sub_l(void)
     0, 0, 
     0, 1, 1, 0, 1, 0, 0);
 
-    storeByte(&memory, 0x0001, SUB_L);
+    storeByte(&memory, 0x0001, SUB_A_L);
     cpu.A = 0x42;
     cpu.L = 0x43;
 
@@ -278,7 +278,7 @@ void test_cpu_sub_a(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, SUB_A);
+    storeByte(&memory, 0x0000, SUB_A_A);
 
     cpu.A = 0x42;
 
