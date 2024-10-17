@@ -372,6 +372,6 @@ int main(void)
     RUN_TEST(test_cpu_add_a_h);
     RUN_TEST(test_cpu_add_a_l);
     RUN_TEST(test_cpu_add_a_a);
-
+    
     return UNITY_END();
 }

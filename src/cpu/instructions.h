@@ -37,15 +37,15 @@
 #define INC_HL      0x34
 
 // Subtract instructions
-#define SUB_n       0xD6
-#define SUB_HL      0x96
-#define SUB_B       0x90
-#define SUB_C       0x91
-#define SUB_D       0x92
-#define SUB_E       0x93
-#define SUB_H       0x94
-#define SUB_L       0x95
-#define SUB_A       0x97
+#define SUB_A_n       0xD6
+#define SUB_A_HL      0x96
+#define SUB_A_B       0x90
+#define SUB_A_C       0x91
+#define SUB_A_D       0x92
+#define SUB_A_E       0x93
+#define SUB_A_H       0x94
+#define SUB_A_L       0x95
+#define SUB_A_A       0x97
 
 // Subtract with carry instructions
 #define SBC_A_n     0xDE
@@ -67,6 +67,39 @@
 #define DEC_H       0x25
 #define DEC_L       0x2D
 #define DEC_HL      0x35
+
+// OR instructions
+#define OR_n        0xF6
+#define OR_HL       0xB6
+#define OR_B        0xB0
+#define OR_C        0xB1
+#define OR_D        0xB2
+#define OR_E        0xB3
+#define OR_H        0xB4
+#define OR_L        0xB5
+#define OR_A        0xB7
+
+// AND instructions
+#define AND_n       0xE6
+#define AND_HL      0xA6
+#define AND_B       0xA0
+#define AND_C       0xA1
+#define AND_D       0xA2
+#define AND_E       0xA3
+#define AND_H       0xA4
+#define AND_L       0xA5
+#define AND_A       0xA7
+
+// XOR instructions
+#define XOR_n       0xEE
+#define XOR_HL      0xAE
+#define XOR_B       0xA8
+#define XOR_C       0xA9
+#define XOR_D       0xAA
+#define XOR_E       0xAB
+#define XOR_H       0xAC
+#define XOR_L       0xAD
+#define XOR_A       0xAF
 
 // Load instructions
 // Immediate

@@ -15,11 +15,12 @@ int main() {
     word_t expectedPC = 0x0001;
 
     cpu.A = 0x05;
+    cpu.B = 0x05;
 
-    storeByte(&memory, 0x0000, ADD_A_A);
+    storeByte(&memory, 0x0000, ADD_A_HL);
     cpuExecute(&cpu, &memory);
 
-    printf("%d\n", cpu.B);
+    printf("%d\n", cpu.A);
 
     return 0;
 }
