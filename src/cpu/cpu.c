@@ -14,6 +14,8 @@ static void initInstructionTable();
 
 static int instructionNop(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 
+static int instructionHalt(CPU_t *cpu, Memory_t *memory, byte_t instruction);
+
 static int instructionAdd(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionAdc(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionInc(CPU_t *cpu, Memory_t *memory, byte_t instruction);
@@ -39,6 +41,7 @@ static int decrementRegister(CPU_t *cpu, byte_t *reg);
 static int andWithRegister(CPU_t *cpu, byte_t value);
 static int orWithRegister(CPU_t *cpu, byte_t value);
 static int xorWithRegister(CPU_t *cpu, byte_t value);
+static int cpWithRegister(CPU_t *cpu, byte_t value);
 
 void cpuInit(CPU_t *cpu)
 {
@@ -410,8 +413,19 @@ static int xorWithRegister(CPU_t *cpu, byte_t value)
     cpu->A = result & 0xFF;
     return result;
 }
+static int cpWithRegister(CPU_t *cpu, byte_t value)
+{
+    word_t result = (word_t)(cpu->A - value);
+    setFlags(cpu, cpu->A, value, result, true);
+    return result;
+}
 
 static int instructionNop(CPU_t *cpu, Memory_t *memory, byte_t instruction)
+{
+    return 0;
+}
+
+static int instructionHalt(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 {
     return 0;
 }

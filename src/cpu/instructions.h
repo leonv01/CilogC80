@@ -4,6 +4,9 @@
 // NOP
 #define NOP 0x00
 
+// HALT
+#define HALT 0x76
+
 // Add instructions
 #define ADD_A_n     0xC6
 #define ADD_A_HL    0x86
@@ -14,6 +17,12 @@
 #define ADD_A_H     0x84
 #define ADD_A_L     0x85
 #define ADD_A_A     0x87
+
+// Add (HL) instructions
+#define ADD_HL_BC   0x09
+#define ADD_HL_DE   0x19
+#define ADD_HL_HL   0x29
+#define ADD_HL_SP   0x39
 
 // Add with carry instructions
 #define ADC_A_n     0xCE
@@ -66,7 +75,12 @@
 #define DEC_E       0x1D
 #define DEC_H       0x25
 #define DEC_L       0x2D
-#define DEC_HL      0x35
+#define DEC_HL      0x35    // TODO: Check this
+
+#define DEC_BC      0x0B
+#define DEC_DE      0x1B
+#define DEC_HL      0x2B
+#define DEC_SP      0x3B
 
 // OR instructions
 #define OR_n        0xF6
@@ -100,6 +114,17 @@
 #define XOR_H       0xAC
 #define XOR_L       0xAD
 #define XOR_A       0xAF
+
+// CP instructions
+#define CP_n        0xFE
+#define CP_HL       0xBE
+#define CP_B        0xB8
+#define CP_C        0xB9
+#define CP_D        0xBA
+#define CP_E        0xBB
+#define CP_H        0xBC
+#define CP_L        0xBD
+#define CP_A        0xBF
 
 // Load instructions
 // Immediate
