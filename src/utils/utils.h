@@ -16,10 +16,6 @@
 #define ERROR_NONE 0x00
 #define ERROR_INSTRUCTION 0x01
 
-typedef int8_t bool_t;
-#define true 1
-#define false 0
-
 typedef uint8_t byte_t;
 typedef uint16_t word_t;
 typedef uint32_t dword_t;

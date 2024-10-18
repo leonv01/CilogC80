@@ -144,6 +144,17 @@
 #define MAIN_RET_P        0xF0
 #define MAIN_RET_M        0xF8
 
+// Call instructions
+#define MAIN_CALL_nn      0xCD
+#define MAIN_CALL_NZ_nn   0xC4
+#define MAIN_CALL_Z_nn    0xCC
+#define MAIN_CALL_NC_nn   0xD4
+#define MAIN_CALL_C_nn    0xDC
+#define MAIN_CALL_PO_nn   0xE4
+#define MAIN_CALL_PE_nn   0xEC
+#define MAIN_CALL_P_nn    0xF4
+#define MAIN_CALL_M_nn    0xFC
+
 // Stack instructions
 // Push instructions
 #define MAIN_PUSH_BC     0xC5
@@ -157,16 +168,51 @@
 #define MAIN_POP_HL      0xE1
 #define MAIN_POP_AF      0xF1
 
-// Load instructions
-// Immediate
-#define MAIN_LD_A_n      0x3E
-#define MAIN_LD_B_n      0x06
-#define MAIN_LD_C_n      0x0E
-#define MAIN_LD_D_n      0x16
-#define MAIN_LD_E_n      0x1E
-#define MAIN_LD_H_n      0x26
-#define MAIN_LD_L_n      0x2E
+// Jump instructions
+#define MAIN_JP_nn       0xC3
+#define MAIN_JP_NZ_nn    0xC2
+#define MAIN_JP_Z_nn     0xCA
+#define MAIN_JP_NC_nn    0xD2
+#define MAIN_JP_C_nn     0xDA
+#define MAIN_JP_PO_nn    0xE2
+#define MAIN_JP_PE_nn    0xEA
+#define MAIN_JP_P_nn     0xF2
+#define MAIN_JP_M_nn     0xFA
+#define MAIN_JP_HL       0xE9
 
+// Jump relative instructions
+#define MAIN_JR_d        0x18
+#define MAIN_JR_NZ_d     0x20
+#define MAIN_JR_Z_d      0x28
+#define MAIN_JR_NC_d     0x30
+#define MAIN_JR_C_d      0x38
+#define MAIN_DJNZ_d      0x10
+
+// RST instructions
+#define MAIN_RST_00H     0xC7
+#define MAIN_RST_08H     0xCF
+#define MAIN_RST_10H     0xD7
+#define MAIN_RST_18H     0xDF
+#define MAIN_RST_20H     0xE7
+#define MAIN_RST_28H     0xEF
+#define MAIN_RST_30H     0xF7
+#define MAIN_RST_38H     0xFF
+
+// Load instructions
+// LD A
+#define MAIN_LD_A_n      0x3E
+#define MAIN_LD_A_A      0x7F
+#define MAIN_LD_A_B      0x78
+#define MAIN_LD_A_C      0x79
+#define MAIN_LD_A_D      0x7A
+#define MAIN_LD_A_E      0x7B
+#define MAIN_LD_A_H      0x7C
+#define MAIN_LD_A_L      0x7D
+#define MAIN_LD_A_HL     0x7E
+
+// LD B
+#define MAIN_LD_B_n      0x06
+#define MAIN_LD_B_A      0x47
 #define MAIN_LD_B_B      0x40
 #define MAIN_LD_B_C      0x41
 #define MAIN_LD_B_D      0x42
@@ -174,8 +220,10 @@
 #define MAIN_LD_B_H      0x44
 #define MAIN_LD_B_L      0x45
 #define MAIN_LD_B_HL     0x46
-#define MAIN_LD_B_A      0x47
 
+// LD C
+#define MAIN_LD_C_n      0x0E
+#define MAIN_LD_C_A      0x4F
 #define MAIN_LD_C_B      0x48
 #define MAIN_LD_C_C      0x49
 #define MAIN_LD_C_D      0x4A
@@ -183,8 +231,10 @@
 #define MAIN_LD_C_H      0x4C
 #define MAIN_LD_C_L      0x4D
 #define MAIN_LD_C_HL     0x4E
-#define MAIN_LD_C_A      0x4F
 
+// LD D
+#define MAIN_LD_D_n      0x16
+#define MAIN_LD_D_A      0x57
 #define MAIN_LD_D_B      0x50
 #define MAIN_LD_D_C      0x51
 #define MAIN_LD_D_D      0x52
@@ -192,8 +242,10 @@
 #define MAIN_LD_D_H      0x54
 #define MAIN_LD_D_L      0x55
 #define MAIN_LD_D_HL     0x56
-#define MAIN_LD_D_A      0x57
 
+// LD E
+#define MAIN_LD_E_n      0x1E
+#define MAIN_LD_E_A      0x5F
 #define MAIN_LD_E_B      0x58
 #define MAIN_LD_E_C      0x59
 #define MAIN_LD_E_D      0x5A
@@ -201,8 +253,10 @@
 #define MAIN_LD_E_H      0x5C
 #define MAIN_LD_E_L      0x5D
 #define MAIN_LD_E_HL     0x5E
-#define MAIN_LD_E_A      0x5F
 
+// LD H
+#define MAIN_LD_H_n      0x26
+#define MAIN_LD_H_A      0x67
 #define MAIN_LD_H_B      0x60
 #define MAIN_LD_H_C      0x61
 #define MAIN_LD_H_D      0x62
@@ -210,8 +264,10 @@
 #define MAIN_LD_H_H      0x64
 #define MAIN_LD_H_L      0x65
 #define MAIN_LD_H_HL     0x66
-#define MAIN_LD_H_A      0x67
 
+// LD L
+#define MAIN_LD_L_n      0x2E
+#define MAIN_LD_L_A      0x6F
 #define MAIN_LD_L_B      0x68
 #define MAIN_LD_L_C      0x69
 #define MAIN_LD_L_D      0x6A
@@ -219,8 +275,9 @@
 #define MAIN_LD_L_H      0x6C
 #define MAIN_LD_L_L      0x6D
 #define MAIN_LD_L_HL     0x6E
-#define MAIN_LD_L_A      0x6F
 
+// LD (HL)
+#define MAIN_LD_H_A      0x67
 #define MAIN_LD_H_B      0x60
 #define MAIN_LD_H_C      0x61
 #define MAIN_LD_H_D      0x62
@@ -228,7 +285,6 @@
 #define MAIN_LD_H_H      0x64
 #define MAIN_LD_H_L      0x65
 #define MAIN_LD_H_HL     0x66
-#define MAIN_LD_H_A      0x67
 
 #define MAIN_LD_A_nn     0x3A
 #define MAIN_LD_HL_nn    0x2A
