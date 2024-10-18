@@ -208,7 +208,11 @@
 #define MAIN_LD_A_E      0x7B
 #define MAIN_LD_A_H      0x7C
 #define MAIN_LD_A_L      0x7D
+
 #define MAIN_LD_A_HL     0x7E
+#define MAIN_LD_A_BC     0x0A
+#define MAIN_LD_A_DE     0x1A
+#define MAIN_LD_A_nn     0x3A
 
 // LD B
 #define MAIN_LD_B_n      0x06
@@ -277,23 +281,28 @@
 #define MAIN_LD_L_HL     0x6E
 
 // LD (HL)
-#define MAIN_LD_H_A      0x67
-#define MAIN_LD_H_B      0x60
-#define MAIN_LD_H_C      0x61
-#define MAIN_LD_H_D      0x62
-#define MAIN_LD_H_E      0x63
-#define MAIN_LD_H_H      0x64
-#define MAIN_LD_H_L      0x65
-#define MAIN_LD_H_HL     0x66
+#define MAIN_LD_HL_A_ADDR 0x77
+#define MAIN_LD_HL_B_ADDR 0x70
+#define MAIN_LD_HL_C_ADDR 0x71
+#define MAIN_LD_HL_D_ADDR 0x72
+#define MAIN_LD_HL_E_ADDR 0x73
+#define MAIN_LD_HL_H_ADDR 0x74
+#define MAIN_LD_HL_L_ADDR 0x75
 
-#define MAIN_LD_A_nn     0x3A
-#define MAIN_LD_HL_nn    0x2A
+#define MAIN_LD_BC_A_ADDR    0x02
+#define MAIN_LD_DE_A_ADDR    0x12
+#define MAIN_LD_HL_A_ADDR    0x77
+#define MAIN_LD_nn_A        0x32
+#define MAIN_LD_nn_HL       0x22
 
-#define MAIN_LD_BC_IMMEDIATE 0x01
-#define MAIN_LD_DE_IMMEDIATE 0x11
-#define MAIN_LD_HL_IMMEDIATE 0x21
-#define MAIN_LD_SP_IMMEDIATE 0x31
-
+// LD Pair instructions
+#define MAIN_LD_HL_nn       0x22
+#define MAIN_LD_DE_nn       0x11
+#define MAIN_LD_BC_nn       0x01
+#define MAIN_LD_SP_nn       0x31
+#define MAIN_LD_SP_HL       0xF9
+#define MAIN_LD_HL_nn_ADDR  0x2A
+#define MAIN_LD_HL_nn       0x21
 
 #define BIT_INSTRUCTIONS 0xCB
 
