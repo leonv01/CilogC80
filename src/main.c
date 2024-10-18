@@ -14,13 +14,15 @@ int main() {
     byte_t value = 0x42;
     word_t expectedPC = 0x0001;
 
-    cpu.A = 0x05;
-    cpu.B = 0x05;
+    cpu.H = 0x12;
+    cpu.L = 0x34;
+    cpu.B = 0x56;
+    cpu.C = 0x78;
 
-    storeByte(&memory, 0x0000, ADD_A_HL);
+    storeByte(&memory, 0x0000, MAIN_ADD_HL_BC);
     cpuExecute(&cpu, &memory);
 
-    printf("%d\n", cpu.A);
+    printf("%d\n", TO_WORD(cpu.H, cpu.L));
 
     return 0;
 }

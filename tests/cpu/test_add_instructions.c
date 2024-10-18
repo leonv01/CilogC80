@@ -43,30 +43,6 @@ void check_registers(
     TEST_ASSERT_EQUAL(flagS, cpu->F.S);
 }
 
-void test_cpu_load_a_immediate(void)
-{
-    CPU_t cpu;
-    cpuInit(&cpu);
-
-    Memory_t memory;
-    memoryInit(&memory);
-
-    storeByte(&memory, 0x0000, 0x3E);
-    storeByte(&memory, 0x0001, 0x42);
-
-    cpuExecute(&cpu, &memory);
-
-    TEST_ASSERT_EQUAL(cpu.A, 0x42);
-    TEST_ASSERT_EQUAL(cpu.PC, 0x0002);
-
-
-    check_registers(&cpu,
-    0x42, 0, 0, 0, 0, 0, 0,
-    0, 2, 0, 0,
-    0, 0, 
-    0, 0, 0, 0, 0, 0, 0);
-}
-
 void test_cpu_add_a_n(void)
 {
     CPU_t cpu;
@@ -75,7 +51,7 @@ void test_cpu_add_a_n(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, ADD_A_n);
+    storeByte(&memory, 0x0000, MAIN_ADD_A_n);
     storeByte(&memory, 0x0001, 0x42);
     cpuExecute(&cpu, &memory);
 
@@ -85,7 +61,7 @@ void test_cpu_add_a_n(void)
     0, 0, 
     0, 0, 1, 0, 0, 0, 0);
 
-    storeByte(&memory, 0x0002, ADD_A_n);
+    storeByte(&memory, 0x0002, MAIN_ADD_A_n);
     storeByte(&memory, 0x0003, 0xFF);
     cpu.A = 0x01;
     cpuExecute(&cpu, &memory);
@@ -104,8 +80,8 @@ void test_cpu_add_a_hl(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, ADD_A_HL);
-    storeByte(&memory, 0x0001, ADD_A_HL);
+    storeByte(&memory, 0x0000, MAIN_ADD_A_HL);
+    storeByte(&memory, 0x0001, MAIN_ADD_A_HL);
     cpu.H = 0x00;
     cpu.L = 0x42;
     storeByte(&memory, 0x0042, 0x42);
@@ -135,8 +111,8 @@ void test_cpu_add_a_b(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, ADD_A_B);
-    storeByte(&memory, 0x0001, ADD_A_B);
+    storeByte(&memory, 0x0000, MAIN_ADD_A_B);
+    storeByte(&memory, 0x0001, MAIN_ADD_A_B);
 
     cpu.A = 0x00;
     cpu.B = 0x42;
@@ -168,8 +144,8 @@ void test_cpu_add_a_c(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, ADD_A_C);
-    storeByte(&memory, 0x0001, ADD_A_C);
+    storeByte(&memory, 0x0000, MAIN_ADD_A_C);
+    storeByte(&memory, 0x0001, MAIN_ADD_A_C);
 
     cpu.A = 0x00;
     cpu.C = 0x42;
@@ -201,8 +177,8 @@ void test_cpu_add_a_d(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, ADD_A_D);
-    storeByte(&memory, 0x0001, ADD_A_D);
+    storeByte(&memory, 0x0000, MAIN_ADD_A_D);
+    storeByte(&memory, 0x0001, MAIN_ADD_A_D);
 
     cpu.A = 0x00;
     cpu.D = 0x42;
@@ -234,8 +210,8 @@ void test_cpu_add_a_e(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, ADD_A_E);
-    storeByte(&memory, 0x0001, ADD_A_E);
+    storeByte(&memory, 0x0000, MAIN_ADD_A_E);
+    storeByte(&memory, 0x0001, MAIN_ADD_A_E);
 
     cpu.A = 0x00;
     cpu.E = 0x42;
@@ -267,8 +243,8 @@ void test_cpu_add_a_h(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, ADD_A_H);
-    storeByte(&memory, 0x0001, ADD_A_H);
+    storeByte(&memory, 0x0000, MAIN_ADD_A_H);
+    storeByte(&memory, 0x0001, MAIN_ADD_A_H);
 
     cpu.A = 0x00;
     cpu.H = 0x42;
@@ -300,8 +276,8 @@ void test_cpu_add_a_l(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, ADD_A_L);
-    storeByte(&memory, 0x0001, ADD_A_L);
+    storeByte(&memory, 0x0000, MAIN_ADD_A_L);
+    storeByte(&memory, 0x0001, MAIN_ADD_A_L);
 
     cpu.A = 0x00;
     cpu.L = 0x42;
@@ -333,8 +309,8 @@ void test_cpu_add_a_a(void)
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0x0000, ADD_A_A);
-    storeByte(&memory, 0x0001, ADD_A_A);
+    storeByte(&memory, 0x0000, MAIN_ADD_A_A);
+    storeByte(&memory, 0x0001, MAIN_ADD_A_A);
 
     cpu.A = 0x05;
 

@@ -31,12 +31,15 @@ static int instructionXor(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionLd(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 
 static int addToRegister(CPU_t *cpu, byte_t value);
+static int addToRegisterPair(CPU_t *cpu, byte_t value1, byte_t value2); // TODO: Maybe change to word_t and name it addToRegisterPair
 static int addToRegisterWithCarry(CPU_t *cpu, byte_t value);
 static int incrementRegister(CPU_t *cpu, byte_t *reg);
+static int incrementRegisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte);
 
 static int subtractFromRegister(CPU_t *cpu, byte_t value);
 static int subtractFromRegisterWithCarry(CPU_t *cpu, byte_t value);
 static int decrementRegister(CPU_t *cpu, byte_t *reg);
+static int decrementregisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte);
 
 static int andWithRegister(CPU_t *cpu, byte_t value);
 static int orWithRegister(CPU_t *cpu, byte_t value);
@@ -120,7 +123,7 @@ void cpuEmulate(CPU_t *cpu, Memory_t *memory)
     }
 }
 
-static int calculateParity(byte_t value)
+static int calculateParity(word_t value)
 {
     int count = 0;
     while (value)
@@ -140,6 +143,18 @@ static void setFlags(CPU_t *cpu, byte_t regA, byte_t operand, word_t result, boo
     cpu->F.P = calculateParity(result & 0xFF);
     cpu->F.N = isSubstraction;
     cpu->F.C = result > 0xFF;
+}
+
+static void setFlagsWord(CPU_t *cpu, word_t reg1, word_t reg2, dword_t result)
+{
+    cpu->F.Z = (result & 0xFFFF) == 0;
+    cpu->F.S = (result & 0x8000) >> 15;
+
+    cpu->F.H = ((reg1 & 0x0FFF) + (reg2 & 0x0FFF)) > 0x0FFF;
+
+    cpu->F.C = result > 0xFFFF;
+
+    cpu->F.N = 0;
 }
 
 static int mainInstructions(CPU_t *cpu, Memory_t *memory, byte_t instruction);
@@ -192,104 +207,115 @@ static void initInstructionTable()
     }
 
     // NOP
-    mainInstructionTable[NOP] = &instructionNop;
+    mainInstructionTable[MAIN_NOP] = &instructionNop;
 
     // Add instructions
-    mainInstructionTable[ADD_A_A] = &instructionAdd;
-    mainInstructionTable[ADD_A_B] = &instructionAdd;
-    mainInstructionTable[ADD_A_C] = &instructionAdd;
-    mainInstructionTable[ADD_A_D] = &instructionAdd;
-    mainInstructionTable[ADD_A_E] = &instructionAdd;
-    mainInstructionTable[ADD_A_H] = &instructionAdd;
-    mainInstructionTable[ADD_A_L] = &instructionAdd;
-    mainInstructionTable[ADD_A_HL] = &instructionAdd;
-    mainInstructionTable[ADD_A_n] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_A] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_B] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_C] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_D] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_E] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_H] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_L] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_HL] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_n] = &instructionAdd;
+
+    // Add instructions (HL)
+    mainInstructionTable[MAIN_ADD_HL_BC] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_HL_DE] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_HL_HL] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_HL_SP] = &instructionAdd;
 
     // ADC instructions
-    mainInstructionTable[ADC_A_A] = &instructionAdc;
-    mainInstructionTable[ADC_A_B] = &instructionAdc;
-    mainInstructionTable[ADC_A_C] = &instructionAdc;
-    mainInstructionTable[ADC_A_D] = &instructionAdc;
-    mainInstructionTable[ADC_A_E] = &instructionAdc;
-    mainInstructionTable[ADC_A_H] = &instructionAdc;
-    mainInstructionTable[ADC_A_L] = &instructionAdc;
-    mainInstructionTable[ADC_A_HL] = &instructionAdc;
-    mainInstructionTable[ADC_A_n] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_A] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_B] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_C] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_D] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_E] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_H] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_L] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_HL] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_n] = &instructionAdc;
 
     // INC instructions
-    mainInstructionTable[INC_A] = &instructionInc;
-    mainInstructionTable[INC_B] = &instructionInc;
-    mainInstructionTable[INC_C] = &instructionInc;
-    mainInstructionTable[INC_D] = &instructionInc;
-    mainInstructionTable[INC_E] = &instructionInc;
-    mainInstructionTable[INC_H] = &instructionInc;
-    mainInstructionTable[INC_L] = &instructionInc;
-    mainInstructionTable[INC_HL] = &instructionInc;
+    mainInstructionTable[MAIN_INC_A] = &instructionInc;
+    mainInstructionTable[MAIN_INC_B] = &instructionInc;
+    mainInstructionTable[MAIN_INC_C] = &instructionInc;
+    mainInstructionTable[MAIN_INC_D] = &instructionInc;
+    mainInstructionTable[MAIN_INC_E] = &instructionInc;
+    mainInstructionTable[MAIN_INC_H] = &instructionInc;
+    mainInstructionTable[MAIN_INC_L] = &instructionInc;
+    mainInstructionTable[MAIN_INC_HL] = &instructionInc;
+
+    mainInstructionTable[MAIN_INC_BC] = &instructionInc;
+    mainInstructionTable[MAIN_INC_DE] = &instructionInc;
+    mainInstructionTable[MAIN_INC_HL] = &instructionInc;
+    mainInstructionTable[MAIN_INC_SP] = &instructionInc;
 
     // Sub instructions
-    mainInstructionTable[SUB_A_A] = &instructionSub;
-    mainInstructionTable[SUB_A_B] = &instructionSub;
-    mainInstructionTable[SUB_A_C] = &instructionSub;
-    mainInstructionTable[SUB_A_D] = &instructionSub;
-    mainInstructionTable[SUB_A_E] = &instructionSub;
-    mainInstructionTable[SUB_A_H] = &instructionSub;
-    mainInstructionTable[SUB_A_L] = &instructionSub;
-    mainInstructionTable[SUB_A_HL] = &instructionSub;
-    mainInstructionTable[SUB_A_n] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_A] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_B] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_C] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_D] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_E] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_H] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_L] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_HL] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_n] = &instructionSub;
 
     // SBC instructions
-    mainInstructionTable[SBC_A_A] = &instructionSbc;
-    mainInstructionTable[SBC_A_B] = &instructionSbc;
-    mainInstructionTable[SBC_A_C] = &instructionSbc;
-    mainInstructionTable[SBC_A_D] = &instructionSbc;
-    mainInstructionTable[SBC_A_E] = &instructionSbc;
-    mainInstructionTable[SBC_A_H] = &instructionSbc;
-    mainInstructionTable[SBC_A_L] = &instructionSbc;
-    mainInstructionTable[SBC_A_HL] = &instructionSbc;
-    mainInstructionTable[SBC_A_n] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_A] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_B] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_C] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_D] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_E] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_H] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_L] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_HL] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_n] = &instructionSbc;
 
     // DEC instructions
-    mainInstructionTable[DEC_A] = &instructionDec;
-    mainInstructionTable[DEC_B] = &instructionDec;
-    mainInstructionTable[DEC_C] = &instructionDec;
-    mainInstructionTable[DEC_D] = &instructionDec;
-    mainInstructionTable[DEC_E] = &instructionDec;
-    mainInstructionTable[DEC_H] = &instructionDec;
-    mainInstructionTable[DEC_L] = &instructionDec;
-    mainInstructionTable[DEC_HL] = &instructionDec;
+    mainInstructionTable[MAIN_DEC_A] = &instructionDec;
+    mainInstructionTable[MAIN_DEC_B] = &instructionDec;
+    mainInstructionTable[MAIN_DEC_C] = &instructionDec;
+    mainInstructionTable[MAIN_DEC_D] = &instructionDec;
+    mainInstructionTable[MAIN_DEC_E] = &instructionDec;
+    mainInstructionTable[MAIN_DEC_H] = &instructionDec;
+    mainInstructionTable[MAIN_DEC_L] = &instructionDec;
+    mainInstructionTable[MAIN_DEC_HL] = &instructionDec;
 
     // AND instructions
-    mainInstructionTable[AND_A] = &instructionAnd;
-    mainInstructionTable[AND_B] = &instructionAnd;
-    mainInstructionTable[AND_C] = &instructionAnd;
-    mainInstructionTable[AND_D] = &instructionAnd;
-    mainInstructionTable[AND_E] = &instructionAnd;
-    mainInstructionTable[AND_H] = &instructionAnd;
-    mainInstructionTable[AND_L] = &instructionAnd;
-    mainInstructionTable[AND_HL] = &instructionAnd;
-    mainInstructionTable[AND_n] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_A] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_B] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_C] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_D] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_E] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_H] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_L] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_HL] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_n] = &instructionAnd;
 
     // OR instructions
-    mainInstructionTable[OR_A] = &instructionOr;
-    mainInstructionTable[OR_B] = &instructionOr;
-    mainInstructionTable[OR_C] = &instructionOr;
-    mainInstructionTable[OR_D] = &instructionOr;
-    mainInstructionTable[OR_E] = &instructionOr;
-    mainInstructionTable[OR_H] = &instructionOr;
-    mainInstructionTable[OR_L] = &instructionOr;
-    mainInstructionTable[OR_HL] = &instructionOr;
-    mainInstructionTable[OR_n] = &instructionOr;
+    mainInstructionTable[MAIN_OR_A] = &instructionOr;
+    mainInstructionTable[MAIN_OR_B] = &instructionOr;
+    mainInstructionTable[MAIN_OR_C] = &instructionOr;
+    mainInstructionTable[MAIN_OR_D] = &instructionOr;
+    mainInstructionTable[MAIN_OR_E] = &instructionOr;
+    mainInstructionTable[MAIN_OR_H] = &instructionOr;
+    mainInstructionTable[MAIN_OR_L] = &instructionOr;
+    mainInstructionTable[MAIN_OR_HL] = &instructionOr;
+    mainInstructionTable[MAIN_OR_n] = &instructionOr;
 
     // XOR instructions
-    mainInstructionTable[XOR_A] = &instructionXor;
-    mainInstructionTable[XOR_B] = &instructionXor;
-    mainInstructionTable[XOR_C] = &instructionXor;
-    mainInstructionTable[XOR_D] = &instructionXor;
-    mainInstructionTable[XOR_E] = &instructionXor;
-    mainInstructionTable[XOR_H] = &instructionXor;
-    mainInstructionTable[XOR_L] = &instructionXor;
-    mainInstructionTable[XOR_HL] = &instructionXor;
-    mainInstructionTable[XOR_n] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_A] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_B] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_C] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_D] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_E] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_H] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_L] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_HL] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_n] = &instructionXor;
 
 
 }
@@ -355,6 +381,15 @@ static int addToRegister(CPU_t *cpu, byte_t value)
     cpu->A = result & 0xFF;
     return result;
 }
+static int addToRegisterPair(CPU_t *cpu, byte_t value1, byte_t value2)
+{
+    word_t value = TO_WORD(value1, value2);
+    dword_t result = (dword_t)(TO_WORD(cpu->H, cpu->L) + value);
+    setFlagsWord(cpu, TO_WORD(cpu->H, cpu->L), value, result);
+    cpu->H = cpu->H + value1;
+    cpu->L = cpu->L + value2;
+    return result;
+}
 static int addToRegisterWithCarry(CPU_t *cpu, byte_t value)
 {
     word_t result = (word_t)(cpu->A + value + cpu->F.C);
@@ -367,6 +402,13 @@ static int incrementRegister(CPU_t *cpu, byte_t *reg)
     word_t result = (word_t)(*reg + 1);
     setFlags(cpu, *reg, 1, result, false);
     *reg = result & 0xFF;
+    return result;
+}
+static int incrementRegisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte)
+{
+    word_t result = (word_t)(TO_WORD(*upperByte, *lowerByte) + 1);
+    *upperByte = UPPER_BYTE(result);
+    *lowerByte = LOWER_BYTE(result);
     return result;
 }
 
@@ -389,6 +431,13 @@ static int decrementRegister(CPU_t *cpu, byte_t *reg)
     word_t result = (word_t)(*reg - 1);
     setFlags(cpu, *reg, 1, result, true);
     *reg = result & 0xFF;
+    return result;
+}
+static int decrementregisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte)
+{
+    word_t result = (word_t)(TO_WORD(*upperByte, *lowerByte) - 1);
+    *upperByte = UPPER_BYTE(result);
+    *lowerByte = LOWER_BYTE(result);
     return result;
 }
 
@@ -437,28 +486,33 @@ static int instructionAdd(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-    case ADD_A_n:
+    case MAIN_ADD_A_n:
         operand = fetchByte(memory, cpu->PC);
         addToRegister(cpu, operand);
         cycles = 7;
         cpu->PC++;
         break;
-    case ADD_A_HL:
+    case MAIN_ADD_A_HL:
         operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
         addToRegister(cpu, operand);
         cycles = 7;
         cpu->PC++;
         break;
-    case ADD_A_B: addToRegister(cpu, cpu->B); cycles = 4; break;
-    case ADD_A_C: addToRegister(cpu, cpu->C); cycles = 4; break;
-    case ADD_A_D: addToRegister(cpu, cpu->D); cycles = 4; break;
-    case ADD_A_E: addToRegister(cpu, cpu->E); cycles = 4; break;
-    case ADD_A_H: addToRegister(cpu, cpu->H); cycles = 4; break;
-    case ADD_A_L: addToRegister(cpu, cpu->L); cycles = 4; break;
-    case ADD_A_A: addToRegister(cpu, cpu->A); cycles = 4; break;
+    case MAIN_ADD_A_B: addToRegister(cpu, cpu->B); cycles = 4; break;
+    case MAIN_ADD_A_C: addToRegister(cpu, cpu->C); cycles = 4; break;
+    case MAIN_ADD_A_D: addToRegister(cpu, cpu->D); cycles = 4; break;
+    case MAIN_ADD_A_E: addToRegister(cpu, cpu->E); cycles = 4; break;
+    case MAIN_ADD_A_H: addToRegister(cpu, cpu->H); cycles = 4; break;
+    case MAIN_ADD_A_L: addToRegister(cpu, cpu->L); cycles = 4; break;
+    case MAIN_ADD_A_A: addToRegister(cpu, cpu->A); cycles = 4; break;
+    case MAIN_ADD_HL_BC: addToRegisterPair(cpu, cpu->B, cpu->C); cycles = 11; break;
+    case MAIN_ADD_HL_DE: addToRegisterPair(cpu, cpu->D, cpu->E); cycles = 11; break;
+    case MAIN_ADD_HL_HL: addToRegisterPair(cpu, cpu->H, cpu->L); cycles = 11; break;
+    case MAIN_ADD_HL_SP: addToRegisterPair(cpu, UPPER_BYTE(cpu->SP), LOWER_BYTE(cpu->SP)); cycles = 11; break;
     }
     return cycles;
 }
+
 static int instructionAdc(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 {
     int cycles = 0;
@@ -466,25 +520,25 @@ static int instructionAdc(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-    case ADC_A_n:
+    case MAIN_ADC_A_n:
         operand = fetchByte(memory, cpu->PC);
         addToRegisterWithCarry(cpu, operand);
         cycles = 7;
         cpu->PC++;
         break;
-    case ADC_A_HL:
+    case MAIN_ADC_A_HL:
         operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
         addToRegisterWithCarry(cpu, operand);
         cycles = 7;
         cpu->PC++;
         break;
-    case ADC_A_B: addToRegisterWithCarry(cpu, cpu->B); cycles = 4; break;
-    case ADC_A_C: addToRegisterWithCarry(cpu, cpu->C); cycles = 4; break;
-    case ADC_A_D: addToRegisterWithCarry(cpu, cpu->D); cycles = 4; break;
-    case ADC_A_E: addToRegisterWithCarry(cpu, cpu->E); cycles = 4; break;
-    case ADC_A_H: addToRegisterWithCarry(cpu, cpu->H); cycles = 4; break;
-    case ADC_A_L: addToRegisterWithCarry(cpu, cpu->L); cycles = 4; break;
-    case ADC_A_A: addToRegisterWithCarry(cpu, cpu->A); cycles = 4; break;
+    case MAIN_ADC_A_B: addToRegisterWithCarry(cpu, cpu->B); cycles = 4; break;
+    case MAIN_ADC_A_C: addToRegisterWithCarry(cpu, cpu->C); cycles = 4; break;
+    case MAIN_ADC_A_D: addToRegisterWithCarry(cpu, cpu->D); cycles = 4; break;
+    case MAIN_ADC_A_E: addToRegisterWithCarry(cpu, cpu->E); cycles = 4; break;
+    case MAIN_ADC_A_H: addToRegisterWithCarry(cpu, cpu->H); cycles = 4; break;
+    case MAIN_ADC_A_L: addToRegisterWithCarry(cpu, cpu->L); cycles = 4; break;
+    case MAIN_ADC_A_A: addToRegisterWithCarry(cpu, cpu->A); cycles = 4; break;
     }
     return cycles;
 }
@@ -495,18 +549,28 @@ static int instructionInc(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-    case INC_A: incrementRegister(cpu, &cpu->A); cycles = 4; break;
-    case INC_B: incrementRegister(cpu, &cpu->B); cycles = 4; break;
-    case INC_C: incrementRegister(cpu, &cpu->C); cycles = 4; break;
-    case INC_D: incrementRegister(cpu, &cpu->D); cycles = 4; break;
-    case INC_E: incrementRegister(cpu, &cpu->E); cycles = 4; break;
-    case INC_H: incrementRegister(cpu, &cpu->H); cycles = 4; break;
-    case INC_L: incrementRegister(cpu, &cpu->L); cycles = 4; break;
-    case INC_HL:
+    case MAIN_INC_A: incrementRegister(cpu, &cpu->A); cycles = 4; break;
+    case MAIN_INC_B: incrementRegister(cpu, &cpu->B); cycles = 4; break;
+    case MAIN_INC_C: incrementRegister(cpu, &cpu->C); cycles = 4; break;
+    case MAIN_INC_D: incrementRegister(cpu, &cpu->D); cycles = 4; break;
+    case MAIN_INC_E: incrementRegister(cpu, &cpu->E); cycles = 4; break;
+    case MAIN_INC_H: incrementRegister(cpu, &cpu->H); cycles = 4; break;
+    case MAIN_INC_L: incrementRegister(cpu, &cpu->L); cycles = 4; break;
+    case MAIN_INC_HL_ADDR:
         operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
         incrementRegister(cpu, &operand);
         storeByte(memory, TO_WORD(cpu->H, cpu->L), operand);
         cycles = 10;
+        break;
+    case MAIN_INC_BC: incrementRegisterPair(cpu, &cpu->B, &cpu->C); cycles = 6; break;
+    case MAIN_INC_DE: incrementRegisterPair(cpu, &cpu->D, &cpu->E); cycles = 6; break;
+    case MAIN_INC_HL: incrementRegisterPair(cpu, &cpu->H, &cpu->L); cycles = 6; break;
+    case MAIN_INC_SP: 
+        byte_t upperByte = UPPER_BYTE(cpu->SP);
+        byte_t lowerByte = LOWER_BYTE(cpu->SP);
+        incrementRegisterPair(cpu, &upperByte, &lowerByte); 
+        cpu->SP = TO_WORD(upperByte, lowerByte);
+        cycles = 6; 
         break;
     }
     return cycles;
@@ -520,25 +584,25 @@ static int instructionSub(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-        case SUB_A_n:
+        case MAIN_SUB_A_n:
             operand = fetchByte(memory, cpu->PC);
             subtractFromRegister(cpu, operand);
             cycles = 7;
             cpu->PC++;
             break;
-        case SUB_A_HL:
+        case MAIN_SUB_A_HL:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             subtractFromRegister(cpu, operand);
             cycles = 7;
             cpu->PC++;
             break;
-        case SUB_A_B: subtractFromRegister(cpu, cpu->B); cycles = 4; break;
-        case SUB_A_C: subtractFromRegister(cpu, cpu->C); cycles = 4; break;
-        case SUB_A_D: subtractFromRegister(cpu, cpu->D); cycles = 4; break;
-        case SUB_A_E: subtractFromRegister(cpu, cpu->E); cycles = 4; break;
-        case SUB_A_H: subtractFromRegister(cpu, cpu->H); cycles = 4; break;
-        case SUB_A_L: subtractFromRegister(cpu, cpu->L); cycles = 4; break;
-        case SUB_A_A: subtractFromRegister(cpu, cpu->A); cycles = 4; break;
+        case MAIN_SUB_A_B: subtractFromRegister(cpu, cpu->B); cycles = 4; break;
+        case MAIN_SUB_A_C: subtractFromRegister(cpu, cpu->C); cycles = 4; break;
+        case MAIN_SUB_A_D: subtractFromRegister(cpu, cpu->D); cycles = 4; break;
+        case MAIN_SUB_A_E: subtractFromRegister(cpu, cpu->E); cycles = 4; break;
+        case MAIN_SUB_A_H: subtractFromRegister(cpu, cpu->H); cycles = 4; break;
+        case MAIN_SUB_A_L: subtractFromRegister(cpu, cpu->L); cycles = 4; break;
+        case MAIN_SUB_A_A: subtractFromRegister(cpu, cpu->A); cycles = 4; break;
     }
     return cycles;
 }
@@ -550,25 +614,25 @@ static int instructionSbc(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch(instruction)
     {
-        case SBC_A_n:
+        case MAIN_SBC_A_n:
             operand = fetchByte(memory, cpu->PC);
             subtractFromRegisterWithCarry(cpu, operand);
             cycles = 7;
             cpu->PC++;
             break;
-        case SBC_A_HL:
+        case MAIN_SBC_A_HL:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             subtractFromRegisterWithCarry(cpu, operand);
             cycles = 7;
             cpu->PC++;
             break;
-        case SBC_A_B: subtractFromRegisterWithCarry(cpu, cpu->B); cycles = 4; break;
-        case SBC_A_C: subtractFromRegisterWithCarry(cpu, cpu->C); cycles = 4; break;
-        case SBC_A_D: subtractFromRegisterWithCarry(cpu, cpu->D); cycles = 4; break;
-        case SBC_A_E: subtractFromRegisterWithCarry(cpu, cpu->E); cycles = 4; break;
-        case SBC_A_H: subtractFromRegisterWithCarry(cpu, cpu->H); cycles = 4; break;
-        case SBC_A_L: subtractFromRegisterWithCarry(cpu, cpu->L); cycles = 4; break;
-        case SBC_A_A: subtractFromRegisterWithCarry(cpu, cpu->A); cycles = 4; break;
+        case MAIN_SBC_A_B: subtractFromRegisterWithCarry(cpu, cpu->B); cycles = 4; break;
+        case MAIN_SBC_A_C: subtractFromRegisterWithCarry(cpu, cpu->C); cycles = 4; break;
+        case MAIN_SBC_A_D: subtractFromRegisterWithCarry(cpu, cpu->D); cycles = 4; break;
+        case MAIN_SBC_A_E: subtractFromRegisterWithCarry(cpu, cpu->E); cycles = 4; break;
+        case MAIN_SBC_A_H: subtractFromRegisterWithCarry(cpu, cpu->H); cycles = 4; break;
+        case MAIN_SBC_A_L: subtractFromRegisterWithCarry(cpu, cpu->L); cycles = 4; break;
+        case MAIN_SBC_A_A: subtractFromRegisterWithCarry(cpu, cpu->A); cycles = 4; break;
     }
     return cycles;
 }
@@ -580,18 +644,28 @@ static int instructionDec(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch(instruction)
     {
-        case DEC_A: decrementRegister(cpu, &cpu->A); cycles = 4; break;
-        case DEC_B: decrementRegister(cpu, &cpu->B); cycles = 4; break;
-        case DEC_C: decrementRegister(cpu, &cpu->C); cycles = 4; break;
-        case DEC_D: decrementRegister(cpu, &cpu->D); cycles = 4; break;
-        case DEC_E: decrementRegister(cpu, &cpu->E); cycles = 4; break;
-        case DEC_H: decrementRegister(cpu, &cpu->H); cycles = 4; break;
-        case DEC_L: decrementRegister(cpu, &cpu->L); cycles = 4; break;
-        case DEC_HL:
+        case MAIN_DEC_A: decrementRegister(cpu, &cpu->A); cycles = 4; break;
+        case MAIN_DEC_B: decrementRegister(cpu, &cpu->B); cycles = 4; break;
+        case MAIN_DEC_C: decrementRegister(cpu, &cpu->C); cycles = 4; break;
+        case MAIN_DEC_D: decrementRegister(cpu, &cpu->D); cycles = 4; break;
+        case MAIN_DEC_E: decrementRegister(cpu, &cpu->E); cycles = 4; break;
+        case MAIN_DEC_H: decrementRegister(cpu, &cpu->H); cycles = 4; break;
+        case MAIN_DEC_L: decrementRegister(cpu, &cpu->L); cycles = 4; break;
+        case MAIN_DEC_HL_ADDR:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             decrementRegister(cpu, &operand);
             storeByte(memory, TO_WORD(cpu->H, cpu->L), operand);
             cycles = 10;
+            break;
+        case MAIN_DEC_BC: decrementregisterPair(cpu, &cpu->B, &cpu->C); cycles = 6; break;
+        case MAIN_DEC_DE: decrementregisterPair(cpu, &cpu->D, &cpu->E); cycles = 6; break;
+        case MAIN_DEC_HL: decrementregisterPair(cpu, &cpu->H, &cpu->L); cycles = 6; break;
+        case MAIN_DEC_SP: 
+            byte_t upperByte = UPPER_BYTE(cpu->SP);
+            byte_t lowerByte = LOWER_BYTE(cpu->SP);
+            decrementregisterPair(cpu, &upperByte, &lowerByte); 
+            cpu->SP = TO_WORD(upperByte, lowerByte);
+            cycles = 6; 
             break;
     }
     return cycles;
@@ -605,19 +679,19 @@ static int instructionAnd(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch(instruction)
     {
-        case AND_A: andWithRegister(cpu, cpu->A); cycles = 4; break;
-        case AND_B: andWithRegister(cpu, cpu->B); cycles = 4; break;
-        case AND_C: andWithRegister(cpu, cpu->C); cycles = 4; break;
-        case AND_D: andWithRegister(cpu, cpu->D); cycles = 4; break;
-        case AND_E: andWithRegister(cpu, cpu->E); cycles = 4; break;
-        case AND_H: andWithRegister(cpu, cpu->H); cycles = 4; break;
-        case AND_L: andWithRegister(cpu, cpu->L); cycles = 4; break;
-        case AND_HL:
+        case MAIN_AND_A: andWithRegister(cpu, cpu->A); cycles = 4; break;
+        case MAIN_AND_B: andWithRegister(cpu, cpu->B); cycles = 4; break;
+        case MAIN_AND_C: andWithRegister(cpu, cpu->C); cycles = 4; break;
+        case MAIN_AND_D: andWithRegister(cpu, cpu->D); cycles = 4; break;
+        case MAIN_AND_E: andWithRegister(cpu, cpu->E); cycles = 4; break;
+        case MAIN_AND_H: andWithRegister(cpu, cpu->H); cycles = 4; break;
+        case MAIN_AND_L: andWithRegister(cpu, cpu->L); cycles = 4; break;
+        case MAIN_AND_HL:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             andWithRegister(cpu, operand);
             cycles = 7;
             break;
-        case AND_n:
+        case MAIN_AND_n:
             operand = fetchByte(memory, cpu->PC);
             andWithRegister(cpu, operand);
             cycles = 7;
@@ -634,19 +708,19 @@ static int instructionOr(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-        case OR_A: orWithRegister(cpu, cpu->A); cycles = 4; break;
-        case OR_B: orWithRegister(cpu, cpu->B); cycles = 4; break;
-        case OR_C: orWithRegister(cpu, cpu->C); cycles = 4; break;
-        case OR_D: orWithRegister(cpu, cpu->D); cycles = 4; break;
-        case OR_E: orWithRegister(cpu, cpu->E); cycles = 4; break;
-        case OR_H: orWithRegister(cpu, cpu->H); cycles = 4; break;
-        case OR_L: orWithRegister(cpu, cpu->L); cycles = 4; break;
-        case OR_HL:
+        case MAIN_OR_A: orWithRegister(cpu, cpu->A); cycles = 4; break;
+        case MAIN_OR_B: orWithRegister(cpu, cpu->B); cycles = 4; break;
+        case MAIN_OR_C: orWithRegister(cpu, cpu->C); cycles = 4; break;
+        case MAIN_OR_D: orWithRegister(cpu, cpu->D); cycles = 4; break;
+        case MAIN_OR_E: orWithRegister(cpu, cpu->E); cycles = 4; break;
+        case MAIN_OR_H: orWithRegister(cpu, cpu->H); cycles = 4; break;
+        case MAIN_OR_L: orWithRegister(cpu, cpu->L); cycles = 4; break;
+        case MAIN_OR_HL:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             orWithRegister(cpu, operand);
             cycles = 7;
             break;
-        case OR_n:
+        case MAIN_OR_n:
             operand = fetchByte(memory, cpu->PC);
             orWithRegister(cpu, operand);
             cycles = 7;
@@ -663,19 +737,19 @@ static int instructionXor(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch(instruction)
     {
-        case XOR_A: xorWithRegister(cpu, cpu->A); cycles = 4; break;
-        case XOR_B: xorWithRegister(cpu, cpu->B); cycles = 4; break;
-        case XOR_C: xorWithRegister(cpu, cpu->C); cycles = 4; break;
-        case XOR_D: xorWithRegister(cpu, cpu->D); cycles = 4; break;
-        case XOR_E: xorWithRegister(cpu, cpu->E); cycles = 4; break;
-        case XOR_H: xorWithRegister(cpu, cpu->H); cycles = 4; break;
-        case XOR_L: xorWithRegister(cpu, cpu->L); cycles = 4; break;
-        case XOR_HL:
+        case MAIN_XOR_A: xorWithRegister(cpu, cpu->A); cycles = 4; break;
+        case MAIN_XOR_B: xorWithRegister(cpu, cpu->B); cycles = 4; break;
+        case MAIN_XOR_C: xorWithRegister(cpu, cpu->C); cycles = 4; break;
+        case MAIN_XOR_D: xorWithRegister(cpu, cpu->D); cycles = 4; break;
+        case MAIN_XOR_E: xorWithRegister(cpu, cpu->E); cycles = 4; break;
+        case MAIN_XOR_H: xorWithRegister(cpu, cpu->H); cycles = 4; break;
+        case MAIN_XOR_L: xorWithRegister(cpu, cpu->L); cycles = 4; break;
+        case MAIN_XOR_HL:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             xorWithRegister(cpu, operand);
             cycles = 7;
             break;
-        case XOR_n:
+        case MAIN_XOR_n:
             operand = fetchByte(memory, cpu->PC);
             xorWithRegister(cpu, operand);
             cycles = 7;
@@ -694,285 +768,10 @@ static int instructionLd(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-    case LD_A_n:
+    case MAIN_LD_A_n:
         cpu->A = fetchByte(memory, cpu->PC);
         cpu->PC++;
         cycles = 7;
         break;
-    case LD_B_n:
-        cpu->B = fetchByte(memory, cpu->PC);
-        cpu->PC++;
-        cycles = 7;
-        break;
-    case LD_C_n:
-        cpu->C = fetchByte(memory, cpu->PC);
-        cpu->PC++;
-        cycles = 7;
-        break;
-    case LD_D_n:
-        cpu->D = fetchByte(memory, cpu->PC);
-        cpu->PC++;
-        cycles = 7;
-        break;
-    case LD_E_n:
-        cpu->E = fetchByte(memory, cpu->PC);
-        cpu->PC++;
-        cycles = 7;
-        break;
-    case LD_H_n:
-        cpu->H = fetchByte(memory, cpu->PC);
-        cpu->PC++;
-        cycles = 7;
-        break;
-    case LD_L_n:
-        cpu->L = fetchByte(memory, cpu->PC);
-        cpu->PC++;
-        cycles = 7;
-        break;
-
-    case LD_B_B:
-        cpu->B = cpu->B;
-        cycles = 4;
-        break;
-    case LD_B_C:
-        cpu->B = cpu->C;
-        cycles = 4;
-        break;
-    case LD_B_D:
-        cpu->B = cpu->D;
-        cycles = 4;
-        break;
-    case LD_B_E:
-        cpu->B = cpu->E;
-        cycles = 4;
-        break;
-    case LD_B_H:
-        cpu->B = cpu->H;
-        cycles = 4;
-        break;
-    case LD_B_L:
-        cpu->B = cpu->L;
-        cycles = 4;
-        break;
-    case LD_B_HL:
-        address = TO_WORD(cpu->H, cpu->L);
-        cpu->B = fetchByte(memory, address);
-        cycles = 7;
-        break;
-    case LD_B_A:
-        cpu->B = cpu->A;
-        cycles = 4;
-        break;
-
-    case LD_C_B:
-        cpu->C = cpu->B;
-        cycles = 4;
-        break;
-    case LD_C_C:
-        cpu->C = cpu->C;
-        cycles = 4;
-        break;
-    case LD_C_D:
-        cpu->C = cpu->D;
-        cycles = 4;
-        break;
-    case LD_C_E:
-        cpu->C = cpu->E;
-        cycles = 4;
-        break;
-    case LD_C_H:
-        cpu->C = cpu->H;
-        cycles = 4;
-        break;
-    case LD_C_L:
-        cpu->C = cpu->L;
-        cycles = 4;
-        break;
-    case LD_C_HL:
-        address = TO_WORD(cpu->H, cpu->L);
-        cpu->C = fetchByte(memory, address);
-        cycles = 7;
-        break;
-    case LD_C_A:
-        cpu->C = cpu->A;
-        cycles = 4;
-        break;
-
-    case LD_D_B:
-        cpu->D = cpu->B;
-        cycles = 4;
-        break;
-    case LD_D_C:
-        cpu->D = cpu->C;
-        cycles = 4;
-        break;
-    case LD_D_D:
-        cpu->D = cpu->D;
-        cycles = 4;
-        break;
-    case LD_D_E:
-        cpu->D = cpu->E;
-        cycles = 4;
-        break;
-    case LD_D_H:
-        cpu->D = cpu->H;
-        cycles = 4;
-        break;
-    case LD_D_L:
-        cpu->D = cpu->L;
-        cycles = 4;
-        break;
-    case LD_D_HL:
-        address = TO_WORD(cpu->H, cpu->L);
-        cpu->D = fetchByte(memory, address);
-        cycles = 7;
-        break;
-    case LD_D_A:
-        cpu->D = cpu->A;
-        cycles = 4;
-        break;
-
-    case LD_E_B:
-        cpu->E = cpu->B;
-        cycles = 4;
-        break;
-    case LD_E_C:
-        cpu->E = cpu->C;
-        cycles = 4;
-        break;
-    case LD_E_D:
-        cpu->E = cpu->D;
-        cycles = 4;
-        break;
-    case LD_E_E:
-        cpu->E = cpu->E;
-        cycles = 4;
-        break;
-    case LD_E_H:
-        cpu->E = cpu->H;
-        cycles = 4;
-        break;
-    case LD_E_L:
-        cpu->E = cpu->L;
-        cycles = 4;
-        break;
-    case LD_E_HL:
-        address = TO_WORD(cpu->H, cpu->L);
-        cpu->E = fetchByte(memory, address);
-        cycles = 7;
-        break;
-    case LD_E_A:
-        cpu->E = cpu->A;
-        cycles = 4;
-        break;
-
-    case LD_H_B:
-        cpu->H = cpu->B;
-        cycles = 4;
-        break;
-    case LD_H_C:
-        cpu->H = cpu->C;
-        cycles = 4;
-        break;
-    case LD_H_D:
-        cpu->H = cpu->D;
-        cycles = 4;
-        break;
-    case LD_H_E:
-        cpu->H = cpu->E;
-        cycles = 4;
-        break;
-    case LD_H_H:
-        cpu->H = cpu->H;
-        cycles = 4;
-        break;
-    case LD_H_L:
-        cpu->H = cpu->L;
-        cycles = 4;
-        break;
-    case LD_H_HL:
-        address = TO_WORD(cpu->H, cpu->L);
-        cpu->H = fetchByte(memory, address);
-        cycles = 7;
-        break;
-    case LD_H_A:
-        cpu->H = cpu->A;
-        cycles = 4;
-        break;
-
-    case LD_L_B:
-        cpu->L = cpu->B;
-        cycles = 4;
-        break;
-    case LD_L_C:
-        cpu->L = cpu->C;
-        cycles = 4;
-        break;
-    case LD_L_D:
-        cpu->L = cpu->D;
-        cycles = 4;
-        break;
-    case LD_L_E:
-        cpu->L = cpu->E;
-        cycles = 4;
-        break;
-    case LD_L_H:
-        cpu->L = cpu->H;
-        cycles = 4;
-        break;
-    case LD_L_L:
-        cpu->L = cpu->L;
-        cycles = 4;
-        break;
-    case LD_L_HL:
-        address = TO_WORD(cpu->H, cpu->L);
-        cpu->L = fetchByte(memory, address);
-        cycles = 7;
-        break;
-    case LD_L_A:
-        cpu->L = cpu->A;
-        cycles = 4;
-        break;
-
-    // LD INDIRECT
-    case LD_A_nn:
-        address = fetchWord(memory, cpu->PC);
-        cpu->A = fetchByte(memory, address);
-        cpu->PC += 2;
-        cycles = 13;
-        break;
-    case LD_HL_nn:
-        address = fetchWord(memory, cpu->PC);
-        cpu->H = fetchByte(memory, address);
-        cpu->L = fetchByte(memory, address + 1);
-        cpu->PC += 2;
-        cycles = 16;
-        break;
-
-    // LD IMMEDIATE
-    case LD_BC_IMMEDIATE:
-        cpu->B = fetchByte(memory, cpu->PC + 1);
-        cpu->C = fetchByte(memory, cpu->PC);
-        cpu->PC += 2;
-        cycles = 10;
-        break;
-    case LD_DE_IMMEDIATE:
-        cpu->D = fetchByte(memory, cpu->PC + 1);
-        cpu->E = fetchByte(memory, cpu->PC);
-        cpu->PC += 2;
-        cycles = 10;
-        break;
-    case LD_HL_IMMEDIATE:
-        cpu->H = fetchByte(memory, cpu->PC + 1);
-        cpu->L = fetchByte(memory, cpu->PC);
-        cpu->PC += 2;
-        cycles = 10;
-        break;
-    case LD_SP_IMMEDIATE:
-        cpu->SP = fetchWord(memory, cpu->PC);
-        cpu->PC += 2;
-        cycles = 10;
-        break;
     }
-    return cycles;
 }
