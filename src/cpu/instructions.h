@@ -1,6 +1,7 @@
 #ifndef CILOG_C80_INSTRUCTIONS_H
 #define CILOG_C80_INSTRUCTIONS_H
 
+// Main instructions -----------------------------------------------------------
 // NOP
 #define MAIN_NOP 0x00
 
@@ -132,6 +133,30 @@
 #define MAIN_CP_L        0xBD
 #define MAIN_CP_A        0xBF
 
+// Return instructions
+#define MAIN_RET          0xC9
+#define MAIN_RET_NZ       0xC0
+#define MAIN_RET_Z        0xC8
+#define MAIN_RET_NC       0xD0
+#define MAIN_RET_C        0xD8
+#define MAIN_RET_PO       0xE0
+#define MAIN_RET_PE       0xE8
+#define MAIN_RET_P        0xF0
+#define MAIN_RET_M        0xF8
+
+// Stack instructions
+// Push instructions
+#define MAIN_PUSH_BC     0xC5
+#define MAIN_PUSH_DE     0xD5
+#define MAIN_PUSH_HL     0xE5
+#define MAIN_PUSH_AF     0xF5
+
+// Pop instructions
+#define MAIN_POP_BC      0xC1
+#define MAIN_POP_DE      0xD1
+#define MAIN_POP_HL      0xE1
+#define MAIN_POP_AF      0xF1
+
 // Load instructions
 // Immediate
 #define MAIN_LD_A_n      0x3E
@@ -225,5 +250,6 @@
 #define MISC_LD_BC_IMMEDIATE 0x01
 #define MISC_LD_SP_IMMEDIATE 0x31
 
+// -----------------------------------------------------------------------------
 
 #endif //CILOG_C80_INSTRUCTIONS_H

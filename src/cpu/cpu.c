@@ -12,39 +12,66 @@ static InstructionHandler mainInstructionTable[MAX_INSTRUCTION_COUNT] = {NULL};
 
 static void initInstructionTable();
 
+// CPU helper functions -------------------------------------------------------
+static byte_t flagsToByte(F_t flags);
+static void byteToFlags(F_t *flags, byte_t value);
+
+static int calculateParity(word_t value);
+static void setFlags(CPU_t *cpu, byte_t regA, byte_t operand, word_t result, bool_t isSubstraction);
+static void setFlagsWord(CPU_t *cpu, word_t reg1, word_t reg2, dword_t result);
+// -----------------------------------------------------------------------------
+
+// Instructions ----------------------------------------------------------------
+// Main instructions -----------------------------------------------------------
+// NOP
 static int instructionNop(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-
+// HALT
 static int instructionHalt(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-
+// Add instructions
 static int instructionAdd(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionAdc(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionInc(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-
+// Sub instructions
 static int instructionSub(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionSbc(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionDec(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-
+// Logical instructions
 static int instructionAnd(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionOr(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionXor(CPU_t *cpu, Memory_t *memory, byte_t instruction);
+static int instructionCp(CPU_t *cpu, Memory_t *memory, byte_t instruction);
+// Push instructions
+static int instructionPush(CPU_t *cpu, Memory_t *memory, byte_t instruction);
+// Pop instructions
+static int instructionPop(CPU_t *cpu, Memory_t *memory, byte_t instruction);
+// Return instructions
+static int instructionRet(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 
 static int instructionLd(CPU_t *cpu, Memory_t *memory, byte_t instruction);
+// -----------------------------------------------------------------------------
 
-static int addToRegister(CPU_t *cpu, byte_t value);
-static int addToRegisterPair(CPU_t *cpu, byte_t value1, byte_t value2); // TODO: Maybe change to word_t and name it addToRegisterPair
-static int addToRegisterWithCarry(CPU_t *cpu, byte_t value);
-static int incrementRegister(CPU_t *cpu, byte_t *reg);
-static int incrementRegisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte);
+// Helper functions ------------------------------------------------------------
+static void addToRegister(CPU_t *cpu, byte_t value);
+static void addToRegisterPair(CPU_t *cpu, byte_t value1, byte_t value2); // TODO: Maybe change to word_t and name it addToRegisterPair
+static void addToRegisterWithCarry(CPU_t *cpu, byte_t value);
+static void incrementRegister(CPU_t *cpu, byte_t *reg);
+static void incrementRegisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte);
 
-static int subtractFromRegister(CPU_t *cpu, byte_t value);
-static int subtractFromRegisterWithCarry(CPU_t *cpu, byte_t value);
-static int decrementRegister(CPU_t *cpu, byte_t *reg);
-static int decrementregisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte);
+static void subtractFromRegister(CPU_t *cpu, byte_t value);
+static void subtractFromRegisterWithCarry(CPU_t *cpu, byte_t value);
+static void decrementRegister(CPU_t *cpu, byte_t *reg);
+static void decrementRegisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte);
 
-static int andWithRegister(CPU_t *cpu, byte_t value);
-static int orWithRegister(CPU_t *cpu, byte_t value);
-static int xorWithRegister(CPU_t *cpu, byte_t value);
-static int cpWithRegister(CPU_t *cpu, byte_t value);
+static void andWithRegister(CPU_t *cpu, byte_t value);
+static void orWithRegister(CPU_t *cpu, byte_t value);
+static void xorWithRegister(CPU_t *cpu, byte_t value);
+static void cpWithRegister(CPU_t *cpu, byte_t value);
+
+static void pushWord(CPU_t *cpu, Memory_t *memory, word_t value);
+static void popWord(CPU_t *cpu, Memory_t *memory, byte_t *upperByte, byte_t *lowerByte);
+
+static void ret(CPU_t *cpu, Memory_t *memory, bool_t condition);
+// -----------------------------------------------------------------------------
 
 void cpuInit(CPU_t *cpu)
 {
@@ -144,7 +171,6 @@ static void setFlags(CPU_t *cpu, byte_t regA, byte_t operand, word_t result, boo
     cpu->F.N = isSubstraction;
     cpu->F.C = result > 0xFF;
 }
-
 static void setFlagsWord(CPU_t *cpu, word_t reg1, word_t reg2, dword_t result)
 {
     cpu->F.Z = (result & 0xFFFF) == 0;
@@ -155,6 +181,31 @@ static void setFlagsWord(CPU_t *cpu, word_t reg1, word_t reg2, dword_t result)
     cpu->F.C = result > 0xFFFF;
 
     cpu->F.N = 0;
+}
+
+static byte_t flagsToByte(F_t flags)
+{
+    return (byte_t)(
+        (flags.S << 7) |
+        (flags.Z << 6) |
+        (flags._ << 5) |
+        (flags.H << 4) |
+        (flags._ << 3) |
+        (flags.P << 2) |
+        (flags.N << 1) |
+        (flags.C)
+    );
+}
+static void byteToFlags(F_t *flags, byte_t value)
+{
+    flags->S = (value & 0x80) >> 7;
+    flags->Z = (value & 0x40) >> 6;
+    flags->_ = (value & 0x20) >> 5;
+    flags->H = (value & 0x10) >> 4;
+    flags->_ = (value & 0x08) >> 3;
+    flags->P = (value & 0x04) >> 2;
+    flags->N = (value & 0x02) >> 1;
+    flags->C = (value & 0x01);
 }
 
 static int mainInstructions(CPU_t *cpu, Memory_t *memory, byte_t instruction);
@@ -317,8 +368,30 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_XOR_HL] = &instructionXor;
     mainInstructionTable[MAIN_XOR_n] = &instructionXor;
 
+    // CP instructions
+    mainInstructionTable[MAIN_CP_A] = &instructionCp;
+    mainInstructionTable[MAIN_CP_B] = &instructionCp;
+    mainInstructionTable[MAIN_CP_C] = &instructionCp;
+    mainInstructionTable[MAIN_CP_D] = &instructionCp;
+    mainInstructionTable[MAIN_CP_E] = &instructionCp;
+    mainInstructionTable[MAIN_CP_H] = &instructionCp;
+    mainInstructionTable[MAIN_CP_L] = &instructionCp;
+    mainInstructionTable[MAIN_CP_HL] = &instructionCp;
+    mainInstructionTable[MAIN_CP_n] = &instructionCp;
 
-}
+    // Push instructions
+    mainInstructionTable[MAIN_PUSH_AF] = &instructionPush;
+    mainInstructionTable[MAIN_PUSH_BC] = &instructionPush;
+    mainInstructionTable[MAIN_PUSH_DE] = &instructionPush;
+    mainInstructionTable[MAIN_PUSH_HL] = &instructionPush;
+
+    // Pop instructions
+    mainInstructionTable[MAIN_POP_AF] = &instructionPop;
+    mainInstructionTable[MAIN_POP_BC] = &instructionPop;
+    mainInstructionTable[MAIN_POP_DE] = &instructionPop;
+    mainInstructionTable[MAIN_POP_HL] = &instructionPop;
+
+}   
 
 static int mainInstructions(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 {
@@ -374,101 +447,115 @@ static int miscInstructions(CPU_t *cpu, Memory_t *memory, byte_t instruction)
     return 0;
 }
 
-static int addToRegister(CPU_t *cpu, byte_t value)
+
+// Helper functions ------------------------------------------------------------
+static void addToRegister(CPU_t *cpu, byte_t value)
 {
     word_t result = (word_t)(cpu->A + value);
     setFlags(cpu, cpu->A, value, result, false);
     cpu->A = result & 0xFF;
-    return result;
 }
-static int addToRegisterPair(CPU_t *cpu, byte_t value1, byte_t value2)
+static void addToRegisterPair(CPU_t *cpu, byte_t value1, byte_t value2)
 {
     word_t value = TO_WORD(value1, value2);
     dword_t result = (dword_t)(TO_WORD(cpu->H, cpu->L) + value);
     setFlagsWord(cpu, TO_WORD(cpu->H, cpu->L), value, result);
     cpu->H = cpu->H + value1;
     cpu->L = cpu->L + value2;
-    return result;
 }
-static int addToRegisterWithCarry(CPU_t *cpu, byte_t value)
+static void addToRegisterWithCarry(CPU_t *cpu, byte_t value)
 {
     word_t result = (word_t)(cpu->A + value + cpu->F.C);
     setFlags(cpu, cpu->A, value, result, false);
     cpu->A = result & 0xFF;
-    return result;
 }
-static int incrementRegister(CPU_t *cpu, byte_t *reg)
+static void incrementRegister(CPU_t *cpu, byte_t *reg)
 {
     word_t result = (word_t)(*reg + 1);
     setFlags(cpu, *reg, 1, result, false);
     *reg = result & 0xFF;
-    return result;
 }
-static int incrementRegisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte)
+static void incrementRegisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte)
 {
     word_t result = (word_t)(TO_WORD(*upperByte, *lowerByte) + 1);
     *upperByte = UPPER_BYTE(result);
     *lowerByte = LOWER_BYTE(result);
-    return result;
 }
 
-static int subtractFromRegister(CPU_t *cpu, byte_t value)
+static void subtractFromRegister(CPU_t *cpu, byte_t value)
 {
     word_t result = (word_t)(cpu->A - value);
     setFlags(cpu, cpu->A, value, result, true);
     cpu->A = result & 0xFF;
-    return result;
 }
-static int subtractFromRegisterWithCarry(CPU_t *cpu, byte_t value)
+static void subtractFromRegisterWithCarry(CPU_t *cpu, byte_t value)
 {
     word_t result = (word_t)(cpu->A - value - cpu->F.C);
     setFlags(cpu, cpu->A, value, result, true);
     cpu->A = result & 0xFF;
-    return result;
 }
-static int decrementRegister(CPU_t *cpu, byte_t *reg)
+static void decrementRegister(CPU_t *cpu, byte_t *reg)
 {
     word_t result = (word_t)(*reg - 1);
     setFlags(cpu, *reg, 1, result, true);
     *reg = result & 0xFF;
-    return result;
 }
-static int decrementregisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte)
+static void decrementRegisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte)
 {
     word_t result = (word_t)(TO_WORD(*upperByte, *lowerByte) - 1);
     *upperByte = UPPER_BYTE(result);
     *lowerByte = LOWER_BYTE(result);
-    return result;
 }
 
-static int andWithRegister(CPU_t *cpu, byte_t value)
+static void andWithRegister(CPU_t *cpu, byte_t value)
 {
     word_t result = (word_t)(cpu->A & value);
     setFlags(cpu, cpu->A, value, result, false);
     cpu->A = result & 0xFF;
-    return result;
 }
-static int orWithRegister(CPU_t *cpu, byte_t value)
+static void orWithRegister(CPU_t *cpu, byte_t value)
 {
     word_t result = (word_t)(cpu->A | value);
     setFlags(cpu, cpu->A, value, result, false);
     cpu->A = result & 0xFF;
-    return result;
 }
-static int xorWithRegister(CPU_t *cpu, byte_t value)
+static void xorWithRegister(CPU_t *cpu, byte_t value)
 {
     word_t result = (word_t)(cpu->A ^ value);
     setFlags(cpu, cpu->A, value, result, false);
     cpu->A = result & 0xFF;
-    return result;
 }
-static int cpWithRegister(CPU_t *cpu, byte_t value)
+static void cpWithRegister(CPU_t *cpu, byte_t value)
 {
     word_t result = (word_t)(cpu->A - value);
     setFlags(cpu, cpu->A, value, result, true);
-    return result;
 }
 
+static void pushWord(CPU_t *cpu, Memory_t *memory, word_t value)
+{
+    storeByte(memory, cpu->SP - 1, UPPER_BYTE(value));
+    storeByte(memory, cpu->SP - 2, LOWER_BYTE(value));
+    cpu->SP -= 2;
+}
+static void popWord(CPU_t *cpu, Memory_t *memory, byte_t *upperByte, byte_t *lowerByte)
+{
+    *lowerByte = fetchByte(memory, cpu->SP);
+    *upperByte = fetchByte(memory, cpu->SP + 1);
+    cpu->SP += 2;
+}
+
+static void ret(CPU_t *cpu, Memory_t *memory, bool_t condition)
+{
+    if(condition)
+    {
+        byte_t lowerByte, upperByte;
+        popWord(cpu, memory, &upperByte, &lowerByte);
+        cpu->PC = TO_WORD(upperByte, lowerByte);
+    }
+}
+// -----------------------------------------------------------------------------
+
+// Main instructions -----------------------------------------------------------
 static int instructionNop(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 {
     return 0;
@@ -512,7 +599,6 @@ static int instructionAdd(CPU_t *cpu, Memory_t *memory, byte_t instruction)
     }
     return cycles;
 }
-
 static int instructionAdc(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 {
     int cycles = 0;
@@ -657,13 +743,13 @@ static int instructionDec(CPU_t *cpu, Memory_t *memory, byte_t instruction)
             storeByte(memory, TO_WORD(cpu->H, cpu->L), operand);
             cycles = 10;
             break;
-        case MAIN_DEC_BC: decrementregisterPair(cpu, &cpu->B, &cpu->C); cycles = 6; break;
-        case MAIN_DEC_DE: decrementregisterPair(cpu, &cpu->D, &cpu->E); cycles = 6; break;
-        case MAIN_DEC_HL: decrementregisterPair(cpu, &cpu->H, &cpu->L); cycles = 6; break;
+        case MAIN_DEC_BC: decrementRegisterPair(cpu, &cpu->B, &cpu->C); cycles = 6; break;
+        case MAIN_DEC_DE: decrementRegisterPair(cpu, &cpu->D, &cpu->E); cycles = 6; break;
+        case MAIN_DEC_HL: decrementRegisterPair(cpu, &cpu->H, &cpu->L); cycles = 6; break;
         case MAIN_DEC_SP: 
             byte_t upperByte = UPPER_BYTE(cpu->SP);
             byte_t lowerByte = LOWER_BYTE(cpu->SP);
-            decrementregisterPair(cpu, &upperByte, &lowerByte); 
+            decrementRegisterPair(cpu, &upperByte, &lowerByte); 
             cpu->SP = TO_WORD(upperByte, lowerByte);
             cycles = 6; 
             break;
@@ -758,6 +844,78 @@ static int instructionXor(CPU_t *cpu, Memory_t *memory, byte_t instruction)
     }
     return cycles;
 }
+static int instructionCp(CPU_t *cpu, Memory_t *memory, byte_t instruction)
+{
+    int cycles = 0;
+
+    byte_t operand;
+
+    switch(instruction)
+    {
+        case MAIN_CP_A: cpWithRegister(cpu, cpu->A); cycles = 4; break;
+        case MAIN_CP_B: cpWithRegister(cpu, cpu->B); cycles = 4; break;
+        case MAIN_CP_C: cpWithRegister(cpu, cpu->C); cycles = 4; break;
+        case MAIN_CP_D: cpWithRegister(cpu, cpu->D); cycles = 4; break;
+        case MAIN_CP_E: cpWithRegister(cpu, cpu->E); cycles = 4; break;
+        case MAIN_CP_H: cpWithRegister(cpu, cpu->H); cycles = 4; break;
+        case MAIN_CP_L: cpWithRegister(cpu, cpu->L); cycles = 4; break;
+        case MAIN_CP_HL:
+            operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+            cpWithRegister(cpu, operand);
+            cycles = 7;
+            break;
+    }
+}
+
+static int instructionPush(CPU_t *cpu, Memory_t *memory, byte_t instruction)
+{
+    int cycles = 0;
+
+    switch(instruction)
+    {
+        case MAIN_PUSH_BC: pushWord(cpu, memory, TO_WORD(cpu->B, cpu->C)); cycles = 11; break;
+        case MAIN_PUSH_DE: pushWord(cpu, memory, TO_WORD(cpu->D, cpu->E)); cycles = 11; break;
+        case MAIN_PUSH_HL: pushWord(cpu, memory, TO_WORD(cpu->H, cpu->L)); cycles = 11; break;  
+        case MAIN_PUSH_AF: pushWord(cpu, memory, TO_WORD(cpu->A, flagsToByte(cpu->F))); cycles = 11; break;
+    }
+}
+static int instructionPop(CPU_t *cpu, Memory_t *memory, byte_t instruction)
+{
+    int cycles = 0;
+
+    switch(instruction)
+    {
+        case MAIN_POP_BC: popWord(cpu, memory, &cpu->B, &cpu->C); cycles = 10; break;
+        case MAIN_POP_DE: popWord(cpu, memory, &cpu->D, &cpu->E); cycles = 10; break;
+        case MAIN_POP_HL: popWord(cpu, memory, &cpu->H, &cpu->L); cycles = 10; break;
+        case MAIN_POP_AF: 
+            byte_t upperByte, lowerByte;
+            popWord(cpu, memory, &upperByte, &lowerByte);
+            byteToFlags(&cpu->F, lowerByte);
+            cpu->A = upperByte;
+            cycles = 10;
+            break;
+    }
+}
+
+static int instructionRet(CPU_t *cpu, Memory_t *memory, byte_t instruction)
+{
+    int cycles = 0;
+
+    bool_t condition;
+    switch(instruction)
+    {
+        case MAIN_RET: ret(cpu, memory, true); cycles = 10; break;
+        case MAIN_RET_NZ: condition = cpu->F.Z == 0; ret(cpu, memory, condition); cycles = condition ? 11 : 5; break;
+        case MAIN_RET_Z: condition = cpu->F.Z == 1; ret(cpu, memory, condition); cycles = condition ? 11 : 5; break;
+        case MAIN_RET_NC: condition = cpu->F.C == 0; ret(cpu, memory, condition); cycles = condition ? 11 : 5; break;
+        case MAIN_RET_C: condition = cpu->F.C == 1; ret(cpu, memory, condition); cycles = condition ? 11 : 5; break;
+        case MAIN_RET_PO: condition = cpu->F.P == 0; ret(cpu, memory, condition); cycles = condition ? 11 : 5; break;
+        case MAIN_RET_PE: condition = cpu->F.P == 1; ret(cpu, memory, condition); cycles = condition ? 11 : 5; break;
+        case MAIN_RET_P: condition = cpu->F.S == 0; ret(cpu, memory, condition); cycles = condition ? 11 : 5; break;
+        case MAIN_RET_M: condition = cpu->F.S == 1; ret(cpu, memory, condition); cycles = condition ? 11 : 5; break;
+    }
+}
 
 static int instructionLd(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 {
@@ -775,3 +933,4 @@ static int instructionLd(CPU_t *cpu, Memory_t *memory, byte_t instruction)
         break;
     }
 }
+// -----------------------------------------------------------------------------

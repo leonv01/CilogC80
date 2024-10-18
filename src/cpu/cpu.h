@@ -30,9 +30,35 @@ typedef struct CPU_t
     float frequency;
 } CPU_t;
 
+/**
+ * @brief Initialize the CPU
+ * 
+ * @param cpu The CPU to initialize
+ */
 void cpuInit(CPU_t* cpu);
+
+/**
+ * @brief Resets the CPU
+ * 
+ * @param cpu The CPU to reset
+ */
 void cpuReset(CPU_t* cpu);
+
+/**
+ * @brief Start the CPU emulation
+ * 
+ * @param cpu 
+ * @param memory 
+ */
 void cpuEmulate(CPU_t* cpu, Memory_t* memory);
+
+/**
+ * @brief Execute one step of the CPU
+ * 
+ * @param cpu 
+ * @param memory 
+ * @return int 
+ */
 int cpuExecute(CPU_t* cpu, Memory_t* memory);
 
 #endif
