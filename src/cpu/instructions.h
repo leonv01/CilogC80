@@ -198,6 +198,18 @@
 #define MAIN_RST_30H     0xF7
 #define MAIN_RST_38H     0xFF
 
+// Disable interrupt instructions
+#define MAIN_DI          0xF3
+
+// Enable interrupt instructions
+#define MAIN_EI          0xFB
+
+// EX instructions
+#define MAIN_EX_DE_HL    0xEB
+#define MAIN_EX_AF_AF_ALT   0x08
+#define MAIN_EX_SP_HL    0xE3
+#define MAIN_EXX         0xD9
+
 // Load instructions
 // LD A
 #define MAIN_LD_A_n      0x3E

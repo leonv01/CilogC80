@@ -19,8 +19,12 @@ typedef struct F_t
 } F_t;
 
 typedef struct CPU_t
-{   byte_t A, B, C, D, E, H, L;
+{   
+    byte_t A, B, C, D, E, H, L;
+    byte_t A_ALT, B_ALT, C_ALT, D_ALT, E_ALT, H_ALT, L_ALT;
+
     F_t F;
+    F_t F_ALT;
     word_t SP, PC;
 
     word_t IX, IY;

@@ -56,6 +56,12 @@ static int instructionJp(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 static int instructionJr(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 // RST instructions
 static int instructionRst(CPU_t *cpu, Memory_t *memory, byte_t instruction);
+// Disable interrupt instructions
+static int instructionDi(CPU_t *cpu, Memory_t *memory, byte_t instruction);
+// Enable interrupt instructions
+static int instructionEi(CPU_t *cpu, Memory_t *memory, byte_t instruction);
+// EX instructions
+static int instructionEx(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 // Load instructions
 static int instructionLd(CPU_t *cpu, Memory_t *memory, byte_t instruction);
 // -----------------------------------------------------------------------------
@@ -86,6 +92,9 @@ static void jump(CPU_t *cpu, Memory_t *memory, bool condition);
 static void jumpRelative(CPU_t *cpu, Memory_t *memory, bool condition);
 
 static void rst(CPU_t *cpu, Memory_t *memory, byte_t address);
+
+static void ex(CPU_t *cpu, byte_t *reg1, byte_t *reg2);
+static void exWord(CPU_t *cpu, word_t *reg1, word_t *reg2);
 
 static void ld(CPU_t *cpu, byte_t *reg, byte_t value);
 static void ldPair(CPU_t *cpu, byte_t *upperByte, byte_t *lowerByte, word_t value);
@@ -460,6 +469,18 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_POP_DE] = &instructionPop;
     mainInstructionTable[MAIN_POP_HL] = &instructionPop;
 
+    // Disable interrupt instructions
+    mainInstructionTable[MAIN_DI] = &instructionDi;
+
+    // Enable interrupt instructions
+    mainInstructionTable[MAIN_EI] = &instructionEi;
+
+    // EX instructions
+    mainInstructionTable[MAIN_EX_DE_HL] = &instructionEx;
+    mainInstructionTable[MAIN_EX_AF_AF_ALT] = &instructionEx;
+    mainInstructionTable[MAIN_EX_SP_HL] = &instructionEx;
+    mainInstructionTable[MAIN_EXX] = &instructionEx;
+
     // Load instructions
     mainInstructionTable[MAIN_LD_A_n] = &instructionLd;
     mainInstructionTable[MAIN_LD_A_A] = &instructionLd;
@@ -752,6 +773,20 @@ static void rst(CPU_t *cpu, Memory_t *memory, byte_t address)
 {
     pushWord(cpu, memory, cpu->PC);
     cpu->PC = address;
+}
+
+static void ex(CPU_t *cpu, byte_t *reg1, byte_t *reg2)
+{
+    byte_t temp = *reg1;
+    *reg1 = *reg2;
+    *reg2 = temp;
+}
+
+static void exWord(CPU_t *cpu, word_t *reg1, word_t *reg2)
+{
+    word_t temp = *reg1;
+    *reg1 = *reg2;
+    *reg2 = temp;
 }
 
 static void ld(CPU_t *cpu, byte_t *reg, byte_t value)
@@ -1212,6 +1247,69 @@ static int instructionRst(CPU_t *cpu, Memory_t *memory, byte_t instruction)
         case MAIN_RST_28H: rst(cpu, memory, 0x28); cycles = 11; break;
         case MAIN_RST_30H: rst(cpu, memory, 0x30); cycles = 11; break;
         case MAIN_RST_38H: rst(cpu, memory, 0x38); cycles = 11; break;
+    }
+}
+
+static int instructionDi(CPU_t *cpu, Memory_t *memory, byte_t instruction)
+{
+    // TODO: Implement
+    return 0;
+}
+
+static int instructionEi(CPU_t *cpu, Memory_t *memory, byte_t instruction)
+{
+    // TODO: Implement
+    return 0;
+}
+
+static int instructionEx(CPU_t *cpu, Memory_t *memory, byte_t instruction)
+{
+    int cycles = 0;
+
+    word_t word1, word2;
+
+    switch(instruction)
+    {
+        case MAIN_EX_DE_HL: 
+            word1 = TO_WORD(cpu->D, cpu->E); 
+            word2 = TO_WORD(cpu->H, cpu->L); 
+            exWord(cpu, &word1, &word2);
+            cpu->D = UPPER_BYTE(word1);
+            cpu->E = LOWER_BYTE(word1);
+            cpu->H = UPPER_BYTE(word2);
+            cpu->L = LOWER_BYTE(word2);
+            cycles = 4;
+            break;
+        case MAIN_EX_AF_AF_ALT: 
+            word1 = TO_WORD(cpu->A, flagsToByte(cpu->F));
+            word2 = TO_WORD(cpu->A_ALT, flagsToByte(cpu->F_ALT));
+            exWord(cpu, &word1, &word2);
+            cpu->A = UPPER_BYTE(word1);
+            byteToFlags(&cpu->F, LOWER_BYTE(word1));
+            cpu->A_ALT = UPPER_BYTE(word2);
+            byteToFlags(&cpu->F_ALT, LOWER_BYTE(word2));
+            cycles = 4;
+            break;
+        case MAIN_EX_SP_HL: 
+            word1 = fetchWord(memory, cpu->SP);
+            word2 = TO_WORD(cpu->H, cpu->L);
+            exWord(cpu, &word1, &word2);
+            storeByte(memory, cpu->SP, UPPER_BYTE(word1));
+            storeByte(memory, cpu->SP + 1, LOWER_BYTE(word1));
+            cpu->H = UPPER_BYTE(word2);
+            cpu->L = LOWER_BYTE(word2);
+            cycles = 19;
+            break;
+            break;
+        case MAIN_EXX: 
+            ex(cpu, &cpu->B, &cpu->B_ALT);
+            ex(cpu, &cpu->C, &cpu->C_ALT);
+            ex(cpu, &cpu->D, &cpu->D_ALT);
+            ex(cpu, &cpu->E, &cpu->E_ALT);
+            ex(cpu, &cpu->H, &cpu->H_ALT);
+            ex(cpu, &cpu->L, &cpu->L_ALT);
+            cycles = 4;
+            break;
     }
 }
 
