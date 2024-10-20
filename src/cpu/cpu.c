@@ -295,14 +295,14 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_ADD_A_E] = &instructionAdd;
     mainInstructionTable[MAIN_ADD_A_H] = &instructionAdd;
     mainInstructionTable[MAIN_ADD_A_L] = &instructionAdd;
-    mainInstructionTable[MAIN_ADD_A_HL] = &instructionAdd;
-    mainInstructionTable[MAIN_ADD_A_n] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_HL_ADDR] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_A_n_IMM] = &instructionAdd;
 
     // Add instructions (HL)
-    mainInstructionTable[MAIN_ADD_HL_BC] = &instructionAdd;
-    mainInstructionTable[MAIN_ADD_HL_DE] = &instructionAdd;
-    mainInstructionTable[MAIN_ADD_HL_HL] = &instructionAdd;
-    mainInstructionTable[MAIN_ADD_HL_SP] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_HL_BC_IMM] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_HL_DE_IMM] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_HL_HL_IMM] = &instructionAdd;
+    mainInstructionTable[MAIN_ADD_HL_SP_IMM] = &instructionAdd;
 
     // ADC instructions
     mainInstructionTable[MAIN_ADC_A_A] = &instructionAdc;
@@ -312,8 +312,8 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_ADC_A_E] = &instructionAdc;
     mainInstructionTable[MAIN_ADC_A_H] = &instructionAdc;
     mainInstructionTable[MAIN_ADC_A_L] = &instructionAdc;
-    mainInstructionTable[MAIN_ADC_A_HL] = &instructionAdc;
-    mainInstructionTable[MAIN_ADC_A_n] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_HL_ADDR] = &instructionAdc;
+    mainInstructionTable[MAIN_ADC_A_n_IMM] = &instructionAdc;
 
     // INC instructions
     mainInstructionTable[MAIN_INC_A] = &instructionInc;
@@ -323,12 +323,12 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_INC_E] = &instructionInc;
     mainInstructionTable[MAIN_INC_H] = &instructionInc;
     mainInstructionTable[MAIN_INC_L] = &instructionInc;
-    mainInstructionTable[MAIN_INC_HL] = &instructionInc;
+    mainInstructionTable[MAIN_INC_HL_ADDR] = &instructionInc;
 
-    mainInstructionTable[MAIN_INC_BC] = &instructionInc;
-    mainInstructionTable[MAIN_INC_DE] = &instructionInc;
-    mainInstructionTable[MAIN_INC_HL] = &instructionInc;
-    mainInstructionTable[MAIN_INC_SP] = &instructionInc;
+    mainInstructionTable[MAIN_INC_BC_IMM] = &instructionInc;
+    mainInstructionTable[MAIN_INC_DE_IMM] = &instructionInc;
+    mainInstructionTable[MAIN_INC_HL_IMM] = &instructionInc;
+    mainInstructionTable[MAIN_INC_SP_IMM] = &instructionInc;
 
     // Sub instructions
     mainInstructionTable[MAIN_SUB_A_A] = &instructionSub;
@@ -338,8 +338,8 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_SUB_A_E] = &instructionSub;
     mainInstructionTable[MAIN_SUB_A_H] = &instructionSub;
     mainInstructionTable[MAIN_SUB_A_L] = &instructionSub;
-    mainInstructionTable[MAIN_SUB_A_HL] = &instructionSub;
-    mainInstructionTable[MAIN_SUB_A_n] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_HL_ADDR] = &instructionSub;
+    mainInstructionTable[MAIN_SUB_A_n_IMM] = &instructionSub;
 
     // SBC instructions
     mainInstructionTable[MAIN_SBC_A_A] = &instructionSbc;
@@ -349,8 +349,8 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_SBC_A_E] = &instructionSbc;
     mainInstructionTable[MAIN_SBC_A_H] = &instructionSbc;
     mainInstructionTable[MAIN_SBC_A_L] = &instructionSbc;
-    mainInstructionTable[MAIN_SBC_A_HL] = &instructionSbc;
-    mainInstructionTable[MAIN_SBC_A_n] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_HL_ADDR] = &instructionSbc;
+    mainInstructionTable[MAIN_SBC_A_n_IMM] = &instructionSbc;
 
     // DEC instructions
     mainInstructionTable[MAIN_DEC_A] = &instructionDec;
@@ -360,7 +360,7 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_DEC_E] = &instructionDec;
     mainInstructionTable[MAIN_DEC_H] = &instructionDec;
     mainInstructionTable[MAIN_DEC_L] = &instructionDec;
-    mainInstructionTable[MAIN_DEC_HL] = &instructionDec;
+    mainInstructionTable[MAIN_DEC_HL_ADDR] = &instructionDec;
 
     // AND instructions
     mainInstructionTable[MAIN_AND_A] = &instructionAnd;
@@ -370,8 +370,8 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_AND_E] = &instructionAnd;
     mainInstructionTable[MAIN_AND_H] = &instructionAnd;
     mainInstructionTable[MAIN_AND_L] = &instructionAnd;
-    mainInstructionTable[MAIN_AND_HL] = &instructionAnd;
-    mainInstructionTable[MAIN_AND_n] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_HL_ADDR] = &instructionAnd;
+    mainInstructionTable[MAIN_AND_n_IMM] = &instructionAnd;
 
     // OR instructions
     mainInstructionTable[MAIN_OR_A] = &instructionOr;
@@ -381,8 +381,8 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_OR_E] = &instructionOr;
     mainInstructionTable[MAIN_OR_H] = &instructionOr;
     mainInstructionTable[MAIN_OR_L] = &instructionOr;
-    mainInstructionTable[MAIN_OR_HL] = &instructionOr;
-    mainInstructionTable[MAIN_OR_n] = &instructionOr;
+    mainInstructionTable[MAIN_OR_HL_ADDR] = &instructionOr;
+    mainInstructionTable[MAIN_OR_n_IMM] = &instructionOr;
 
     // XOR instructions
     mainInstructionTable[MAIN_XOR_A] = &instructionXor;
@@ -392,8 +392,8 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_XOR_E] = &instructionXor;
     mainInstructionTable[MAIN_XOR_H] = &instructionXor;
     mainInstructionTable[MAIN_XOR_L] = &instructionXor;
-    mainInstructionTable[MAIN_XOR_HL] = &instructionXor;
-    mainInstructionTable[MAIN_XOR_n] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_HL_ADDR] = &instructionXor;
+    mainInstructionTable[MAIN_XOR_n_IMM] = &instructionXor;
 
     // CP instructions
     mainInstructionTable[MAIN_CP_A] = &instructionCp;
@@ -403,8 +403,8 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_CP_E] = &instructionCp;
     mainInstructionTable[MAIN_CP_H] = &instructionCp;
     mainInstructionTable[MAIN_CP_L] = &instructionCp;
-    mainInstructionTable[MAIN_CP_HL] = &instructionCp;
-    mainInstructionTable[MAIN_CP_n] = &instructionCp;
+    mainInstructionTable[MAIN_CP_HL_ADDR] = &instructionCp;
+    mainInstructionTable[MAIN_CP_n_IMM] = &instructionCp;
 
     // Return instructions
     mainInstructionTable[MAIN_RET] = &instructionRet;
@@ -418,26 +418,26 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_RET_M] = &instructionRet;
 
     // Call instructions
-    mainInstructionTable[MAIN_CALL_nn] = &instructionCall;
-    mainInstructionTable[MAIN_CALL_NZ_nn] = &instructionCall;
-    mainInstructionTable[MAIN_CALL_NC_nn] = &instructionCall;
-    mainInstructionTable[MAIN_CALL_PO_nn] = &instructionCall;
-    mainInstructionTable[MAIN_CALL_P_nn] = &instructionCall;
-    mainInstructionTable[MAIN_CALL_Z_nn] = &instructionCall;
-    mainInstructionTable[MAIN_CALL_C_nn] = &instructionCall;
-    mainInstructionTable[MAIN_CALL_PE_nn] = &instructionCall;
-    mainInstructionTable[MAIN_CALL_M_nn] = &instructionCall;
+    mainInstructionTable[MAIN_CALL_nn_IMM] = &instructionCall;
+    mainInstructionTable[MAIN_CALL_NZ_nn_IMM] = &instructionCall;
+    mainInstructionTable[MAIN_CALL_NC_nn_IMM] = &instructionCall;
+    mainInstructionTable[MAIN_CALL_PO_nn_IMM] = &instructionCall;
+    mainInstructionTable[MAIN_CALL_P_nn_IMM] = &instructionCall;
+    mainInstructionTable[MAIN_CALL_Z_nn_IMM] = &instructionCall;
+    mainInstructionTable[MAIN_CALL_C_nn_IMM] = &instructionCall;
+    mainInstructionTable[MAIN_CALL_PE_nn_IMM] = &instructionCall;
+    mainInstructionTable[MAIN_CALL_M_nn_IMM] = &instructionCall;
 
     // Jump instructions
-    mainInstructionTable[MAIN_JP_nn] = &instructionJp;
-    mainInstructionTable[MAIN_JP_NZ_nn] = &instructionJp;
-    mainInstructionTable[MAIN_JP_NC_nn] = &instructionJp;
-    mainInstructionTable[MAIN_JP_PO_nn] = &instructionJp;
-    mainInstructionTable[MAIN_JP_P_nn] = &instructionJp;
-    mainInstructionTable[MAIN_JP_Z_nn] = &instructionJp;
-    mainInstructionTable[MAIN_JP_C_nn] = &instructionJp;
-    mainInstructionTable[MAIN_JP_PE_nn] = &instructionJp;
-    mainInstructionTable[MAIN_JP_M_nn] = &instructionJp;
+    mainInstructionTable[MAIN_JP_nn_IMM] = &instructionJp;
+    mainInstructionTable[MAIN_JP_NZ_nn_IMM] = &instructionJp;
+    mainInstructionTable[MAIN_JP_NC_nn_IMM] = &instructionJp;
+    mainInstructionTable[MAIN_JP_PO_nn_IMM] = &instructionJp;
+    mainInstructionTable[MAIN_JP_P_nn_IMM] = &instructionJp;
+    mainInstructionTable[MAIN_JP_Z_nn_IMM] = &instructionJp;
+    mainInstructionTable[MAIN_JP_C_nn_IMM] = &instructionJp;
+    mainInstructionTable[MAIN_JP_PE_nn_IMM] = &instructionJp;
+    mainInstructionTable[MAIN_JP_M_nn_IMM] = &instructionJp;
 
     // Jump relative instructions
     mainInstructionTable[MAIN_JR_d] = &instructionJr;
@@ -464,10 +464,10 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_PUSH_HL] = &instructionPush;
 
     // Pop instructions
-    mainInstructionTable[MAIN_POP_AF] = &instructionPop;
-    mainInstructionTable[MAIN_POP_BC] = &instructionPop;
-    mainInstructionTable[MAIN_POP_DE] = &instructionPop;
-    mainInstructionTable[MAIN_POP_HL] = &instructionPop;
+    mainInstructionTable[MAIN_POP_AF_IMM] = &instructionPop;
+    mainInstructionTable[MAIN_POP_BC_IMM] = &instructionPop;
+    mainInstructionTable[MAIN_POP_DE_IMM] = &instructionPop;
+    mainInstructionTable[MAIN_POP_HL_IMM] = &instructionPop;
 
     // Disable interrupt instructions
     mainInstructionTable[MAIN_DI] = &instructionDi;
@@ -476,9 +476,9 @@ static void initInstructionTable()
     mainInstructionTable[MAIN_EI] = &instructionEi;
 
     // EX instructions
-    mainInstructionTable[MAIN_EX_DE_HL] = &instructionEx;
+    mainInstructionTable[MAIN_EX_DE_HL_IMM] = &instructionEx;
     mainInstructionTable[MAIN_EX_AF_AF_ALT] = &instructionEx;
-    mainInstructionTable[MAIN_EX_SP_HL] = &instructionEx;
+    mainInstructionTable[MAIN_EX_SP_HL_ADDR] = &instructionEx;
     mainInstructionTable[MAIN_EXX] = &instructionEx;
 
     // Load instructions
@@ -818,13 +818,13 @@ static int instructionAdd(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-    case MAIN_ADD_A_n:
+    case MAIN_ADD_A_n_IMM:
         operand = fetchByte(memory, cpu->PC);
         addToRegister(cpu, operand);
         cycles = 7;
         cpu->PC++;
         break;
-    case MAIN_ADD_A_HL:
+    case MAIN_ADD_A_HL_ADDR:
         operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
         addToRegister(cpu, operand);
         cycles = 7;
@@ -837,10 +837,10 @@ static int instructionAdd(CPU_t *cpu, Memory_t *memory, byte_t instruction)
     case MAIN_ADD_A_H: addToRegister(cpu, cpu->H); cycles = 4; break;
     case MAIN_ADD_A_L: addToRegister(cpu, cpu->L); cycles = 4; break;
     case MAIN_ADD_A_A: addToRegister(cpu, cpu->A); cycles = 4; break;
-    case MAIN_ADD_HL_BC: addToRegisterPair(cpu, cpu->B, cpu->C); cycles = 11; break;
-    case MAIN_ADD_HL_DE: addToRegisterPair(cpu, cpu->D, cpu->E); cycles = 11; break;
-    case MAIN_ADD_HL_HL: addToRegisterPair(cpu, cpu->H, cpu->L); cycles = 11; break;
-    case MAIN_ADD_HL_SP: addToRegisterPair(cpu, UPPER_BYTE(cpu->SP), LOWER_BYTE(cpu->SP)); cycles = 11; break;
+    case MAIN_ADD_HL_BC_IMM: addToRegisterPair(cpu, cpu->B, cpu->C); cycles = 11; break;
+    case MAIN_ADD_HL_DE_IMM: addToRegisterPair(cpu, cpu->D, cpu->E); cycles = 11; break;
+    case MAIN_ADD_HL_HL_IMM: addToRegisterPair(cpu, cpu->H, cpu->L); cycles = 11; break;
+    case MAIN_ADD_HL_SP_IMM: addToRegisterPair(cpu, UPPER_BYTE(cpu->SP), LOWER_BYTE(cpu->SP)); cycles = 11; break;
     }
     return cycles;
 }
@@ -851,13 +851,13 @@ static int instructionAdc(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-    case MAIN_ADC_A_n:
+    case MAIN_ADC_A_n_IMM:
         operand = fetchByte(memory, cpu->PC);
         addToRegisterWithCarry(cpu, operand);
         cycles = 7;
         cpu->PC++;
         break;
-    case MAIN_ADC_A_HL:
+    case MAIN_ADC_A_HL_ADDR:
         operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
         addToRegisterWithCarry(cpu, operand);
         cycles = 7;
@@ -893,10 +893,10 @@ static int instructionInc(CPU_t *cpu, Memory_t *memory, byte_t instruction)
         storeByte(memory, TO_WORD(cpu->H, cpu->L), operand);
         cycles = 10;
         break;
-    case MAIN_INC_BC: incrementRegisterPair(cpu, &cpu->B, &cpu->C); cycles = 6; break;
-    case MAIN_INC_DE: incrementRegisterPair(cpu, &cpu->D, &cpu->E); cycles = 6; break;
-    case MAIN_INC_HL: incrementRegisterPair(cpu, &cpu->H, &cpu->L); cycles = 6; break;
-    case MAIN_INC_SP: 
+    case MAIN_INC_BC_IMM: incrementRegisterPair(cpu, &cpu->B, &cpu->C); cycles = 6; break;
+    case MAIN_INC_DE_IMM: incrementRegisterPair(cpu, &cpu->D, &cpu->E); cycles = 6; break;
+    case MAIN_INC_HL_IMM: incrementRegisterPair(cpu, &cpu->H, &cpu->L); cycles = 6; break;
+    case MAIN_INC_SP_IMM: 
         byte_t upperByte = UPPER_BYTE(cpu->SP);
         byte_t lowerByte = LOWER_BYTE(cpu->SP);
         incrementRegisterPair(cpu, &upperByte, &lowerByte); 
@@ -915,13 +915,13 @@ static int instructionSub(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-        case MAIN_SUB_A_n:
+        case MAIN_SUB_A_n_IMM:
             operand = fetchByte(memory, cpu->PC);
             subtractFromRegister(cpu, operand);
             cycles = 7;
             cpu->PC++;
             break;
-        case MAIN_SUB_A_HL:
+        case MAIN_SUB_A_HL_ADDR:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             subtractFromRegister(cpu, operand);
             cycles = 7;
@@ -945,13 +945,13 @@ static int instructionSbc(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch(instruction)
     {
-        case MAIN_SBC_A_n:
+        case MAIN_SBC_A_n_IMM:
             operand = fetchByte(memory, cpu->PC);
             subtractFromRegisterWithCarry(cpu, operand);
             cycles = 7;
             cpu->PC++;
             break;
-        case MAIN_SBC_A_HL:
+        case MAIN_SBC_A_HL_ADDR:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             subtractFromRegisterWithCarry(cpu, operand);
             cycles = 7;
@@ -988,10 +988,10 @@ static int instructionDec(CPU_t *cpu, Memory_t *memory, byte_t instruction)
             storeByte(memory, TO_WORD(cpu->H, cpu->L), operand);
             cycles = 10;
             break;
-        case MAIN_DEC_BC: decrementRegisterPair(cpu, &cpu->B, &cpu->C); cycles = 6; break;
-        case MAIN_DEC_DE: decrementRegisterPair(cpu, &cpu->D, &cpu->E); cycles = 6; break;
-        case MAIN_DEC_HL: decrementRegisterPair(cpu, &cpu->H, &cpu->L); cycles = 6; break;
-        case MAIN_DEC_SP: 
+        case MAIN_DEC_BC_IMM: decrementRegisterPair(cpu, &cpu->B, &cpu->C); cycles = 6; break;
+        case MAIN_DEC_DE_IMM: decrementRegisterPair(cpu, &cpu->D, &cpu->E); cycles = 6; break;
+        case MAIN_DEC_HL_IMM: decrementRegisterPair(cpu, &cpu->H, &cpu->L); cycles = 6; break;
+        case MAIN_DEC_SP_IMM: 
             byte_t upperByte = UPPER_BYTE(cpu->SP);
             byte_t lowerByte = LOWER_BYTE(cpu->SP);
             decrementRegisterPair(cpu, &upperByte, &lowerByte); 
@@ -1017,12 +1017,12 @@ static int instructionAnd(CPU_t *cpu, Memory_t *memory, byte_t instruction)
         case MAIN_AND_E: andWithRegister(cpu, cpu->E); cycles = 4; break;
         case MAIN_AND_H: andWithRegister(cpu, cpu->H); cycles = 4; break;
         case MAIN_AND_L: andWithRegister(cpu, cpu->L); cycles = 4; break;
-        case MAIN_AND_HL:
+        case MAIN_AND_HL_ADDR:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             andWithRegister(cpu, operand);
             cycles = 7;
             break;
-        case MAIN_AND_n:
+        case MAIN_AND_n_IMM:
             operand = fetchByte(memory, cpu->PC);
             andWithRegister(cpu, operand);
             cycles = 7;
@@ -1046,12 +1046,12 @@ static int instructionOr(CPU_t *cpu, Memory_t *memory, byte_t instruction)
         case MAIN_OR_E: orWithRegister(cpu, cpu->E); cycles = 4; break;
         case MAIN_OR_H: orWithRegister(cpu, cpu->H); cycles = 4; break;
         case MAIN_OR_L: orWithRegister(cpu, cpu->L); cycles = 4; break;
-        case MAIN_OR_HL:
+        case MAIN_OR_HL_ADDR:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             orWithRegister(cpu, operand);
             cycles = 7;
             break;
-        case MAIN_OR_n:
+        case MAIN_OR_n_IMM:
             operand = fetchByte(memory, cpu->PC);
             orWithRegister(cpu, operand);
             cycles = 7;
@@ -1075,12 +1075,12 @@ static int instructionXor(CPU_t *cpu, Memory_t *memory, byte_t instruction)
         case MAIN_XOR_E: xorWithRegister(cpu, cpu->E); cycles = 4; break;
         case MAIN_XOR_H: xorWithRegister(cpu, cpu->H); cycles = 4; break;
         case MAIN_XOR_L: xorWithRegister(cpu, cpu->L); cycles = 4; break;
-        case MAIN_XOR_HL:
+        case MAIN_XOR_HL_ADDR:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             xorWithRegister(cpu, operand);
             cycles = 7;
             break;
-        case MAIN_XOR_n:
+        case MAIN_XOR_n_IMM:
             operand = fetchByte(memory, cpu->PC);
             xorWithRegister(cpu, operand);
             cycles = 7;
@@ -1104,7 +1104,7 @@ static int instructionCp(CPU_t *cpu, Memory_t *memory, byte_t instruction)
         case MAIN_CP_E: cpWithRegister(cpu, cpu->E); cycles = 4; break;
         case MAIN_CP_H: cpWithRegister(cpu, cpu->H); cycles = 4; break;
         case MAIN_CP_L: cpWithRegister(cpu, cpu->L); cycles = 4; break;
-        case MAIN_CP_HL:
+        case MAIN_CP_HL_ADDR:
             operand = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
             cpWithRegister(cpu, operand);
             cycles = 7;
@@ -1130,10 +1130,10 @@ static int instructionPop(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch(instruction)
     {
-        case MAIN_POP_BC: popWord(cpu, memory, &cpu->B, &cpu->C); cycles = 10; break;
-        case MAIN_POP_DE: popWord(cpu, memory, &cpu->D, &cpu->E); cycles = 10; break;
-        case MAIN_POP_HL: popWord(cpu, memory, &cpu->H, &cpu->L); cycles = 10; break;
-        case MAIN_POP_AF: 
+        case MAIN_POP_BC_IMM: popWord(cpu, memory, &cpu->B, &cpu->C); cycles = 10; break;
+        case MAIN_POP_DE_IMM: popWord(cpu, memory, &cpu->D, &cpu->E); cycles = 10; break;
+        case MAIN_POP_HL_IMM: popWord(cpu, memory, &cpu->H, &cpu->L); cycles = 10; break;
+        case MAIN_POP_AF_IMM: 
             byte_t upperByte, lowerByte;
             popWord(cpu, memory, &upperByte, &lowerByte);
             byteToFlags(&cpu->F, lowerByte);
@@ -1171,15 +1171,15 @@ static int instructionCall(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch (instruction)
     {
-    case MAIN_CALL_nn: call(cpu, memory, true); cycles = 17; break;
-    case MAIN_CALL_NZ_nn: condition = cpu->F.Z == 0; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
-    case MAIN_CALL_Z_nn: condition = cpu->F.Z == 1; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
-    case MAIN_CALL_NC_nn: condition = cpu->F.C == 0; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
-    case MAIN_CALL_C_nn: condition = cpu->F.C == 1; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
-    case MAIN_CALL_PO_nn: condition = cpu->F.P == 0; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
-    case MAIN_CALL_PE_nn: condition = cpu->F.P == 1; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
-    case MAIN_CALL_P_nn: condition = cpu->F.S == 0; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
-    case MAIN_CALL_M_nn: condition = cpu->F.S == 1; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
+    case MAIN_CALL_nn_IMM: call(cpu, memory, true); cycles = 17; break;
+    case MAIN_CALL_NZ_nn_IMM: condition = cpu->F.Z == 0; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
+    case MAIN_CALL_Z_nn_IMM: condition = cpu->F.Z == 1; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
+    case MAIN_CALL_NC_nn_IMM: condition = cpu->F.C == 0; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
+    case MAIN_CALL_C_nn_IMM: condition = cpu->F.C == 1; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
+    case MAIN_CALL_PO_nn_IMM: condition = cpu->F.P == 0; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
+    case MAIN_CALL_PE_nn_IMM: condition = cpu->F.P == 1; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
+    case MAIN_CALL_P_nn_IMM: condition = cpu->F.S == 0; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
+    case MAIN_CALL_M_nn_IMM: condition = cpu->F.S == 1; call(cpu, memory, condition); cycles = condition ? 17 : 10; break;
     }
 }
 
@@ -1191,16 +1191,16 @@ static int instructionJp(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch(instruction)
     {
-        case MAIN_JP_nn: jump(cpu, memory, true); cycles = 10; break;
-        case MAIN_JP_NZ_nn: condition = cpu->F.Z == 0; jump(cpu, memory, condition); cycles = 10; break;
-        case MAIN_JP_Z_nn: condition = cpu->F.Z == 1; jump(cpu, memory, condition); cycles = 10; break;
-        case MAIN_JP_NC_nn: condition = cpu->F.C == 0; jump(cpu, memory, condition); cycles = 10; break;
-        case MAIN_JP_C_nn: condition = cpu->F.C == 1; jump(cpu, memory, condition); cycles = 10; break;
-        case MAIN_JP_PO_nn: condition = cpu->F.P == 0; jump(cpu, memory, condition); cycles = 10; break;
-        case MAIN_JP_PE_nn: condition = cpu->F.P == 1; jump(cpu, memory, condition); cycles = 10; break;
-        case MAIN_JP_P_nn: condition = cpu->F.S == 0; jump(cpu, memory, condition); cycles = 10; break;
-        case MAIN_JP_M_nn: condition = cpu->F.S == 1; jump(cpu, memory, condition); cycles = 10; break;
-        case MAIN_JP_HL: cpu->PC = TO_WORD(cpu->H, cpu->L); cycles = 4; break;
+        case MAIN_JP_nn_IMM: jump(cpu, memory, true); cycles = 10; break;
+        case MAIN_JP_NZ_nn_IMM: condition = cpu->F.Z == 0; jump(cpu, memory, condition); cycles = 10; break;
+        case MAIN_JP_Z_nn_IMM: condition = cpu->F.Z == 1; jump(cpu, memory, condition); cycles = 10; break;
+        case MAIN_JP_NC_nn_IMM: condition = cpu->F.C == 0; jump(cpu, memory, condition); cycles = 10; break;
+        case MAIN_JP_C_nn_IMM: condition = cpu->F.C == 1; jump(cpu, memory, condition); cycles = 10; break;
+        case MAIN_JP_PO_nn_IMM: condition = cpu->F.P == 0; jump(cpu, memory, condition); cycles = 10; break;
+        case MAIN_JP_PE_nn_IMM: condition = cpu->F.P == 1; jump(cpu, memory, condition); cycles = 10; break;
+        case MAIN_JP_P_nn_IMM: condition = cpu->F.S == 0; jump(cpu, memory, condition); cycles = 10; break;
+        case MAIN_JP_M_nn_IMM: condition = cpu->F.S == 1; jump(cpu, memory, condition); cycles = 10; break;
+        case MAIN_JP_HL_IMM: cpu->PC = TO_WORD(cpu->H, cpu->L); cycles = 4; break;
     }
 }
 static int instructionJr(CPU_t *cpu, Memory_t *memory, byte_t instruction)
@@ -1270,7 +1270,7 @@ static int instructionEx(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
     switch(instruction)
     {
-        case MAIN_EX_DE_HL: 
+        case MAIN_EX_DE_HL_IMM: 
             word1 = TO_WORD(cpu->D, cpu->E); 
             word2 = TO_WORD(cpu->H, cpu->L); 
             exWord(cpu, &word1, &word2);
@@ -1290,7 +1290,7 @@ static int instructionEx(CPU_t *cpu, Memory_t *memory, byte_t instruction)
             byteToFlags(&cpu->F_ALT, LOWER_BYTE(word2));
             cycles = 4;
             break;
-        case MAIN_EX_SP_HL: 
+        case MAIN_EX_SP_HL_ADDR: 
             word1 = fetchWord(memory, cpu->SP);
             word2 = TO_WORD(cpu->H, cpu->L);
             exWord(cpu, &word1, &word2);
