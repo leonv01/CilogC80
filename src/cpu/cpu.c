@@ -45,7 +45,7 @@ static void pushWord(CPU_t *cpu, Memory_t *memory, word_t value);
 static void popWord(CPU_t *cpu, Memory_t *memory, byte_t *upperByte, byte_t *lowerByte);
 
 static void ret(CPU_t *cpu, Memory_t *memory, bool condition);
-static void call(CPU_t *cpu, Memory_t *memory, bool condition);
+static int call(CPU_t *cpu, Memory_t *memory, bool condition);
 static void jump(CPU_t *cpu, Memory_t *memory, bool condition);
 static void jumpRelative(CPU_t *cpu, Memory_t *memory, bool condition);
 
@@ -728,17 +728,24 @@ static void popWord(CPU_t *cpu, Memory_t *memory, byte_t *upperByte, byte_t *low
     cpu->SP += 2;
 }
 
-static void ret(CPU_t *cpu, Memory_t *memory, bool condition)
+static int ret(CPU_t *cpu, Memory_t *memory, bool condition)
 {
+    int cycles = 5;
+
     if(condition)
     {
         byte_t lowerByte, upperByte;
         popWord(cpu, memory, &upperByte, &lowerByte);
         cpu->PC = TO_WORD(upperByte, lowerByte);
+
+        cycles = 11;
     }
+
+    return cycles;
 }
-static void call(CPU_t *cpu, Memory_t *memory, bool condition)
+static int call(CPU_t *cpu, Memory_t *memory, bool condition)
 {
+    int cycles = 10;
     word_t address = fetchWord(memory, cpu->PC);
     cpu->PC += 2;
 
@@ -746,7 +753,11 @@ static void call(CPU_t *cpu, Memory_t *memory, bool condition)
     {
         pushWord(cpu, memory, cpu->PC);
         cpu->PC = address;
+
+        cycles = 17;
     }
+
+    return cycles;
 }
 
 static void jump(CPU_t *cpu, Memory_t *memory, bool condition)
@@ -1420,6 +1431,128 @@ static int pop_af(CPU_t *cpu, Memory_t *memory)
     popWord(cpu, memory, cpu->A, &f);
     byteToFlags(&cpu->F, f);
     return 10;
+}
+
+// CALL     -----------------------------------------------------------------------------
+static int call_nz_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.N == 0;
+    int cycles = call(cpu, memory, condition);
+
+    return cycles;
+}
+static int call_z_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.Z == 1;
+    int cycles = call(cpu, memory, condition);
+
+    return cycles;
+}
+static int call_nn(CPU_t *cpu, Memory_t *memory)
+{
+    int cycles = call(cpu, memory, true);
+
+    return cycles;
+}
+static int call_nc_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.C == 0;
+    int cycles = call(cpu, memory, condition);
+
+    return cycles;
+}
+static int call_c_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.C == 1;
+    int cycles = call(cpu, memory, condition);
+
+    return cycles;
+}
+static int call_po_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.P == 0;
+    int cycles = call(cpu, memory, condition);
+
+    return cycles;
+}
+static int call_pe_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.P == 1;
+    int cycles = call(cpu, memory, condition);
+
+    return cycles;
+}
+static int call_p_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.S == 0;
+    int cycles = call(cpu, memory, condition);
+
+    return cycles;
+}
+static int call_m_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.S == 0;
+    int cycles = call(cpu, memory, condition);
+
+    return cycles;
+}
+
+// RET      -----------------------------------------------------------------------------
+static int ret_nz(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.Z == 0;
+    int cycles = ret(cpu, memory, condition);
+
+    return cycles;
+}
+static int ret_z(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.Z == 1;
+    int cycles = ret(cpu, memory, condition);
+
+    return cycles;
+}
+static int ret_nc(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.C == 0;
+    int cycles = ret(cpu, memory, condition);
+
+    return cycles;
+}
+static int ret_c(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.C == 1;
+    int cycles = ret(cpu, memory, condition);
+
+    return cycles;
+}
+static int ret_po(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.P == 0;
+    int cycles = ret(cpu, memory, condition);
+
+    return cycles;
+}
+static int ret_pe(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.P == 1;
+    int cycles = ret(cpu, memory, condition);
+
+    return cycles;
+}
+static int ret_p(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.S == 0;
+    int cycles = ret(cpu, memory, condition);
+
+    return cycles;
+}
+static int ret_m(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.S == 1;
+    int cycles = ret(cpu, memory, condition);
+
+    return cycles;
 }
 
 // EXCHANGE -----------------------------------------------------------------------------
