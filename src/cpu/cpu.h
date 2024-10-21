@@ -32,6 +32,9 @@ typedef struct CPU_t
 
     int cyclesInFrame;
     float frequency;
+
+    int currentCycles;
+    int totalCycles;
 } CPU_t;
 
 /**

@@ -19,7 +19,7 @@ int main() {
     cpu.B = 0x56;
     cpu.C = 0x78;
 
-    storeByte(&memory, 0x0000, MAIN_ADD_HL_BC_IMM);
+    storeByte(&memory, 0x0000, MAIN_NOP);
     cpuExecute(&cpu, &memory);
 
     printf("%d\n", TO_WORD(cpu.H, cpu.L));
