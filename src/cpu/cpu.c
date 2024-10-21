@@ -24,51 +24,10 @@ static void setFlags(CPU_t *cpu, byte_t regA, byte_t operand, word_t result, boo
 static void setFlagsWord(CPU_t *cpu, word_t reg1, word_t reg2, dword_t result);
 // -----------------------------------------------------------------------------
 
-// Instructions ----------------------------------------------------------------
-// Main instructions -----------------------------------------------------------
-
-// HALT
-static int instructionHalt(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Add instructions
-static int instructionAdd(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-static int instructionAdc(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-static int instructionInc(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Sub instructions
-static int instructionSub(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-static int instructionSbc(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-static int instructionDec(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Logical instructions
-static int instructionAnd(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-static int instructionOr(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-static int instructionXor(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-static int instructionCp(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Push instructions
-static int instructionPush(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Pop instructions
-static int instructionPop(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Return instructions
-static int instructionRet(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Call instructions
-static int instructionCall(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Jump instructions
-static int instructionJp(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-static int instructionJr(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// RST instructions
-static int instructionRst(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Disable interrupt instructions
-static int instructionDi(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Enable interrupt instructions
-static int instructionEi(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// EX instructions
-static int instructionEx(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// Load instructions
-static int instructionLd(CPU_t *cpu, Memory_t *memory, byte_t instruction);
-// -----------------------------------------------------------------------------
-
 // Helper functions ------------------------------------------------------------
-static void addToRegister(CPU_t *cpu, byte_t value);
-static void addToRegisterPair(CPU_t *cpu, byte_t value1, byte_t value2); // TODO: Maybe change to word_t and name it addToRegisterPair
-static void addToRegisterWithCarry(CPU_t *cpu, byte_t value);
+static void addToRegister(CPU_t *cpu, byte_t *reg, byte_t value);
+static void addToRegisterPair(CPU_t *cpu, word_t value1, word_t value2);
+static void addToRegisterWithCarry(CPU_t *cpu, byte_t *reg, byte_t value);
 static void incrementRegister(CPU_t *cpu, byte_t *reg);
 static void incrementRegisterPair(CPU_t *cpu, byte_t* upperByte, byte_t* lowerByte);
 
@@ -92,7 +51,6 @@ static void jumpRelative(CPU_t *cpu, Memory_t *memory, bool condition);
 
 static void rst(CPU_t *cpu, Memory_t *memory, byte_t address);
 
-static void ex(CPU_t *cpu, byte_t *reg1, byte_t *reg2);
 static void exWord(CPU_t *cpu, word_t *reg1, word_t *reg2);
 
 static void ld(CPU_t *cpu, byte_t *reg, byte_t value);
@@ -296,8 +254,9 @@ static int jp_hl_addr(CPU_t *cpu, Memory_t *memory);
 static int jp_p_nn(CPU_t *cpu, Memory_t *memory);
 static int jp_m_nn(CPU_t *cpu, Memory_t *memory);
 // EXCHANGE -----------------------------------------------------------------------------
-static int ex_af_af_(CPU_t *cpu, Memory_t *memory);
+static int ex(CPU_t *cpu, Memory_t *memory);
 static int exx(CPU_t *cpu, Memory_t *memory);
+static int ex_af_af_(CPU_t *cpu, Memory_t *memory);
 static int ex_sp_hl_addr(CPU_t *cpu, Memory_t *memory);
 static int ex_de_hl(CPU_t *cpu, Memory_t *memory);
 // LD       -----------------------------------------------------------------------------
@@ -675,25 +634,24 @@ static int miscInstructions(CPU_t *cpu, Memory_t *memory, byte_t instruction)
 
 
 // Helper functions ------------------------------------------------------------
-static void addToRegister(CPU_t *cpu, byte_t value)
+static void addToRegister(CPU_t *cpu, byte_t *reg, byte_t value)
 {
-    word_t result = (word_t)(cpu->A + value);
-    setFlags(cpu, cpu->A, value, result, false);
-    cpu->A = result & 0xFF;
+    word_t result = (word_t)(*reg + value);
+    setFlags(cpu, *reg, value, result, false);
+    *reg = result & 0xFF;
 }
-static void addToRegisterPair(CPU_t *cpu, byte_t value1, byte_t value2)
+static void addToRegisterPair(CPU_t *cpu, word_t value1, word_t value2)
 {
-    word_t value = TO_WORD(value1, value2);
-    dword_t result = (dword_t)(TO_WORD(cpu->H, cpu->L) + value);
-    setFlagsWord(cpu, TO_WORD(cpu->H, cpu->L), value, result);
-    cpu->H = cpu->H + value1;
+    dword_t result = (dword_t)(value1 + value2);
+    setFlagsWord(cpu, value1, value2, result);
+    cpu->H = cpu->H + value1;   // TODO: May change
     cpu->L = cpu->L + value2;
 }
-static void addToRegisterWithCarry(CPU_t *cpu, byte_t value)
+static void addToRegisterWithCarry(CPU_t *cpu, byte_t *reg, byte_t value)
 {
-    word_t result = (word_t)(cpu->A + value + cpu->F.C);
-    setFlags(cpu, cpu->A, value, result, false);
-    cpu->A = result & 0xFF;
+    word_t result = (word_t)(*reg + value + cpu->F.C);
+    setFlags(cpu, *reg, value, result, false);
+    *reg = result & 0xFF;
 }
 static void incrementRegister(CPU_t *cpu, byte_t *reg)
 {
@@ -845,43 +803,156 @@ static int nop(CPU_t *cpu, Memory_t *memory)
     return 4;
 }
 
-// EXCHANGE -----------------------------------------------------------------------------
-static int ex_af_af_(CPU_t *cpu, Memory_t *memory)
+// HALT     -----------------------------------------------------------------------------
+static int halt(CPU_t *cpu, Memory_t *memory)
 {
-    // TODO
+
 }
 
 // ADD      -----------------------------------------------------------------------------
 static int add_hl_bc_imm(CPU_t *cpu, Memory_t *memory)
 {
-    //
+
+}
+static int add_hl_de_imm(CPU_t *cpu, Memory_t *memory)
+{
+
+}
+static int add_hl_hl_imm(CPU_t *cpu, Memory_t *memory)
+{
+
+}
+static int add_hl_sp_imm(CPU_t *cpu, Memory_t *memory)
+{
+
 }
 
+static int add_a_n(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, cpu->PC);
+    addToRegister(cpu, &cpu->A, val);
+    cpu->PC++;
+    return 7;
+}
+static int add_a_a(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegister(cpu, &cpu->A, cpu->A);
+    return 4;
+}
+static int add_a_b(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegister(cpu, &cpu->A, cpu->B);
+    return 4;
+}
+static int add_a_c(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegister(cpu, &cpu->A, cpu->C);
+    return 4;
+}
+static int add_a_d(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegister(cpu, &cpu->A, cpu->D);
+    return 4;
+}
+static int add_a_e(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegister(cpu, &cpu->A, cpu->E);
+    return 4;
+}
+static int add_a_h(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegister(cpu, &cpu->A, cpu->H);
+    return 4;
+}
+static int add_a_l(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegister(cpu, &cpu->A, cpu->L);
+    return 4;
+}
+static int add_a_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    addToRegister(cpu, &cpu->A, val);
+    cpu->PC++;
+    return 7;
+}
 
-
+// ADC      -----------------------------------------------------------------------------
+static int adc_a_n(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, cpu->PC);
+    addToRegisterWithCarry(cpu, &cpu->A, val);
+    cpu->PC++;
+    return 7;
+}
+static int adc_a_a(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
+    return 4;
+}
+static int adc_a_b(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
+    return 4;
+}
+static int adc_a_c(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
+    return 4;
+}
+static int adc_a_d(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
+    return 4;
+}
+static int adc_a_e(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
+    return 4;
+}
+static int adc_a_h(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
+    return 4;
+}
+static int adc_a_l(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
+    return 4;
+}
+static int adc_a_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    addToRegisterWithCarry(cpu, &cpu->A, val);
+    cpu->PC++;
+    return 7;
+}
 
 // INC      -----------------------------------------------------------------------------
 static int inc_bc(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegisterPair(cpu, cpu->B, cpu->C);
+    incrementRegisterPair(cpu, &cpu->B, &cpu->C);
     return 6;
 }
 static int inc_de(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegisterPair(cpu, cpu->D, cpu->E);
+    incrementRegisterPair(cpu, &cpu->D, &cpu->E);
     return 6;
 }
 static int inc_hl(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegisterPair(cpu, cpu->H, cpu->L);
+    incrementRegisterPair(cpu, &cpu->H, &cpu->L);
     return 6;
 }
 static int inc_sp(CPU_t *cpu, Memory_t *memory)
 {
-    byte_t s = UPPER_BYTE(cpu->SP);
-    byte_t p = LOWER_BYTE(cpu->SP);
-    incrementRegisterPair(cpu, &s, &p);
-    cpu->SP = TO_WORD(s, p);
+    byte_t upperByte = UPPER_BYTE(cpu->SP);
+    byte_t lowerByte = LOWER_BYTE(cpu->SP);
+
+    incrementRegisterPair(cpu, &upperByte, &lowerByte);
+
+    cpu->SP = TO_WORD(upperByte, lowerByte);
+    return 6;
 }
 
 static int inc_a(CPU_t *cpu, Memory_t *memory)
@@ -922,12 +993,116 @@ static int inc_l(CPU_t *cpu, Memory_t *memory)
 static int inc_hl_addr(CPU_t *cpu, Memory_t *memory)
 {
     byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpu->PC++;
     incrementRegister(cpu, &val);
     storeByte(memory, TO_WORD(cpu->H, cpu->L), val);
+    cpu->PC++;
     return 11;
 }
 
-// DEC      -----------------------------------------------------------------------------
+// SUB      -----------------------------------------------------------------------------
+static int sub_n(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, cpu->PC);
+    subtractFromRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+static int sub_a(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegister(cpu, cpu->A);
+    return 4;
+}
+static int sub_b(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegister(cpu, cpu->B);
+    return 4;
+}
+static int sub_c(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegister(cpu, cpu->C);
+    return 4;
+}
+static int sub_d(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegister(cpu, cpu->D);
+    return 4;
+}
+static int sub_e(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegister(cpu, cpu->E);
+    return 4;
+}
+static int sub_h(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegister(cpu, cpu->H);
+    return 4;
+}
+static int sub_l(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegister(cpu, cpu->L);
+    return 4;
+}
+static int sub_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    subtractFromRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+
+// SBC      -----------------------------------------------------------------------------
+static int sbc_a_n(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, cpu->PC);
+    subtractFromRegisterWithCarry(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+static int sbc_a_a(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterWithCarry(cpu, cpu->A);
+    return 4;
+}
+static int sbc_b(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterWithCarry(cpu, cpu->B);
+    return 4;
+}
+static int sbc_c(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterWithCarry(cpu, cpu->C);
+    return 4;
+}
+static int sbc_d(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterWithCarry(cpu, cpu->D);
+    return 4;
+}
+static int sbc_e(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterWithCarry(cpu, cpu->E);
+    return 4;
+}
+static int sbc_h(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterWithCarry(cpu, cpu->H);
+    return 4;
+}
+static int sbc_l(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterWithCarry(cpu, cpu->L);
+    return 4;
+}
+static int sbc_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    subtractFromRegisterWithCarry(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+
+// SBC      -----------------------------------------------------------------------------
 static int dec_bc(CPU_t *cpu, Memory_t *memory)
 {
     decrementRegisterPair(cpu, cpu->B, cpu->C);
@@ -990,10 +1165,269 @@ static int dec_l(CPU_t *cpu, Memory_t *memory)
 static int dec_hl_addr(CPU_t *cpu, Memory_t *memory)
 {
     byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpu->PC++;
     decrementRegister(cpu, &val);
     storeByte(memory, TO_WORD(cpu->H, cpu->L), val);
+    cpu->PC++;
     return 11;
 }
+
+// AND      -----------------------------------------------------------------------------
+static int and_n(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, cpu->PC);
+    andWithRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+static int and_a(CPU_t *cpu, Memory_t *memory)
+{
+    andWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int and_b(CPU_t *cpu, Memory_t *memory)
+{
+    andWithRegister(cpu, cpu->B);
+    return 4;
+}
+static int and_c(CPU_t *cpu, Memory_t *memory)
+{
+    andWithRegister(cpu, cpu->C);
+    return 4;
+}
+static int and_d(CPU_t *cpu, Memory_t *memory)
+{
+    andWithRegister(cpu, cpu->D);
+    return 4;
+}
+static int and_e(CPU_t *cpu, Memory_t *memory)
+{
+    andWithRegister(cpu, cpu->E);
+    return 4;
+}
+static int and_h(CPU_t *cpu, Memory_t *memory)
+{
+    andWithRegister(cpu, cpu->H);
+    return 4;
+}
+static int and_l(CPU_t *cpu, Memory_t *memory)
+{
+    andWithRegister(cpu, cpu->L);
+    return 4;
+}
+static int and_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    andWithRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+
+// OR       -----------------------------------------------------------------------------
+static int or_n(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, cpu->PC);
+    orWithRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+static int or_a(CPU_t *cpu, Memory_t *memory)
+{
+    orWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int or_b(CPU_t *cpu, Memory_t *memory)
+{
+    orWithRegister(cpu, cpu->B);
+    return 4;
+}
+static int or_c(CPU_t *cpu, Memory_t *memory)
+{
+    orWithRegister(cpu, cpu->C);
+    return 4;
+}
+static int or_d(CPU_t *cpu, Memory_t *memory)
+{
+    orWithRegister(cpu, cpu->D);
+    return 4;
+}
+static int or_e(CPU_t *cpu, Memory_t *memory)
+{
+    orWithRegister(cpu, cpu->E);
+    return 4;
+}
+static int or_h(CPU_t *cpu, Memory_t *memory)
+{
+    orWithRegister(cpu, cpu->H);
+    return 4;
+}
+static int or_l(CPU_t *cpu, Memory_t *memory)
+{
+    orWithRegister(cpu, cpu->L);
+    return 4;
+}
+static int or_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    andWithRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+
+// XOR      -----------------------------------------------------------------------------
+static int xor_n(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, cpu->PC);
+    xorWithRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+static int xor_a(CPU_t *cpu, Memory_t *memory)
+{
+    xorWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int xor_b(CPU_t *cpu, Memory_t *memory)
+{
+    xorWithRegister(cpu, cpu->B);
+    return 4;
+}
+static int xor_c(CPU_t *cpu, Memory_t *memory)
+{
+    xorWithRegister(cpu, cpu->C);
+    return 4;
+}
+static int xor_d(CPU_t *cpu, Memory_t *memory)
+{
+    xorWithRegister(cpu, cpu->D);
+    return 4;
+}
+static int xor_e(CPU_t *cpu, Memory_t *memory)
+{
+    xorWithRegister(cpu, cpu->E);
+    return 4;
+}
+static int xor_h(CPU_t *cpu, Memory_t *memory)
+{
+    xorWithRegister(cpu, cpu->H);
+    return 4;
+}
+static int xor_l(CPU_t *cpu, Memory_t *memory)
+{
+    xorWithRegister(cpu, cpu->L);
+    return 4;
+}
+static int xor_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    xorWithRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+
+// CP       -----------------------------------------------------------------------------
+static int cp_n(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, cpu->PC);
+    cpWithRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+static int cp_a(CPU_t *cpu, Memory_t *memory)
+{
+    cpWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int cp_b(CPU_t *cpu, Memory_t *memory)
+{
+    cpWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int cp_c(CPU_t *cpu, Memory_t *memory)
+{
+    cpWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int cp_d(CPU_t *cpu, Memory_t *memory)
+{
+    cpWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int cp_e(CPU_t *cpu, Memory_t *memory)
+{
+    cpWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int cp_h(CPU_t *cpu, Memory_t *memory)
+{
+    cpWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int cp_l(CPU_t *cpu, Memory_t *memory)
+{
+    cpWithRegister(cpu, cpu->A);
+    return 4;
+}
+static int cp_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpWithRegister(cpu, val);
+    cpu->PC++;
+    return 7;
+}
+
+// PUSH     -----------------------------------------------------------------------------
+static int push_bc(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, TO_WORD(cpu->B, cpu->C));
+    return 11;
+}
+static int push_de(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, TO_WORD(cpu->D, cpu->E));
+    return 11;
+}
+static int push_hl(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, TO_WORD(cpu->H, cpu->L));
+    return 11;
+}
+static int push_af(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, TO_WORD(cpu->A, flagsToByte(cpu->F)));
+    return 11;
+}
+
+// POP      -----------------------------------------------------------------------------
+static int pop_bc(CPU_t *cpu, Memory_t *memory)
+{
+    popWord(cpu, memory, cpu->B, cpu->C);
+    return 10;
+}
+static int pop_de(CPU_t *cpu, Memory_t *memory)
+{
+    popWord(cpu, memory, cpu->D, cpu->E);
+    return 10;
+}
+static int pop_hl(CPU_t *cpu, Memory_t *memory)
+{
+    popWord(cpu, memory, cpu->H, cpu->L);
+    return 10;
+}
+static int pop_af(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t f = flagsToByte(cpu->F);
+    popWord(cpu, memory, cpu->A, &f);
+    byteToFlags(&cpu->F, f);
+    return 10;
+}
+
+// EXCHANGE -----------------------------------------------------------------------------
+static int ex_af_af_(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+
 
 // ROTATE   -----------------------------------------------------------------------------
 static int rlca(CPU_t *cpu, Memory_t *memory)
