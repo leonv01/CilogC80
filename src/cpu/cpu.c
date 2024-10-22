@@ -12,9 +12,6 @@
 
 typedef int (*InstructionHandler)(CPU_t *, Memory_t *);
 
-
-static void initInstructionTable();
-
 // CPU helper functions -------------------------------------------------------
 static byte_t flagsToByte(F_t flags);
 static void byteToFlags(F_t *flags, byte_t value);
@@ -57,6 +54,9 @@ static void ld(CPU_t *cpu, byte_t *reg, byte_t value);
 static void ldPair(CPU_t *cpu, byte_t *upperByte, byte_t *lowerByte, word_t value);
 // -----------------------------------------------------------------------------
 
+// Instruction handlers     -----------------------------------------------------------------------------
+// NO Func  -----------------------------------------------------------------------------
+static int noFunc(CPU_t *cpu, Memory_t *memory);
 
 // NOP      -----------------------------------------------------------------------------
 static int nop(CPU_t *cpu, Memory_t *memory);
@@ -377,11 +377,12 @@ static int out_n_a_addr(CPU_t *cpu, Memory_t *memory);
 static int daa(CPU_t *cpu, Memory_t *memory);
 static int scf(CPU_t *cpu, Memory_t *memory);
 
-// EXTRA
+// EXTRA    -----------------------------------------------------------------------------
 static int cpl(CPU_t *cpu, Memory_t *memory);
 static int ccf(CPU_t *cpu, Memory_t *memory);
 
-static const InstructionHandler mainInstructionTable[MAX_INSTRUCTION_COUNT] = {
+static const InstructionHandler mainInstructionTable[MAX_INSTRUCTION_COUNT] = 
+{
 /*      0               1               2               3               4               5               6               7               8               9                   A                   B               C               D           E               F*/
 /*0x0*/ nop,            ld_bc_nn_imm,   ld_bc_a_addr,   inc_bc,         inc_b,          dec_b,          ld_b_n,         rlca,           ex_af_af_,      add_hl_bc_imm,      ld_a_bc_addr,       dec_bc,         inc_c,          dec_c,      ld_c_n,         rrca,
 /*0x1*/ djnz_d,         ld_de_nn_imm,   ld_de_a_addr,   inc_de,         inc_d,          dec_d,          ld_d_n,         rla,            jr_d,           add_hl_de_imm,      ld_a_de_addr,       dec_de,         inc_e,          dec_e,      ld_e_n,         rra,
@@ -399,6 +400,26 @@ static const InstructionHandler mainInstructionTable[MAX_INSTRUCTION_COUNT] = {
 /*0xD*/ ret_nc,         pop_de,         jp_nc_nn,       out_n_a_addr,   call_nc_nn,     push_de,        sub_n,          rst_10h,        ret_c,          exx,                jp_c_nn,            in_a_n,         call_c_nn,      ix_op,      sbc_a_n,        rst_18h,
 /*0xE*/ ret_po,         pop_hl,         jp_po_nn,       ex_sp_hl_addr,  call_po_nn,     push_hl,        and_n,          rst_20h,        ret_pe,         ret,                jp_hl_addr,         ex_de_hl,       call_pe_nn,     misc_op,    xor_n,          rst_28h,
 /*0xF*/ ret_p,          pop_af,         jp_p_nn,        di,             call_p_nn,      push_af,        or_n,           rst_30h,        ret_m,          ld_sp_hl,           jp_m_nn,            ei,             call_m_nn,      iy_op,      cp_n,           rst_38h
+};
+static const InstructionHandler miscInstructionTable[MAX_INSTRUCTION_COUNT] =
+{
+/*      0               1               2               3               4               5               6               7               8               9                   A                   B               C               D           E               F*/
+/*0x0*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_b,          noFunc,         noFunc,         noFunc,         noFunc,         noFunc,             noFunc,             noFunc,         tst_c,          noFunc,     noFunc,         noFunc,
+/*0x1*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_d,          noFunc,         noFunc,         rla,            jr_d,           add_hl_de_imm,      ld_a_de_addr,       dec_de,         inc_e,          dec_e,      ld_e_n,         rra,
+/*0x2*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_h,          noFunc,         noFunc,         daa,            jr_z_b,         add_hl_hl_imm,      ld_hl_nn_addr,      dec_hl,         inc_l,          dec_l,      ld_l_n,         cpl,
+/*0x3*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_hl_addr,    noFunc,         noFunc,         scf,            jr_c_b,         add_hl_sp_imm,      ld_a_nn_addr,       dec_sp,         inc_a,          dec_a,      ld_a_n,         ccf,
+/*0x4*/ in_b_c,         out_c_b,        sbc_hl_bc,      ld_nn_bc_imm,   neg,            retn,           im_0,         ld_b_a,         ld_c_b,         ld_c_c,             ld_c_d,             ld_c_e,         ld_c_h,         ld_c_l,     ld_c_hl_addr,   ld_c_a,
+/*0x5*/ in_d_c,         out_c_d,        sbc_hl_de,      ld_nn_de_imm,   noFunc,         noFunc,         im_1,         ld_d_a,         ld_d_b,         ld_e_c,             ld_e_d,             ld_e_e,         ld_e_h,         ld_e_l,     ld_e_hl_addr,   ld_e_a,
+/*0x6*/ in_h_c,         out_c_h,        sbc_hl_hl,      ld_nn_hl_imm,   tst_n,          noFunc,         noFunc,         ld_h_a,         ld_h_b,         ld_l_c,             ld_l_d,             ld_l_e,         ld_l_h,         ld_l_l,     ld_l_hl_addr,   ld_l_a,
+/*0x7*/ noFunc,         out_c_0,        sbc_hl_sp,      ld_nn_sp_imm,   tstio_n,        noFunc,         slp,         ld_hl_a_addr,   ld_hl_b_addr,   ld_a_c,             ld_a_d,             ld_a_e,         ld_a_h,         ld_a_l,     ld_a_hl_addr,   ld_a_a,
+/*0x8*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         add_a_a,        adc_a_b,        adc_a_c,            adc_a_d,            adc_a_e,        adc_a_h,        adc_a_l,    adc_a_hl_addr,  adc_a_a,
+/*0x9*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         sub_hl_addr,    sub_a,          sbc_b,          sbc_c,              sbc_d,              sbc_e,          sbc_h,          sbc_l,      sbc_hl_addr,    sbc_a_a,
+/*0xA*/ ldi,            cpi,            ini,            outi,           noFunc,         noFunc,         noFunc,         and_a,          xor_b,          xor_c,              xor_d,              xor_e,          xor_h,          xor_l,      xor_hl_addr,    xor_a,
+/*0xB*/ ldir,           cpir,           inir,           otir,           noFunc,         noFunc,         noFunc,         or_a,           cp_b,           cp_c,               cp_d,               cp_e,           cp_h,           cp_l,       cp_hl_addr,     cp_a,
+/*0xC*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_00h,        ret_z,          ret,                jp_z_nn,            bit_op,         call_z_nn,      call_nn,    adc_a_n,        rst_08h,
+/*0xD*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_10h,        ret_c,          exx,                jp_c_nn,            in_a_n,         call_c_nn,      ix_op,      sbc_a_n,        rst_18h,
+/*0xE*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_20h,        ret_pe,         ret,                jp_hl_addr,         ex_de_hl,       call_pe_nn,     misc_op,    xor_n,          rst_28h,
+/*0xF*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_30h,        ret_m,          ld_sp_hl,           jp_m_nn,            ei,             call_m_nn,      iy_op,      cp_n,           rst_38h
 };
 
 void cpuInit(CPU_t *cpu)
@@ -631,7 +652,6 @@ static int miscInstructions(CPU_t *cpu, Memory_t *memory, byte_t instruction)
     return 0;
 }
 
-
 // Helper functions ------------------------------------------------------------
 static void addToRegister(CPU_t *cpu, byte_t *reg, byte_t value)
 {
@@ -788,7 +808,6 @@ static void rst(CPU_t *cpu, Memory_t *memory, byte_t address)
     pushWord(cpu, memory, cpu->PC);
     cpu->PC = address;
 }
-
 
 static void exWord(CPU_t *cpu, word_t *reg1, word_t *reg2)
 {
@@ -1832,7 +1851,6 @@ static int ex_de_hl(CPU_t *cpu, Memory_t *memory)
     return 4;
 }
 
-
 // LD       -----------------------------------------------------------------------------
 static int ld_a_n(CPU_t *cpu, Memory_t *memory)
 {
@@ -2328,4 +2346,121 @@ static int ld_sp_hl(CPU_t *cpu, Memory_t *memory)
     cpu->SP = TO_WORD(cpu->H, cpu->L);
     return 6;
 }
+
+// OTHER INSTRUCTION    -----------------------------------------------------------------------------
+static int bit_op(CPU_t *cpu, Memory_t *memory)
+{
+    return 0;
+}
+static int ix_op(CPU_t *cpu, Memory_t *memory)
+{
+    return 0;
+}
+static int misc_op(CPU_t *cpu, Memory_t *memory)
+{
+    return 0;
+}
+static int iy_op(CPU_t *cpu, Memory_t *memory)
+{
+    return 0;
+}
+
+// INTERRUPTS           -----------------------------------------------------------------------------
+static int di(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO: Interrupts
+    return 4;
+}
+static int ei(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO: Interrupts
+    return 4;
+}
+
+// PORT     -----------------------------------------------------------------------------
+static int in_a_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO: Port
+    return 11;
+}
+static int out_n_a_addr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO: Port
+    return 11;
+}
+static int daa(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t halfCarry = cpu->F.H;
+    byte_t carry = cpu->F.C;
+    byte_t subtract = cpu->F.N;
+    byte_t correction = 0;
+    byte_t a = cpu->A;
+
+    if(subtract == 0)
+    {
+        if(halfCarry == 1 || LOWER_NIBBLE(a) > 9)
+        {
+            correction |= 0x06;
+        }
+        if(carry == 1 || a > 0x99)
+        {
+            correction |= 0x60;
+            cpu->F.C = 1;
+        }
+    }
+    else
+    {
+        if(halfCarry == 1 || LOWER_NIBBLE(a) > 9)
+        {
+            correction |= 0x06;
+        }
+        if(carry == 1 || a > 0x99)
+        {
+            correction |= 0x60;
+            cpu->F.C = 1;
+        }
+    }
+
+    if(subtract == 0)
+    {
+        cpu->A += correction;
+    }
+    else
+    {
+        cpu->A -= correction;
+    }
+
+    cpu->F.Z = cpu->A == 0;
+
+    cpu->F.H = 0;
+
+    return 4;
+}
+static int scf(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->F.C = 1;
+    cpu->F.H = 0;
+    cpu->F.N = 0;
+
+    return 4;
+}
+
+// EXTRA    -----------------------------------------------------------------------------
+static int cpl(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->A = ~cpu->A;
+    cpu->F.H = 1;
+    cpu->F.N = 1;
+
+    return 4;
+}
+static int ccf(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->F.C = !cpu->F.C;
+    cpu->F.H = 0;
+    cpu->F.N = 0;
+
+    return 4;
+}
+
 // -----------------------------------------------------------------------------
