@@ -8,7 +8,7 @@
 #define CYCLES_PER_FRAME(x) ((int)((x * 1000000) / 60))
 #define MAX_ITERATIONS 1000000
 
-#define MAX_INSTRUCTION_COUNT 0xFF
+#define MAX_INSTRUCTION_COUNT 256
 
 typedef int (*InstructionHandler)(CPU_t *, Memory_t *);
 
@@ -44,10 +44,10 @@ static void cpWithRegister(CPU_t *cpu, byte_t value);
 static void pushWord(CPU_t *cpu, Memory_t *memory, word_t value);
 static void popWord(CPU_t *cpu, Memory_t *memory, byte_t *upperByte, byte_t *lowerByte);
 
-static void ret(CPU_t *cpu, Memory_t *memory, bool condition);
-static int call(CPU_t *cpu, Memory_t *memory, bool condition);
-static void jump(CPU_t *cpu, Memory_t *memory, bool condition);
-static void jumpRelative(CPU_t *cpu, Memory_t *memory, bool condition);
+static int returnHelper(CPU_t *cpu, Memory_t *memory, bool condition);
+static int callHelper(CPU_t *cpu, Memory_t *memory, bool condition);
+static int jumpHelper(CPU_t *cpu, Memory_t *memory, bool condition);
+static int jumpRelativeHelper(CPU_t *cpu, Memory_t *memory, bool condition);
 
 static void rst(CPU_t *cpu, Memory_t *memory, byte_t address);
 
@@ -219,6 +219,7 @@ static int ret_po(CPU_t *cpu, Memory_t *memory);
 static int ret_pe(CPU_t *cpu, Memory_t *memory);
 static int ret_p(CPU_t *cpu, Memory_t *memory);
 static int ret_m(CPU_t *cpu, Memory_t *memory);
+static int ret(CPU_t *cpu, Memory_t *memory);
 
 // ROTATE   -----------------------------------------------------------------------------
 static int rlca(CPU_t *cpu, Memory_t *memory);
@@ -250,15 +251,15 @@ static int jp_nc_nn(CPU_t *cpu, Memory_t *memory);
 static int jp_c_nn(CPU_t *cpu, Memory_t *memory);
 static int jp_po_nn(CPU_t *cpu, Memory_t *memory);
 static int jp_hl_addr(CPU_t *cpu, Memory_t *memory);
-static int jp_hl_addr(CPU_t *cpu, Memory_t *memory);
 static int jp_p_nn(CPU_t *cpu, Memory_t *memory);
 static int jp_m_nn(CPU_t *cpu, Memory_t *memory);
+
 // EXCHANGE -----------------------------------------------------------------------------
-static int ex(CPU_t *cpu, Memory_t *memory);
 static int exx(CPU_t *cpu, Memory_t *memory);
 static int ex_af_af_(CPU_t *cpu, Memory_t *memory);
 static int ex_sp_hl_addr(CPU_t *cpu, Memory_t *memory);
 static int ex_de_hl(CPU_t *cpu, Memory_t *memory);
+
 // LD       -----------------------------------------------------------------------------
 static int ld_a_n(CPU_t *cpu, Memory_t *memory);
 static int ld_a_a(CPU_t *cpu, Memory_t *memory);
@@ -398,7 +399,7 @@ static const InstructionHandler mainInstructionTable[MAX_INSTRUCTION_COUNT] = {
 /*0xB*/ or_b,           or_c,           or_d,           or_e,           or_h,           or_l,           or_hl_addr,     or_a,           cp_b,           cp_c,               cp_d,               cp_e,           cp_h,           cp_l,       cp_hl_addr,     cp_a,
 /*0xC*/ ret_nz,         pop_bc,         jp_nz_nn,       jp_nn,          call_nz_nn,     push_bc,        add_a_n,        rst_00h,        ret_z,          ret,                jp_z_nn,            bit_op,         call_z_nn,      call_nn,    adc_a_n,        rst_08h,
 /*0xD*/ ret_nc,         pop_de,         jp_nc_nn,       out_n_a_addr,   call_nc_nn,     push_de,        sub_n,          rst_10h,        ret_c,          exx,                jp_c_nn,            in_a_n,         call_c_nn,      ix_op,      sbc_a_n,        rst_18h,
-/*0xE*/ ret_po,         pop_hl,         jp_po_nn,       ex_sp_hl_addr,  call_po_nn,     push_hl,        and_n,          rst_20h,        ret_pe,         jp_hl_addr,         jp_hl_addr,         ex_de_hl,       call_pe_nn,     misc_op,    xor_n,          rst_28h,
+/*0xE*/ ret_po,         pop_hl,         jp_po_nn,       ex_sp_hl_addr,  call_po_nn,     push_hl,        and_n,          rst_20h,        ret_pe,         ret,                jp_hl_addr,         ex_de_hl,       call_pe_nn,     misc_op,    xor_n,          rst_28h,
 /*0xF*/ ret_p,          pop_af,         jp_p_nn,        di,             call_p_nn,      push_af,        or_n,           rst_30h,        ret_m,          ld_sp_hl,           jp_m_nn,            ei,             call_m_nn,      iy_op,      cp_n,           rst_38h
 };
 
@@ -728,7 +729,7 @@ static void popWord(CPU_t *cpu, Memory_t *memory, byte_t *upperByte, byte_t *low
     cpu->SP += 2;
 }
 
-static int ret(CPU_t *cpu, Memory_t *memory, bool condition)
+static int returnHelper(CPU_t *cpu, Memory_t *memory, bool condition)
 {
     int cycles = 5;
 
@@ -743,7 +744,7 @@ static int ret(CPU_t *cpu, Memory_t *memory, bool condition)
 
     return cycles;
 }
-static int call(CPU_t *cpu, Memory_t *memory, bool condition)
+static int callHelper(CPU_t *cpu, Memory_t *memory, bool condition)
 {
     int cycles = 10;
     word_t address = fetchWord(memory, cpu->PC);
@@ -760,21 +761,28 @@ static int call(CPU_t *cpu, Memory_t *memory, bool condition)
     return cycles;
 }
 
-static void jump(CPU_t *cpu, Memory_t *memory, bool condition)
+static int jumpHelper(CPU_t *cpu, Memory_t *memory, bool condition)
 {
     if(condition)
     {
         word_t address = fetchWord(memory, cpu->PC);
         cpu->PC = address;
     }
+
+    return 10;
 }
-static void jumpRelative(CPU_t *cpu, Memory_t *memory, bool condition)
+static int jumpRelativeHelper(CPU_t *cpu, Memory_t *memory, bool condition)
 {
+    int cycles = 7;
+
     if(condition)
     {
         byte_t offset = fetchByte(memory, cpu->PC);
         cpu->PC += offset;
+        cycles = 12;
     }
+
+    return cycles;
 }
 
 static void rst(CPU_t *cpu, Memory_t *memory, byte_t address)
@@ -783,12 +791,6 @@ static void rst(CPU_t *cpu, Memory_t *memory, byte_t address)
     cpu->PC = address;
 }
 
-static void ex(CPU_t *cpu, byte_t *reg1, byte_t *reg2)
-{
-    byte_t temp = *reg1;
-    *reg1 = *reg2;
-    *reg2 = temp;
-}
 
 static void exWord(CPU_t *cpu, word_t *reg1, word_t *reg2)
 {
@@ -968,37 +970,37 @@ static int inc_sp(CPU_t *cpu, Memory_t *memory)
 
 static int inc_a(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegister(cpu, cpu->A);
+    incrementRegister(cpu, &cpu->A);
     return 4;
 }
 static int inc_b(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegister(cpu, cpu->B);
+    incrementRegister(cpu, &cpu->B);
     return 4;
 }
 static int inc_c(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegister(cpu, cpu->C);
+    incrementRegister(cpu, &cpu->C);
     return 4;
 }
 static int inc_d(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegister(cpu, cpu->D);
+    incrementRegister(cpu, &cpu->D);
     return 4;
 }
 static int inc_e(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegister(cpu, cpu->E);
+    incrementRegister(cpu, &cpu->E);
     return 4;
 }
 static int inc_h(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegister(cpu, cpu->H);
+    incrementRegister(cpu, &cpu->H);
     return 4;
 }
 static int inc_l(CPU_t *cpu, Memory_t *memory)
 {
-    incrementRegister(cpu, cpu->L);
+    incrementRegister(cpu, &cpu->L);
     return 4;
 }
 static int inc_hl_addr(CPU_t *cpu, Memory_t *memory)
@@ -1116,17 +1118,17 @@ static int sbc_hl_addr(CPU_t *cpu, Memory_t *memory)
 // SBC      -----------------------------------------------------------------------------
 static int dec_bc(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegisterPair(cpu, cpu->B, cpu->C);
+    decrementRegisterPair(cpu, &cpu->B, &cpu->C);
     return 6;
 }
 static int dec_de(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegisterPair(cpu, cpu->D, cpu->E);
+    decrementRegisterPair(cpu, &cpu->D, &cpu->E);
     return 6;
 }
 static int dec_hl(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegisterPair(cpu, cpu->D, cpu->E);
+    decrementRegisterPair(cpu, &cpu->D, &cpu->E);
     return 6;
 }
 static int dec_sp(CPU_t *cpu, Memory_t *memory)
@@ -1140,37 +1142,37 @@ static int dec_sp(CPU_t *cpu, Memory_t *memory)
 
 static int dec_a(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegister(cpu, cpu->A);
+    decrementRegister(cpu, &cpu->A);
     return 4;
 }
 static int dec_b(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegister(cpu, cpu->B);
+    decrementRegister(cpu, &cpu->B);
     return 4;
 }
 static int dec_c(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegister(cpu, cpu->C);
+    decrementRegister(cpu, &cpu->C);
     return 4;
 }
 static int dec_d(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegister(cpu, cpu->D);
+    decrementRegister(cpu, &cpu->D);
     return 4;
 }
 static int dec_e(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegister(cpu, cpu->E);
+    decrementRegister(cpu, &cpu->E);
     return 4;
 }
 static int dec_h(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegister(cpu, cpu->H);
+    decrementRegister(cpu, &cpu->H);
     return 4;
 }
 static int dec_l(CPU_t *cpu, Memory_t *memory)
 {
-    decrementRegister(cpu, cpu->L);
+    decrementRegister(cpu, &cpu->L);
     return 4;
 }
 static int dec_hl_addr(CPU_t *cpu, Memory_t *memory)
@@ -1412,23 +1414,23 @@ static int push_af(CPU_t *cpu, Memory_t *memory)
 // POP      -----------------------------------------------------------------------------
 static int pop_bc(CPU_t *cpu, Memory_t *memory)
 {
-    popWord(cpu, memory, cpu->B, cpu->C);
+    popWord(cpu, memory, &cpu->B, &cpu->C);
     return 10;
 }
 static int pop_de(CPU_t *cpu, Memory_t *memory)
 {
-    popWord(cpu, memory, cpu->D, cpu->E);
+    popWord(cpu, memory, &cpu->D, &cpu->E);
     return 10;
 }
 static int pop_hl(CPU_t *cpu, Memory_t *memory)
 {
-    popWord(cpu, memory, cpu->H, cpu->L);
+    popWord(cpu, memory, &cpu->H, &cpu->L);
     return 10;
 }
 static int pop_af(CPU_t *cpu, Memory_t *memory)
 {
     byte_t f = flagsToByte(cpu->F);
-    popWord(cpu, memory, cpu->A, &f);
+    popWord(cpu, memory, &cpu->A, &f);
     byteToFlags(&cpu->F, f);
     return 10;
 }
@@ -1437,62 +1439,62 @@ static int pop_af(CPU_t *cpu, Memory_t *memory)
 static int call_nz_nn(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.N == 0;
-    int cycles = call(cpu, memory, condition);
+    int cycles = callHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int call_z_nn(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.Z == 1;
-    int cycles = call(cpu, memory, condition);
+    int cycles = callHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int call_nn(CPU_t *cpu, Memory_t *memory)
 {
-    int cycles = call(cpu, memory, true);
+    int cycles = callHelper(cpu, memory, true);
 
     return cycles;
 }
 static int call_nc_nn(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.C == 0;
-    int cycles = call(cpu, memory, condition);
+    int cycles = callHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int call_c_nn(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.C == 1;
-    int cycles = call(cpu, memory, condition);
+    int cycles = callHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int call_po_nn(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.P == 0;
-    int cycles = call(cpu, memory, condition);
+    int cycles = callHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int call_pe_nn(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.P == 1;
-    int cycles = call(cpu, memory, condition);
+    int cycles = callHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int call_p_nn(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.S == 0;
-    int cycles = call(cpu, memory, condition);
+    int cycles = callHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int call_m_nn(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.S == 0;
-    int cycles = call(cpu, memory, condition);
+    int cycles = callHelper(cpu, memory, condition);
 
     return cycles;
 }
@@ -1501,102 +1503,728 @@ static int call_m_nn(CPU_t *cpu, Memory_t *memory)
 static int ret_nz(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.Z == 0;
-    int cycles = ret(cpu, memory, condition);
+    int cycles = returnHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int ret_z(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.Z == 1;
-    int cycles = ret(cpu, memory, condition);
+    int cycles = returnHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int ret_nc(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.C == 0;
-    int cycles = ret(cpu, memory, condition);
+    int cycles = returnHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int ret_c(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.C == 1;
-    int cycles = ret(cpu, memory, condition);
+    int cycles = returnHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int ret_po(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.P == 0;
-    int cycles = ret(cpu, memory, condition);
+    int cycles = returnHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int ret_pe(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.P == 1;
-    int cycles = ret(cpu, memory, condition);
+    int cycles = returnHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int ret_p(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.S == 0;
-    int cycles = ret(cpu, memory, condition);
+    int cycles = returnHelper(cpu, memory, condition);
 
     return cycles;
 }
 static int ret_m(CPU_t *cpu, Memory_t *memory)
 {
     bool condition = cpu->F.S == 1;
-    int cycles = ret(cpu, memory, condition);
+    int cycles = returnHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int ret(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t lowerByte, upperByte;
+    popWord(cpu, memory, &upperByte, &lowerByte);
+    cpu->PC = TO_WORD(upperByte, lowerByte);
+
+    return 10;
+}
+
+// ROTATE   -----------------------------------------------------------------------------
+static int rlca(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t bit7 = (cpu->A & 0b10000000) >> 7;
+    cpu->A = (cpu->A << 1) | bit7;
+    cpu->F.C = bit7;
+    cpu->F.H = 0;
+    cpu->F.N = 0;
+    return 4;
+}
+static int rrca(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t bit0 = (cpu->A & 0b00000001);
+    cpu->A = (bit0 << 7) | (cpu->A >> 1); 
+    cpu->F.C = bit0;
+    cpu->F.H = 0;
+    cpu->F.N = 0;
+    return 4;
+}
+static int rla(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t bit7 = (cpu->A & 0b10000000) >> 7;
+    cpu->A = (cpu->A << 1) | cpu->F.C;
+    cpu->F.C = bit7;
+    cpu->F.H = 0;
+    cpu->F.N = 0;
+    return 4;
+}
+static int rra(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t bit0 = (cpu->A & 0b00000001);
+    cpu->A = (cpu->F.C << 7) | (cpu->A >> 1);
+    cpu->F.C = bit0;
+    cpu->F.H = 0;
+    cpu->F.N = 0;
+    return 4;
+}
+
+// RST      -----------------------------------------------------------------------------
+static int rst_00h(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, cpu->PC);
+    cpu->PC = 0x00;
+    return 11;
+}
+static int rst_08h(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, cpu->PC);
+    cpu->PC = 0x08;
+    return 11;
+}
+static int rst_10h(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, cpu->PC);
+    cpu->PC = 0x10;
+    return 11;
+}
+static int rst_18h(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, cpu->PC);
+    cpu->PC = 0x18;
+    return 11;
+}
+static int rst_20h(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, cpu->PC);
+    cpu->PC = 0x20;
+    return 11;
+}
+static int rst_28h(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, cpu->PC);
+    cpu->PC = 0x28;
+    return 11;
+}
+static int rst_30h(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, cpu->PC);
+    cpu->PC = 0x30;
+    return 11;
+}
+static int rst_38h(CPU_t *cpu, Memory_t *memory)
+{
+    pushWord(cpu, memory, cpu->PC);
+    cpu->PC = 0x38;
+    return 11;
+}
+
+// JUMP     -----------------------------------------------------------------------------
+static int djnz_d(CPU_t *cpu, Memory_t *memory)
+{
+    int cycles = 8;
+    cpu->B--;
+    bool condition = cpu->B != 0;
+
+    jumpRelativeHelper(cpu, memory, condition);
+
+    if(condition)
+    {
+        cycles = 13;
+    }
+
+    return cycles;
+}
+static int jr_d(CPU_t *cpu, Memory_t *memory)
+{
+    int cycles = jumpRelativeHelper(cpu, memory, true);
+    return cycles;
+}
+static int jr_nz_d(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.Z == 0;
+    int cycles = jumpRelativeHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jr_z_b(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.Z == 1;
+    int cycles = jumpRelativeHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jr_nc_d(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.C == 0;
+    int cycles = jumpRelativeHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jr_c_b(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.C == 1;
+    int cycles = jumpRelativeHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jp_nz_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.Z == 0;
+    int cycles = jumpHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jp_nn(CPU_t *cpu, Memory_t *memory)
+{
+    int cycles = jumpHelper(cpu, memory, true);
+
+    return cycles;
+}
+static int jp_z_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.Z == 1;
+    int cycles = jumpHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jp_nc_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.C == 0;
+    int cycles = jumpHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jp_c_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.C == 1;
+    int cycles = jumpHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jp_po_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.P == 0;
+    int cycles = jumpHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jp_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->PC = TO_WORD(cpu->H, cpu->L);
+    return 4;
+}
+static int jp_p_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.S == 0;
+    int cycles = jumpHelper(cpu, memory, condition);
+
+    return cycles;
+}
+static int jp_m_nn(CPU_t *cpu, Memory_t *memory)
+{
+    bool condition = cpu->F.S == 1;
+    int cycles = jumpHelper(cpu, memory, condition);
 
     return cycles;
 }
 
 // EXCHANGE -----------------------------------------------------------------------------
+static int exx(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t temp;
+
+    temp = cpu->B;
+    cpu->B = cpu->B_;
+    cpu->B_ = temp;
+
+    temp = cpu->C;
+    cpu->C = cpu->C_;
+    cpu->C_ = temp;
+
+    temp = cpu->D;
+    cpu->D = cpu->D_;
+    cpu->D_ = temp;
+
+    temp = cpu->E;
+    cpu->E = cpu->E_;
+    cpu->E_ = temp;
+
+    temp = cpu->H;
+    cpu->H = cpu->H_;
+    cpu->H_ = temp;
+
+    return 4;
+}
 static int ex_af_af_(CPU_t *cpu, Memory_t *memory)
 {
-    // TODO
-}
+    byte_t temp;
 
+    temp = cpu->A;
+    cpu->A = cpu->A_;
+    cpu->A_ = temp;
 
-// ROTATE   -----------------------------------------------------------------------------
-static int rlca(CPU_t *cpu, Memory_t *memory)
-{
-    // TODO: Rotate instruction
+    temp = flagsToByte(cpu->F);
+    byte_t temp2 = flagsToByte(cpu->F_);
+
+    byteToFlags(&cpu->F, temp2);
+    byteToFlags(&cpu->F_, temp);
+
     return 4;
 }
-static int rrca(CPU_t *cpu, Memory_t *memory)
+static int ex_sp_hl_addr(CPU_t *cpu, Memory_t *memory)
 {
+    word_t address = cpu->SP;
+
+    byte_t lowerByte = fetchByte(memory, address);
+    byte_t upperByte = fetchByte(memory, address + 1);
+
+    storeByte(memory, address, cpu->L);
+    storeByte(memory, address + 1, cpu->H);
+
+    cpu->H = upperByte;
+    cpu->L = lowerByte;
+
+    return 19;
+}
+static int ex_de_hl(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t temp = cpu->D;
+    cpu->D = cpu->H;
+    cpu->H = temp;
+
+    temp = cpu->E;
+    cpu->E = cpu->L;
+    cpu->L = temp;
+
     return 4;
 }
+
 
 // LD       -----------------------------------------------------------------------------
-static int ld_a_bc_addr(CPU_t *cpu, Memory_t *memory)
+static int ld_a_n(CPU_t *cpu, Memory_t *memory)
 {
-
+    cpu->A = fetchByte(memory, cpu->PC);
+    cpu->PC++;
+    return 7;
 }
-static int ld_c_n_imm(CPU_t *cpu, Memory_t *memory)
+static int ld_a_a(CPU_t *cpu, Memory_t *memory)
 {
-
+    cpu->A = cpu->A;
+    return 4;
 }
-static int ld_b_n_imm(CPU_t *cpu, Memory_t *memory)
+static int ld_a_b(CPU_t *cpu, Memory_t *memory)
 {
-
+    cpu->A = cpu->B;
+    return 4;
 }
-static int ld_bc_nn_imm(CPU_t *cpu, Memory_t *memory)
+static int ld_a_c(CPU_t *cpu, Memory_t *memory)
 {
-    word_t word = fetchWord(memory, cpu->PC);
-    cpu->B = UPPER_BYTE(word);
-    cpu->C = LOWER_BYTE(word);
-    cpu->PC += 2;
+    cpu->A = cpu->C;
+    return 4;
+}
+static int ld_a_d(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->A = cpu->D;
+    return 4;
+}
+static int ld_a_e(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->A = cpu->E;
+    return 4;
+}
+static int ld_a_h(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->A = cpu->H;
+    return 4;
+}
+static int ld_a_l(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->A = cpu->L;
+    return 4;
+}
+static int ld_a_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpu->A = val;
+    cpu->PC++;
+    return 7;
+}
+
+static int ld_b_n(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->B = fetchByte(memory, cpu->PC);
+    cpu->PC++;
+    return 7;
+}
+static int ld_b_a(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->B = cpu->A;
+    return 4;
+}
+static int ld_b_b(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->B = cpu->B;
+    return 4;
+}
+static int ld_b_c(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->B = cpu->C;
+    return 4;
+}
+static int ld_b_d(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->B = cpu->D;
+    return 4;
+}
+static int ld_b_e(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->B = cpu->E;
+    return 4;
+}
+static int ld_b_h(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->B = cpu->H;
+    return 4;
+}
+static int ld_b_l(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->B = cpu->L;
+    return 4;
+}
+static int ld_b_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpu->B = val;
+    cpu->PC++;
+    return 7;
+}
+
+static int ld_c_n(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->C = fetchByte(memory, cpu->PC);
+    cpu->PC++;
+    return 7;
+}
+static int ld_c_a(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->C = cpu->A;
+    return 4;
+}
+static int ld_c_b(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->C = cpu->B;
+    return 4;
+}
+static int ld_c_c(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->C = cpu->C;
+    return 4;
+}
+static int ld_c_d(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->C = cpu->D;
+    return 4;
+}
+static int ld_c_e(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->C = cpu->E;
+    return 4;
+}
+static int ld_c_h(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->C = cpu->H;
+    return 4;
+}
+static int ld_c_l(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->C = cpu->L;
+    return 4;
+}
+static int ld_c_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpu->C = val;
+    cpu->PC++;
+    return 7;
+}
+
+static int ld_d_n(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->D = fetchByte(memory, cpu->PC);
+    cpu->PC++;
+    return 7;
+}
+static int ld_d_a(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->D = cpu->A;
+    return 4;
+}
+static int ld_d_b(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->D = cpu->B;
+    return 4;
+}
+static int ld_d_c(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->D = cpu->C;
+    return 4;
+}
+static int ld_d_d(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->D = cpu->D;
+    return 4;
+}
+static int ld_d_e(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->D = cpu->E;
+    return 4;
+}
+static int ld_d_h(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->D = cpu->H;
+    return 4;
+}
+static int ld_d_l(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->D = cpu->L;
+    return 4;
+}
+static int ld_d_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpu->D = val;
+    cpu->PC++;
+    return 7;
+}
+
+static int ld_e_n(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->E = fetchByte(memory, cpu->PC);
+    cpu->PC++;
+    return 7;
+}
+static int ld_e_a(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->E = cpu->A;
+    return 4;
+}
+static int ld_e_b(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->E = cpu->B;
+    return 4;
+}
+static int ld_e_c(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->E = cpu->C;
+    return 4;
+}
+static int ld_e_d(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->E = cpu->D;
+    return 4;
+}
+static int ld_e_e(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->E = cpu->E;
+    return 4;
+}
+static int ld_e_h(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->E = cpu->H;
+    return 4;
+}
+static int ld_e_l(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->E = cpu->L;
+    return 4;
+}
+static int ld_e_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpu->E = val;
+    cpu->PC++;
+    return 7;
+}
+
+static int ld_h_n(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->H = fetchByte(memory, cpu->PC);
+    cpu->PC++;
+    return 7;
+}
+static int ld_h_a(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->H = cpu->A;
+    return 4;
+}
+static int ld_h_b(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->H = cpu->B;
+    return 4;
+}
+static int ld_h_c(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->H = cpu->C;
+    return 4;
+}
+static int ld_h_d(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->H = cpu->D;
+    return 4;
+}
+static int ld_h_e(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->H = cpu->E;
+    return 4;
+}
+static int ld_h_h(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->H = cpu->H;
+    return 4;
+}
+static int ld_h_l(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->H = cpu->L;
+    return 4;
+}
+static int ld_h_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpu->H = val;
+    cpu->PC++;
+    return 7;
+}
+
+static int ld_l_n(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->L = fetchByte(memory, cpu->PC);
+    cpu->PC++;
+    return 7;
+}
+static int ld_l_a(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->L = cpu->A;
+    return 4;
+}
+static int ld_l_b(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->L = cpu->B;
+    return 4;
+}
+static int ld_l_c(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->L = cpu->C;
+    return 4;
+}
+static int ld_l_d(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->L = cpu->D;
+    return 4;
+}
+static int ld_l_e(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->L = cpu->E;
+    return 4;
+}
+static int ld_l_h(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->L = cpu->H;
+    return 4;
+}
+static int ld_l_l(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->L = cpu->L;
+    return 4;
+}
+static int ld_l_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    cpu->L = val;
+    cpu->PC++;
+    return 7;
+}
+
+static int ld_hl_n_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, cpu->PC);
+    storeByte(memory, TO_WORD(cpu->H, cpu->L), val);
+    cpu->PC++;
     return 10;
 }
-static int ld_bc_a_addr(CPU_t *cpu, Memory_t *memory)
+static int ld_hl_a_addr(CPU_t *cpu, Memory_t *memory)
 {
-    storeByte(memory, TO_WORD(cpu->B, cpu->C), cpu->A);
+    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->A);
+    return 7;
+}
+static int ld_hl_b_addr(CPU_t *cpu, Memory_t *memory)
+{
+    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->B);
+    return 7;
+}
+static int ld_hl_c_addr(CPU_t *cpu, Memory_t *memory)
+{
+    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->C);
+    return 7;
+}
+static int ld_hl_d_addr(CPU_t *cpu, Memory_t *memory)
+{
+    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->D);
+    return 7;
+}
+static int ld_hl_e_addr(CPU_t *cpu, Memory_t *memory)
+{
+    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->E);
+    return 7;
+}
+static int ld_hl_h_addr(CPU_t *cpu, Memory_t *memory)
+{
+    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->H);
+    return 7;
+}
+static int ld_hl_l_addr(CPU_t *cpu, Memory_t *memory)
+{
+    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->L);
+    return 7;
+}
+static int ld_hl_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    storeByte(memory, TO_WORD(cpu->H, cpu->L), val);
     return 7;
 }
 

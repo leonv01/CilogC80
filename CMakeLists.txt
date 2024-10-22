@@ -3,7 +3,7 @@ project(CilogC80 C)
 
 # Set the C standard
 set(CMAKE_C_STANDARD 99)
-#set(CMAKE_C_COMPILER "clang")
+set(CMAKE_C_COMPILER "clang")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
