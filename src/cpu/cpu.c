@@ -356,8 +356,6 @@ static int ld_bc_a_addr(CPU_t *cpu, Memory_t *memory);
 static int ld_a_bc_addr(CPU_t *cpu, Memory_t *memory);
 
 static int ld_hl_nn_imm(CPU_t *cpu, Memory_t *memory);
-static int ld_hl_a_addr(CPU_t *cpu, Memory_t *memory);
-static int ld_a_hl_addr(CPU_t *cpu, Memory_t *memory);
 
 static int ld_sp_nn_imm(CPU_t *cpu, Memory_t *memory);
 
@@ -2228,4 +2226,106 @@ static int ld_hl_hl_addr(CPU_t *cpu, Memory_t *memory)
     return 7;
 }
 
+static int ld_hl_nn_addr(CPU_t *cpu, Memory_t *memory)
+{
+    word_t address = fetchWord(memory, cpu->PC);
+    
+    byte_t lowerByte = fetchByte(memory, address);
+    byte_t upperByte = fetchByte(memory, address + 1);
+
+    cpu->H = upperByte;
+    cpu->L = lowerByte;
+
+    cpu->PC += 2;
+
+    return 16;
+}
+static int ld_a_nn_addr(CPU_t *cpu, Memory_t *memory)
+{
+    word_t address = fetchWord(memory, cpu->PC);
+    cpu->A = fetchByte(memory, address);
+    cpu->PC += 2;
+    return 13;
+}
+
+static int ld_nn_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    word_t address = fetchWord(memory, cpu->PC);
+    storeByte(memory, address, cpu->L);
+    storeByte(memory, address + 1, cpu->H);
+    cpu->PC += 2;
+    return 16;
+}
+static int ld_nn_a_addr(CPU_t *cpu, Memory_t *memory)
+{
+    word_t address = fetchWord(memory, cpu->PC);
+    storeByte(memory, address, cpu->A);
+    cpu->PC += 2;
+    return 13;
+}
+
+static int ld_de_nn_imm(CPU_t *cpu, Memory_t *memory)
+{
+    word_t address = fetchWord(memory, cpu->PC);
+    storeByte(memory, address, cpu->E);
+    storeByte(memory, address + 1, cpu->D);
+    cpu->PC += 2;
+    return 16;
+}
+static int ld_de_a_addr(CPU_t *cpu, Memory_t *memory)
+{
+    storeByte(memory, TO_WORD(cpu->D, cpu->E), cpu->A);
+    return 7;
+}
+static int ld_a_de_addr(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->A = fetchByte(memory, TO_WORD(cpu->D, cpu->E));
+    return 7;
+}
+
+static int ld_bc_nn_imm(CPU_t *cpu, Memory_t *memory)
+{
+    word_t immediate = fetchWord(memory, cpu->PC);
+    cpu->B = UPPER_BYTE(immediate);
+    cpu->C = LOWER_BYTE(immediate);
+    cpu->PC += 2;
+
+    return 10;
+
+}
+static int ld_bc_a_addr(CPU_t *cpu, Memory_t *memory)
+{
+    storeByte(memory, TO_WORD(cpu->B, cpu->C), cpu->A);
+    return 7;
+}
+static int ld_a_bc_addr(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->A = fetchByte(memory, TO_WORD(cpu->B, cpu->C));
+    return 7;
+}
+
+static int ld_hl_nn_imm(CPU_t *cpu, Memory_t *memory)
+{
+    word_t immediate = fetchWord(memory, cpu->PC);
+    cpu->H = UPPER_BYTE(immediate);
+    cpu->L = LOWER_BYTE(immediate);
+    cpu->PC += 2;
+
+    return 10;
+}
+
+static int ld_sp_nn_imm(CPU_t *cpu, Memory_t *memory)
+{
+    word_t immediate = fetchWord(memory, cpu->PC);
+    cpu->SP = immediate;
+    cpu->PC += 2;
+
+    return 10;
+}
+
+static int ld_sp_hl(CPU_t *cpu, Memory_t *memory)
+{
+    cpu->SP = TO_WORD(cpu->H, cpu->L);
+    return 6;
+}
 // -----------------------------------------------------------------------------
