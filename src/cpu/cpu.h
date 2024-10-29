@@ -66,7 +66,7 @@ void cpuEmulate(CPU_t* cpu, Memory_t* memory);
  * @param memory 
  * @return int 
  */
-int cpuExecute(CPU_t* cpu, Memory_t* memory);
+//int cpuExecute(CPU_t* cpu, Memory_t* memory);
 
 #endif
 
