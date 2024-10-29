@@ -370,7 +370,7 @@
 #define MAIN_LD_SP_nn       0x31
 #define MAIN_LD_SP_HL       0xF9
 #define MAIN_LD_HL_nn_ADDR  0x2A
-#define MAIN_LD_HL_nn       0x21
+//#define MAIN_LD_HL_nn       0x21
 
 #define BIT_INSTRUCTIONS 0xCB
 

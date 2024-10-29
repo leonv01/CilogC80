@@ -21,10 +21,10 @@ typedef struct F_t
 typedef struct CPU_t
 {   
     byte_t A, B, C, D, E, H, L;
-    byte_t A_ALT, B_ALT, C_ALT, D_ALT, E_ALT, H_ALT, L_ALT;
+    byte_t A_, B_, C_, D_, E_, H_, L_;
 
     F_t F;
-    F_t F_ALT;
+    F_t F_;
     word_t SP, PC;
 
     word_t IX, IY;
@@ -32,6 +32,9 @@ typedef struct CPU_t
 
     int cyclesInFrame;
     float frequency;
+
+    int currentCycles;
+    int totalCycles;
 } CPU_t;
 
 /**
@@ -63,7 +66,7 @@ void cpuEmulate(CPU_t* cpu, Memory_t* memory);
  * @param memory 
  * @return int 
  */
-int cpuExecute(CPU_t* cpu, Memory_t* memory);
+//int cpuExecute(CPU_t* cpu, Memory_t* memory);
 
 #endif
 
