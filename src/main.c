@@ -4,18 +4,22 @@
 #include "mem.h"
 #include "instructions.h"
 #include "instruction_handler.h"
+#include "file_loader.h"
 
 int main() {
-
-    CPU_t cpu;
-    cpuInit(&cpu);
-
     Memory_t memory;
     memoryInit(&memory);
 
-    storeByte(&memory, 0, 0x00);
+    int err = loadFile(&memory, "../roms/test.z80");
 
-    cpuEmulate(&cpu, &memory);
+    if(err != 0) {
+        printf("Error loading file\n");
+        return 1;
+    }
+
+    for(int i = 0; i < 10; i++) {
+        printf("%02X", memory.data[i]);
+    }
 
     return 0;
 }
