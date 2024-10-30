@@ -1,0 +1,56 @@
+@startuml
+
+class CPU
+{
+    +A:     byte
+    +B:     byte
+    +C:     byte
+    +D:     byte
+    +A_:    byte
+    +B_:    byte
+    +C_:    byte
+    +D_:    byte
+    +PC:    word
+    +SP:    word
+    +IR:    byte
+    +Flags: Flags
+    +frequency: float
+    +cyclesInFrame: int
+    +currentCycles: int
+    +totalCycles: int
+
+    +cpuInit(cpu *CPU): void
+    +cpuReset(cpu *CPU): void
+    +cpuEmulate(cpu *CPU, memory *Memory): void
+}
+
+class Flags
+{
+    C: byte
+    N: byte
+    P: byte
+    _: byte
+    H: byte
+    Z: byte
+    S: byte
+}
+
+class Memory
+{
+    +data: *byte
+
+    +memoryInit(memory *Memory): void
+    +memoryDestroy(memory *Memory): void
+
+    +fetchByte(memory *Memory, address word): byte
+    +fetchWord(memory *Memory, address word): word
+    +storeByte(memory *Memory, address word, value byte): void
+    +storeWord(memory *Memory, address word, value word): void
+}
+
+
+CPU "1" *-left- "1" Flags
+CPU "1" o-right- "1" Memory
+
+
+@enduml
