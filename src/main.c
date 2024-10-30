@@ -6,5 +6,7 @@ int main() {
     emulatorInit();
     emulatorRun();
 
+    printf("Test\n");
+
     return 0;
 }
