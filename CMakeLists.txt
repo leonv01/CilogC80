@@ -5,16 +5,6 @@ project(CilogC80 C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_COMPILER "clang")
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
-
-find_package(SDL2 REQUIRED)
-
-if(NOT SDL2_FOUND)
-        if(WIN32)
-                set(SDL2_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/extern/sdl2/include")
-                set(SDL2_LIBRARY "${CMAKE_SOURCE_DIR}/extern/sdl2/lib/")
-
-
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 endif()
