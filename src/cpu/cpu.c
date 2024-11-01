@@ -1,6 +1,5 @@
 #include "cpu.h"
 #include "instructions.h"
-#include "time.h"
 #include "instruction_handler.h"
 
 #include <stdio.h>
@@ -56,36 +55,5 @@ void cpuReset(CPU_t *cpu)
 
 void cpuEmulate(CPU_t *cpu, Memory_t *memory)
 {
-    struct timespec start, end;
-    clock_gettime(CLOCK_MONOTONIC, &start);
-
-    int cycles = 0;
-    int iterations = 0;
-
-    while (cycles < CYCLES_PER_FRAME(cpu->frequency) && iterations < MAX_ITERATIONS)
-    {
-        cycles += executeInstruction(cpu, memory);
-        iterations++;
-    }
-
-    // Handle iterations limit reached
-    if (iterations >= MAX_ITERATIONS)
-    {
-        // Handle error
-    }
-
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    long elapsedNs = (end.tv_sec - start.tv_sec) * 1000000000L +
-                     (end.tv_nsec - start.tv_nsec);
-
-    const long targetNs = 1000000000L / 60;
-
-    if (elapsedNs < targetNs)
-    {
-        struct timespec sleepTime;
-        sleepTime.tv_sec = 0;
-        sleepTime.tv_nsec = targetNs - elapsedNs;
-        nanosleep(&sleepTime, NULL);
-    }
+    
 }

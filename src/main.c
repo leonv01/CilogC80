@@ -1,12 +1,9 @@
 #include <stdio.h>
 
 #include "emulator.h"
+#include "graphics.h"
 
-int main() {
-    emulatorInit();
-    emulatorRun();
-
-    printf("Test\n");
-
-    return 0;
+int main(int argc, char *argv[]) 
+{
+    return graphicsInit(argc, argv);
 }

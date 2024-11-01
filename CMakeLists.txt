@@ -3,25 +3,18 @@ project(CilogC80 C)
 
 # Set the C standard
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_COMPILER "clang")
-
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
-
-find_package(SDL2 REQUIRED)
-
-if(NOT SDL2_FOUND)
-        if(WIN32)
-                set(SDL2_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/extern/sdl2/include")
-                set(SDL2_LIBRARY "${CMAKE_SOURCE_DIR}/extern/sdl2/lib/")
-
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
 endif()
+
+# Find PkgConfig and GTK
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GTK4 REQUIRED gtk4)
 
 # Include necessary directories
 include_directories(src/utils)
@@ -30,12 +23,13 @@ include_directories(src/memory)
 include_directories(src/emulator)
 include_directories(extern/unity/src)
 
+include_directories(${GTK4_INCLUDE_DIRS})
 
-# Find SDL2
+# Include GTK directories
+include_directories(${GTK_INCLUDE_DIRS})
 
-if(SDL2_FOUND)
-    include_directories(${SDL2_INCLUDE_DIR})
-endif()
+# Link GTK libraries
+link_directories(${GTK_LIBRARY_DIRS})
 
 file(GLOB MAIN_SOURCE
         src/main.c
@@ -49,6 +43,9 @@ file(GLOB_RECURSE APP_SOURCES
 )
 
 add_executable(CilogC80 ${APP_SOURCES} ${MAIN_SOURCE})
+
+# Link the GTK libraries
+target_link_libraries(CilogC80 ${GTK_LIBRARIES} ${GTK4_LIBRARIES})
 
 # Gather Unity source files
 #file(GLOB UNITY_SOURCE
