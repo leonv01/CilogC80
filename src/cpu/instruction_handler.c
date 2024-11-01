@@ -85,6 +85,11 @@ static int adc_a_h(CPU_t *cpu, Memory_t *memory);
 static int adc_a_l(CPU_t *cpu, Memory_t *memory);
 static int adc_a_hl_addr(CPU_t *cpu, Memory_t *memory);
 
+static int adc_hl_bc(CPU_t *cpu, Memory_t *memory);
+static int adc_hl_de(CPU_t *cpu, Memory_t *memory);
+static int adc_hl_hl(CPU_t *cpu, Memory_t *memory);
+static int adc_hl_sp(CPU_t *cpu, Memory_t *memory);
+
 // INC      -----------------------------------------------------------------------------
 static int inc_bc(CPU_t *cpu, Memory_t *memory);
 static int inc_de(CPU_t *cpu, Memory_t *memory);
@@ -121,6 +126,10 @@ static int sbc_e(CPU_t *cpu, Memory_t *memory);
 static int sbc_h(CPU_t *cpu, Memory_t *memory);
 static int sbc_l(CPU_t *cpu, Memory_t *memory);
 static int sbc_hl_addr(CPU_t *cpu, Memory_t *memory);
+static int sbc_hl_bc(CPU_t *cpu, Memory_t *memory);
+static int sbc_hl_de(CPU_t *cpu, Memory_t *memory);
+static int sbc_hl_hl(CPU_t *cpu, Memory_t *memory);
+static int sbc_hl_sp(CPU_t *cpu, Memory_t *memory);
 
 // DEC      -----------------------------------------------------------------------------
 static int dec_bc(CPU_t *cpu, Memory_t *memory);
@@ -180,6 +189,8 @@ static int cp_e(CPU_t *cpu, Memory_t *memory);
 static int cp_h(CPU_t *cpu, Memory_t *memory);
 static int cp_l(CPU_t *cpu, Memory_t *memory);
 static int cp_hl_addr(CPU_t *cpu, Memory_t *memory);
+static int cpi(CPU_t *cpu, Memory_t *memory);
+static int cpir(CPU_t *cpu, Memory_t *memory);
 
 // PUSH     -----------------------------------------------------------------------------
 static int push_bc(CPU_t *cpu, Memory_t *memory);
@@ -214,6 +225,8 @@ static int ret_pe(CPU_t *cpu, Memory_t *memory);
 static int ret_p(CPU_t *cpu, Memory_t *memory);
 static int ret_m(CPU_t *cpu, Memory_t *memory);
 static int ret(CPU_t *cpu, Memory_t *memory);
+static int retn(CPU_t *cpu, Memory_t *memory);
+static int reti(CPU_t *cpu, Memory_t *memory);
 
 // ROTATE   -----------------------------------------------------------------------------
 static int rlca(CPU_t *cpu, Memory_t *memory);
@@ -337,9 +350,15 @@ static int ld_hl_hl_addr(CPU_t *cpu, Memory_t *memory);
 
 static int ld_hl_nn_addr(CPU_t *cpu, Memory_t *memory);
 static int ld_a_nn_addr(CPU_t *cpu, Memory_t *memory);
+static int ld_bc_nn_addr(CPU_t *cpu, Memory_t *memory);
+static int ld_de_nn_addr(CPU_t *cpu, Memory_t *memory);
+static int ld_sp_nn_addr(CPU_t *cpu, Memory_t *memory);
 
 static int ld_nn_hl_addr(CPU_t *cpu, Memory_t *memory);
 static int ld_nn_a_addr(CPU_t *cpu, Memory_t *memory);
+static int ld_nn_bc_addr(CPU_t *cpu, Memory_t *memory);
+static int ld_nn_de_addr(CPU_t *cpu, Memory_t *memory);
+static int ld_nn_sp_addr(CPU_t *cpu, Memory_t *memory);
 
 static int ld_de_nn_imm(CPU_t *cpu, Memory_t *memory);
 static int ld_de_a_addr(CPU_t *cpu, Memory_t *memory);
@@ -355,6 +374,20 @@ static int ld_sp_nn_imm(CPU_t *cpu, Memory_t *memory);
 
 static int ld_sp_hl(CPU_t *cpu, Memory_t *memory);
 
+static int ldi(CPU_t *cpu, Memory_t *memory);
+static int ldir(CPU_t *cpu, Memory_t *memory);
+static int ldd(CPU_t *cpu, Memory_t *memory);
+static int lddr(CPU_t *cpu, Memory_t *memory);
+
+static int ld_nn_bc_imm(CPU_t *cpu, Memory_t *memory);
+static int ld_nn_de_imm(CPU_t *cpu, Memory_t *memory);
+static int ld_nn_hl_imm(CPU_t *cpu, Memory_t *memory);
+static int ld_nn_sp_imm(CPU_t *cpu, Memory_t *memory);
+
+static int ld_r_a(CPU_t *cpu, Memory_t *memory);
+static int ld_a_r(CPU_t *cpu, Memory_t *memory);
+
+
 // OTHER INSTRUCTION    -----------------------------------------------------------------------------
 static int bit_op(CPU_t *cpu, Memory_t *memory);
 static int ix_op(CPU_t *cpu, Memory_t *memory);
@@ -367,15 +400,78 @@ static int ei(CPU_t *cpu, Memory_t *memory);
 
 // PORT     -----------------------------------------------------------------------------
 static int in_a_n(CPU_t *cpu, Memory_t *memory);
+static int in_b_c(CPU_t *cpu, Memory_t *memory);
+static int in_d_c(CPU_t *cpu, Memory_t *memory);
+static int in_e_c(CPU_t *cpu, Memory_t *memory);
+static int in_h_c(CPU_t *cpu, Memory_t *memory);
+static int in_l_c(CPU_t *cpu, Memory_t *memory);
+static int ini(CPU_t *cpu, Memory_t *memory);
+static int inir(CPU_t *cpu, Memory_t *memory);
+static int in_c_c(CPU_t *cpu, Memory_t *memory);
+static int in_a_c(CPU_t *cpu, Memory_t *memory);
+
+static int in0_c_n(CPU_t *cpu, Memory_t *memory);
+static int in0_e_n(CPU_t *cpu, Memory_t *memory);
+static int in0_l_n(CPU_t *cpu, Memory_t *memory);
+static int in0_a_n(CPU_t *cpu, Memory_t *memory);
+
 static int out_n_a_addr(CPU_t *cpu, Memory_t *memory);
+static int out_c_b(CPU_t *cpu, Memory_t *memory);
+static int out_c_d(CPU_t *cpu, Memory_t *memory);
+static int out_c_h(CPU_t *cpu, Memory_t *memory);
+static int out_c_0(CPU_t *cpu, Memory_t *memory);
+static int out_c_c(CPU_t *cpu, Memory_t *memory);
+static int out_c_e(CPU_t *cpu, Memory_t *memory);
+static int out_c_l(CPU_t *cpu, Memory_t *memory);
+static int out_c_a(CPU_t *cpu, Memory_t *memory);
+static int outi(CPU_t *cpu, Memory_t *memory);
+static int otir(CPU_t *cpu, Memory_t *memory);
+
+static int out0_c_n(CPU_t *cpu, Memory_t *memory);
+static int out0_e_n(CPU_t *cpu, Memory_t *memory);
+static int out0_l_n(CPU_t *cpu, Memory_t *memory);
+static int out0_a_n(CPU_t *cpu, Memory_t *memory);
+
 static int daa(CPU_t *cpu, Memory_t *memory);
 static int scf(CPU_t *cpu, Memory_t *memory);
 
+static int otim(CPU_t *cpu, Memory_t *memory);
+static int otimr(CPU_t *cpu, Memory_t *memory);
+static int otdm(CPU_t *cpu, Memory_t *memory);
+static int otdmr(CPU_t *cpu, Memory_t *memory);
+static int outd(CPU_t *cpu, Memory_t *memory);
+static int otdr(CPU_t *cpu, Memory_t *memory);
+
+// TST      -----------------------------------------------------------------------------
+static int tst_b(CPU_t *cpu, Memory_t *memory);
+static int tst_d(CPU_t *cpu, Memory_t *memory);
+static int tst_h(CPU_t *cpu, Memory_t *memory);
+static int tst_c(CPU_t *cpu, Memory_t *memory);
+static int tst_e(CPU_t *cpu, Memory_t *memory);
+static int tst_l(CPU_t *cpu, Memory_t *memory);
+static int tst_a(CPU_t *cpu, Memory_t *memory);
+static int tst_hl_addr(CPU_t *cpu, Memory_t *memory);
+static int tst_n(CPU_t *cpu, Memory_t *memory);
+static int tstio_n(CPU_t *cpu, Memory_t *memory);
+
+// MULT     -----------------------------------------------------------------------------
+static int mlt_bc(CPU_t *cpu, Memory_t *memory);
+static int mlt_de(CPU_t *cpu, Memory_t *memory);
+static int mlt_hl(CPU_t *cpu, Memory_t *memory);
+static int mlt_sp(CPU_t *cpu, Memory_t *memory);
+
+// IM       -----------------------------------------------------------------------------
+static int im_0(CPU_t *cpu, Memory_t *memory);
+static int im_1(CPU_t *cpu, Memory_t *memory);
+static int im_2(CPU_t *cpu, Memory_t *memory);
 // EXTRA    -----------------------------------------------------------------------------
 static int cpl(CPU_t *cpu, Memory_t *memory);
 static int ccf(CPU_t *cpu, Memory_t *memory);
+static int neg(CPU_t *cpu, Memory_t *memory);
+static int slp(CPU_t *cpu, Memory_t *memory);
+static int rld(CPU_t *cpu, Memory_t *memory);
 
-
+// Instruction table -----------------------------------------------------------------
 static const InstructionHandler mainInstructionTable[MAX_INSTRUCTION_COUNT] = 
 {
 /*      0               1               2               3               4               5               6               7               8               9                   A                   B               C               D           E               F*/
@@ -397,26 +493,26 @@ static const InstructionHandler mainInstructionTable[MAX_INSTRUCTION_COUNT] =
 /*0xF*/ ret_p,          pop_af,         jp_p_nn,        di,             call_p_nn,      push_af,        or_n,           rst_30h,        ret_m,          ld_sp_hl,           jp_m_nn,            ei,             call_m_nn,      iy_op,      cp_n,           rst_38h
 };
 
-//static const InstructionHandler miscInstructionTable[MAX_INSTRUCTION_COUNT] =
-//{
+static const InstructionHandler miscInstructionTable[MAX_INSTRUCTION_COUNT] =
+{
 /*      0               1               2               3               4               5               6               7               8               9                   A                   B               C               D           E               F*/
-/*0x0*/ //noFunc,         noFunc,         noFunc,         noFunc,         tst_b,          noFunc,         noFunc,         noFunc,         noFunc,         noFunc,             noFunc,             noFunc,         tst_c,          noFunc,     noFunc,         noFunc,
-/*0x1*/ //noFunc,         noFunc,         noFunc,         noFunc,         tst_d,          noFunc,         noFunc,         rla,            jr_d,           add_hl_de_imm,      ld_a_de_addr,       dec_de,         inc_e,          dec_e,      ld_e_n,         rra,
-/*0x2*/ //noFunc,         noFunc,         noFunc,         noFunc,         tst_h,          noFunc,         noFunc,         daa,            jr_z_b,         add_hl_hl_imm,      ld_hl_nn_addr,      dec_hl,         inc_l,          dec_l,      ld_l_n,         cpl,
-/*0x3*/ //noFunc,         noFunc,         noFunc,         noFunc,         tst_hl_addr,    noFunc,         noFunc,         scf,            jr_c_b,         add_hl_sp_imm,      ld_a_nn_addr,       dec_sp,         inc_a,          dec_a,      ld_a_n,         ccf,
-/*0x4*/ //in_b_c,         out_c_b,        sbc_hl_bc,      ld_nn_bc_imm,   neg,            retn,           im_0,         ld_b_a,         ld_c_b,         ld_c_c,             ld_c_d,             ld_c_e,         ld_c_h,         ld_c_l,     ld_c_hl_addr,   ld_c_a,
-/*0x5*/ //in_d_c,         out_c_d,        sbc_hl_de,      ld_nn_de_imm,   noFunc,         noFunc,         im_1,         ld_d_a,         ld_d_b,         ld_e_c,             ld_e_d,             ld_e_e,         ld_e_h,         ld_e_l,     ld_e_hl_addr,   ld_e_a,
-/*0x6*/ //in_h_c,         out_c_h,        sbc_hl_hl,      ld_nn_hl_imm,   tst_n,          noFunc,         noFunc,         ld_h_a,         ld_h_b,         ld_l_c,             ld_l_d,             ld_l_e,         ld_l_h,         ld_l_l,     ld_l_hl_addr,   ld_l_a,
-/*0x7*/ //noFunc,         out_c_0,        sbc_hl_sp,      ld_nn_sp_imm,   tstio_n,        noFunc,         slp,         ld_hl_a_addr,   ld_hl_b_addr,   ld_a_c,             ld_a_d,             ld_a_e,         ld_a_h,         ld_a_l,     ld_a_hl_addr,   ld_a_a,
-/*0x8*/ //noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         add_a_a,        adc_a_b,        adc_a_c,            adc_a_d,            adc_a_e,        adc_a_h,        adc_a_l,    adc_a_hl_addr,  adc_a_a,
-/*0x9*/ //noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         sub_hl_addr,    sub_a,          sbc_b,          sbc_c,              sbc_d,              sbc_e,          sbc_h,          sbc_l,      sbc_hl_addr,    sbc_a_a,
-/*0xA*/ //ldi,            cpi,            ini,            outi,           noFunc,         noFunc,         noFunc,         and_a,          xor_b,          xor_c,              xor_d,              xor_e,          xor_h,          xor_l,      xor_hl_addr,    xor_a,
-/*0xB*/ //ldir,           cpir,           inir,           otir,           noFunc,         noFunc,         noFunc,         or_a,           cp_b,           cp_c,               cp_d,               cp_e,           cp_h,           cp_l,       cp_hl_addr,     cp_a,
-/*0xC*/ //noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_00h,        ret_z,          ret,                jp_z_nn,            bit_op,         call_z_nn,      call_nn,    adc_a_n,        rst_08h,
-/*0xD*/ //noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_10h,        ret_c,          exx,                jp_c_nn,            in_a_n,         call_c_nn,      ix_op,      sbc_a_n,        rst_18h,
-/*0xE*/ //noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_20h,        ret_pe,         ret,                jp_hl_addr,         ex_de_hl,       call_pe_nn,     misc_op,    xor_n,          rst_28h,
-/*0xF*/ //noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_30h,        ret_m,          ld_sp_hl,           jp_m_nn,            ei,             call_m_nn,      iy_op,      cp_n,           rst_38h
-//};
+/*0x0*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_b,          noFunc,         noFunc,         noFunc,         in0_c_n,        out0_c_n,           noFunc,             noFunc,         tst_c,          noFunc,     noFunc,         noFunc,
+/*0x1*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_d,          noFunc,         noFunc,         rla,            in0_e_n,        out0_e_n,           noFunc,             noFunc,         tst_e,          noFunc,     noFunc,         noFunc,
+/*0x2*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_h,          noFunc,         noFunc,         daa,            in0_l_n,        out0_l_n,           noFunc,             noFunc,         tst_l,          noFunc,     noFunc,         noFunc,
+/*0x3*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_hl_addr,    noFunc,         noFunc,         scf,            in0_a_n,        out0_a_n,           noFunc,             noFunc,         tst_a,          noFunc,     noFunc,         noFunc,
+/*0x4*/ in_b_c,         out_c_b,        sbc_hl_bc,      ld_nn_bc_addr,  neg,            retn,           im_0,           ld_b_a,         in_c_c,         out_c_c,            adc_hl_bc,          ld_bc_nn_addr,  mlt_bc,         reti,       noFunc,         ld_r_a,
+/*0x5*/ in_d_c,         out_c_d,        sbc_hl_de,      ld_nn_de_addr,  noFunc,         noFunc,         im_1,           ld_d_a,         in_e_c,         out_c_e,            adc_hl_de,          ld_de_nn_addr,  mlt_de,         noFunc,     im_2,           ld_a_r,
+/*0x6*/ in_h_c,         out_c_h,        sbc_hl_hl,      ld_nn_hl_addr,  tst_n,          noFunc,         noFunc,         ld_h_a,         in_l_c,         out_c_l,            adc_hl_hl,          ld_hl_nn_addr,  mlt_hl,         noFunc,     noFunc,         rld,
+/*0x7*/ noFunc,         out_c_0,        sbc_hl_sp,      ld_nn_sp_addr,  tstio_n,        noFunc,         slp,            ld_hl_a_addr,   in_a_c,         out_c_a,            adc_hl_sp,          ld_sp_nn_addr,  mlt_sp,         noFunc,     noFunc,         noFunc,
+/*0x8*/ noFunc,         noFunc,         noFunc,         otim,           noFunc,         noFunc,         noFunc,         add_a_a,        noFunc,         noFunc,             noFunc,             adc_a_e,        noFunc,         noFunc,     noFunc,         noFunc,
+/*0x9*/ noFunc,         noFunc,         noFunc,         otimr,          noFunc,         noFunc,         noFunc,         sub_hl_addr,    noFunc,         noFunc,             noFunc,             otdm,           noFunc,         noFunc,     noFunc,         noFunc,
+/*0xA*/ ldi,            cpi,            ini,            outi,           noFunc,         noFunc,         noFunc,         and_a,          noFunc,         ldd,                noFunc,             otdmr,          noFunc,         noFunc,     noFunc,         noFunc,
+/*0xB*/ ldir,           cpir,           inir,           otir,           noFunc,         noFunc,         noFunc,         or_a,           noFunc,         lddr,               noFunc,             outd,           noFunc,         noFunc,     noFunc,         noFunc,
+/*0xC*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_00h,        noFunc,         noFunc,             noFunc,             otdr,           noFunc,         noFunc,     noFunc,         noFunc,
+/*0xD*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_10h,        noFunc,         noFunc,             noFunc,             noFunc,         noFunc,         noFunc,     noFunc,         noFunc,
+/*0xE*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_20h,        noFunc,         noFunc,             noFunc,             noFunc,         noFunc,         noFunc,     noFunc,         noFunc,
+/*0xF*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_30h,        noFunc,         noFunc,             noFunc,             noFunc,         noFunc,         noFunc,     noFunc,         noFunc,
+};
 
 int executeInstruction(CPU_t *cpu, Memory_t *memory)
 {

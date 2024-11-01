@@ -1,4 +1,5 @@
 #include "mem.h"
+#include <string.h>
 
 void memoryInit(Memory_t* memory)
 {
@@ -14,10 +15,7 @@ void memoryInit(Memory_t* memory)
         return;
     }
 
-    for(int i = 0; i < MEMORY_SIZE; i++)
-    {
-        memory->data[i] = 0x00;
-    }
+    memset(memory->data, 0x00, MEMORY_SIZE);
 }
 
 void memoryDestroy(Memory_t* memory)

@@ -48,6 +48,17 @@ class Memory
     +storeWord(memory *Memory, address word, value word): void
 }
 
+class Graphics
+{
+    +graphicsInit(argc: int, arv char**): void
+    +graphicsDestroy(): void
+}
+
+class Emulator
+{
+    +emulatorInit(argc: int, arv char**): void
+    +emulatorDestroy(): void
+}
 
 CPU "1" *-left- "1" Flags
 CPU "1" o-right- "1" Memory
