@@ -21,11 +21,16 @@ typedef enum
     C80_ERROR_ROM_FILE_TOO_LARGE,
     C80_ERROR_ROM_FILE_READ_ERROR,
     C80_ERROR_ROM_FILE_WRITE_ERROR,
-    C80_ERROR_ROM_STORE_BYTE_ERROR
+    C80_ERROR_ROM_STORE_BYTE_ERROR,
     
+    // CPU errors
+    C80_ERROR_CPU_INIT_ERROR,
+    C80_ERROR_CPU_DESTROY_ERROR,
+    C80_ERROR_CPU_INVALID_OPCODE
+
 } C80_Error_t;
 
-void initErrorStack();
+void errorStackInit();
 
 void pollError();
 void setError(C80_Error_t error);

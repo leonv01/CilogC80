@@ -36,11 +36,13 @@ static const char *errorMessages[] =
     "Error writing ROM file",
     "Error trying to store byte in ROM"
 
-    // RAM errors
-
+    // CPU errors
+    "Error initializing CPU",
+    "Error destroying CPU",
+    "Invalid opcode"
 };
 
-void initErrorStack()
+void errorStackInit()
 {
     errorStack.topIndex = -1;
 }

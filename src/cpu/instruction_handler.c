@@ -1,6 +1,9 @@
 #include "instruction_handler.h"
+
 #include <stdio.h>
+
 #include "stdbool.h"
+#include "error_handler.h"
 
 #define MAX_INSTRUCTION_COUNT 256
 
@@ -775,7 +778,7 @@ static void ldPair(CPU_t *cpu, byte_t *upperByte, byte_t *lowerByte, word_t valu
 // -----------------------------------------------------------------------------
 static int noFunc(CPU_t *cpu, Memory_t *memory)
 {
-    printf("Error\n");
+    setError(C80_ERROR_CPU_INVALID_OPCODE);
     return 0;
 }
 

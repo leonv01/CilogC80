@@ -48,12 +48,6 @@ class Memory
     +storeWord(memory *Memory, address word, value word): void
 }
 
-class Graphics
-{
-    +graphicsInit(argc: int, arv char**): void
-    +graphicsDestroy(): void
-}
-
 class Emulator
 {
     +emulatorInit(argc: int, arv char**): void
