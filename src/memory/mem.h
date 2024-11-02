@@ -7,10 +7,16 @@
 #include "utils.h"
 
 #define MEMORY_SIZE 0x10000
+#define ROM_SIZE 0x2000
+#define RAM_SIZE MEMORY_SIZE - ROM_SIZE
 
 typedef struct Memory_t
 {
-    byte_t* data;
+    byte_t* ram;
+    size_t ramSize;
+
+    byte_t* rom;
+    size_t romSize;
 } Memory_t;
 
 void memoryInit(Memory_t* memory);

@@ -4,6 +4,9 @@ project(CilogC80 C)
 # Set the C standard
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
+# Set Clang as the compiler
+#set(CMAKE_C_COMPILER clang)
+#set(CMAKE_CXX_COMPILER clang++)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
@@ -24,6 +27,7 @@ include_directories(src/memory)
 include_directories(src/emulator)
 include_directories(extern/unity/src)
 
+# Include GTK4 directories
 include_directories(${GTK4_INCLUDE_DIRS})
 
 # Include GTK directories
