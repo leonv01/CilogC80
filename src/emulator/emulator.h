@@ -1,7 +1,7 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
-void emulatorInit();
+void emulatorInit(int argc, char** argv);
 void emulatorRun();
 void emulatorStop();
 void emulatorReset();

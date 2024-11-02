@@ -5,5 +5,5 @@
 
 int main(int argc, char *argv[]) 
 {
-    return graphicsInit(argc, argv);
+    emulatorInit(argc, argv);
 }

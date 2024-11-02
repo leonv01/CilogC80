@@ -4,15 +4,18 @@
 #include "memory.h"
 #include "utils.h"
 #include "stdbool.h"
+#include "graphics.h"
 
 static CPU_t        cpu;
 static Memory_t     memory;
 static bool         emulationRunning = false;
 
-void emulatorInit()
+void emulatorInit(int argc, char** argv)
 {
     cpuInit(&cpu);
     memoryInit(&memory);
+
+    graphicsInit(argc, argv);
 }
 
 void emulatorRun()

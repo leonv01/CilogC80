@@ -1,5 +1,5 @@
 #include "instruction_handler.h"
-
+#include <stdio.h>
 #include "stdbool.h"
 
 #define MAX_INSTRUCTION_COUNT 256
@@ -126,6 +126,7 @@ static int sbc_e(CPU_t *cpu, Memory_t *memory);
 static int sbc_h(CPU_t *cpu, Memory_t *memory);
 static int sbc_l(CPU_t *cpu, Memory_t *memory);
 static int sbc_hl_addr(CPU_t *cpu, Memory_t *memory);
+
 static int sbc_hl_bc(CPU_t *cpu, Memory_t *memory);
 static int sbc_hl_de(CPU_t *cpu, Memory_t *memory);
 static int sbc_hl_hl(CPU_t *cpu, Memory_t *memory);
@@ -464,6 +465,7 @@ static int mlt_sp(CPU_t *cpu, Memory_t *memory);
 static int im_0(CPU_t *cpu, Memory_t *memory);
 static int im_1(CPU_t *cpu, Memory_t *memory);
 static int im_2(CPU_t *cpu, Memory_t *memory);
+
 // EXTRA    -----------------------------------------------------------------------------
 static int cpl(CPU_t *cpu, Memory_t *memory);
 static int ccf(CPU_t *cpu, Memory_t *memory);
@@ -603,6 +605,13 @@ static void addToRegisterWithCarry(CPU_t *cpu, byte_t *reg, byte_t value)
     setFlags(cpu, *reg, value, result, false);
     *reg = result & 0xFF;
 }
+static void addToRegisterPairWithCarry(CPU_t *cpu, word_t value1, word_t value2)
+{
+    dword_t result = (dword_t)(value1 + value2 + cpu->F.C);
+    setFlagsWord(cpu, value1, value2, result);
+    cpu->H = cpu->H + value1;   // TODO: May change
+    cpu->L = cpu->L + value2;
+}
 static void incrementRegister(CPU_t *cpu, byte_t *reg)
 {
     word_t result = (word_t)(*reg + 1);
@@ -627,6 +636,13 @@ static void subtractFromRegisterWithCarry(CPU_t *cpu, byte_t value)
     word_t result = (word_t)(cpu->A - value - cpu->F.C);
     setFlags(cpu, cpu->A, value, result, true);
     cpu->A = result & 0xFF;
+}
+static void subtractFromRegisterPairWithCarry(CPU_t *cpu, word_t val1, word_t val2)
+{
+    dword_t result = (dword_t)(val1 - val2 - cpu->F.C);
+    setFlagsWord(cpu, val1, val2, result);
+    cpu->H = val1 - val2;   // TODO: May change
+    cpu->L = val1 - val2;
 }
 static void decrementRegister(CPU_t *cpu, byte_t *reg)
 {
@@ -757,7 +773,11 @@ static void ldPair(CPU_t *cpu, byte_t *upperByte, byte_t *lowerByte, word_t valu
     *lowerByte = LOWER_BYTE(value);
 }
 // -----------------------------------------------------------------------------
-
+static int noFunc(CPU_t *cpu, Memory_t *memory)
+{
+    printf("Error\n");
+    return 0;
+}
 
 // NOP      -----------------------------------------------------------------------------
 static int nop(CPU_t *cpu, Memory_t *memory)
@@ -890,6 +910,28 @@ static int adc_a_hl_addr(CPU_t *cpu, Memory_t *memory)
     addToRegisterWithCarry(cpu, &cpu->A, val);
     cpu->PC++;
     return 7;
+}
+
+
+static int adc_hl_bc(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->B, cpu->C));
+    return 11;
+}
+static int adc_hl_de(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->D, cpu->E));
+    return 11;
+}
+static int adc_hl_hl(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->H, cpu->L));
+    return 11;
+}
+static int adc_hl_sp(CPU_t *cpu, Memory_t *memory)
+{
+    addToRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), cpu->SP);
+    return 11;
 }
 
 // INC      -----------------------------------------------------------------------------
@@ -1065,6 +1107,28 @@ static int sbc_hl_addr(CPU_t *cpu, Memory_t *memory)
     cpu->PC++;
     return 7;
 }
+
+static int sbc_hl_bc(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->B, cpu->C));
+    return 11;
+}
+static int sbc_hl_de(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->D, cpu->E));
+    return 11;
+}
+static int sbc_hl_hl(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->H, cpu->L));
+    return 11;
+}
+static int sbc_hl_sp(CPU_t *cpu, Memory_t *memory)
+{
+    subtractFromRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), cpu->SP);
+    return 11;
+}
+
 
 // SBC      -----------------------------------------------------------------------------
 static int dec_bc(CPU_t *cpu, Memory_t *memory)
@@ -1339,6 +1403,14 @@ static int cp_hl_addr(CPU_t *cpu, Memory_t *memory)
     cpu->PC++;
     return 7;
 }
+static int cpi(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int cpir(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
 
 // PUSH     -----------------------------------------------------------------------------
 static int push_bc(CPU_t *cpu, Memory_t *memory)
@@ -1514,6 +1586,14 @@ static int ret(CPU_t *cpu, Memory_t *memory)
     cpu->PC = TO_WORD(upperByte, lowerByte);
 
     return 10;
+}
+static int retn(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int reti(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
 }
 
 // ROTATE   -----------------------------------------------------------------------------
@@ -2281,6 +2361,73 @@ static int ld_sp_hl(CPU_t *cpu, Memory_t *memory)
     return 6;
 }
 
+static int ld_bc_nn_addr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ld_de_nn_addr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ld_sp_nn_addr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ld_nn_bc_addr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ld_nn_de_addr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ld_nn_sp_addr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ldi(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ldir(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ldd(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int lddr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+
+static int ld_nn_bc_imm(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ld_nn_de_imm(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ld_nn_hl_imm(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ld_nn_sp_imm(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+
+static int ld_r_a(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+static int ld_a_r(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:
+}
+
 // OTHER INSTRUCTION    -----------------------------------------------------------------------------
 static int bit_op(CPU_t *cpu, Memory_t *memory)
 {
@@ -2378,6 +2525,215 @@ static int scf(CPU_t *cpu, Memory_t *memory)
 
     return 4;
 }
+static int in_b_c(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int in_d_c(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int in_e_c(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int in_h_c(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int in_l_c(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int ini(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int inir(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int in_c_c(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int in_a_c(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+
+static int in0_c_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int in0_e_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int in0_l_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int in0_a_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out_c_b(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out_c_d(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out_c_h(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out_c_0(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out_c_c(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out_c_e(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out_c_l(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out_c_a(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int outi(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int otir(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+
+static int out0_c_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out0_e_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out0_l_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int out0_a_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+
+static int otim(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int otimr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int otdm(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int otdmr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int outd(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int otdr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+
+// TST      -----------------------------------------------------------------------------
+static int tst_b(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+static int tst_d(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+static int tst_h(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+static int tst_c(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+static int tst_e(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+static int tst_l(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+static int tst_a(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+static int tst_hl_addr(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+static int tst_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+static int tstio_n(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO:    
+}
+
+// MULT     -----------------------------------------------------------------------------
+static int mlt_bc(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int mlt_de(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int mlt_hl(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int mlt_sp(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+
+// IM       -----------------------------------------------------------------------------
+static int im_0(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int im_1(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int im_2(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
 
 // EXTRA    -----------------------------------------------------------------------------
 static int cpl(CPU_t *cpu, Memory_t *memory)
@@ -2396,5 +2752,16 @@ static int ccf(CPU_t *cpu, Memory_t *memory)
 
     return 4;
 }
-
+static int neg(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int slp(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
+static int rld(CPU_t *cpu, Memory_t *memory)
+{
+    // TODO
+}
 // -----------------------------------------------------------------------------
