@@ -59,14 +59,5 @@ void cpuReset(CPU_t* cpu);
  */
 void cpuStep(CPU_t* cpu, Memory_t* memory);
 
-/**
- * @brief Execute one step of the CPU
- * 
- * @param cpu 
- * @param memory 
- * @return int 
- */
-//int cpuExecute(CPU_t* cpu, Memory_t* memory);
-
 #endif
 

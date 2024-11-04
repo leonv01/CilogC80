@@ -12,7 +12,7 @@
 
 typedef enum
 {
-    EMULATION_STATE_STOPPED,
+    EMULATION_STATE_STOPPED = 0,
     EMULATION_STATE_RUNNING,
     EMULATION_STATE_PAUSED
 } C80_EmulationState_t;
@@ -44,7 +44,7 @@ static void pauseEmulationCallback(GSimpleAction *action, GVariant *parameter, g
 static void stopEmulationCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data);
 
 // GTK functions
-int graphicsInit(int argc, char **argv);
+static int graphicsInit(int argc, char **argv);
 static void activate(GtkApplication *app, gpointer user_data);
 static gpointer emulatorThreadFunc(gpointer userData);
 static gboolean updateGuiWithEmulationState(gpointer userData);
@@ -83,7 +83,7 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_window_present(GTK_WINDOW(window));
 }
 
-int graphicsInit(int argc, char **argv)
+static int graphicsInit(int argc, char **argv)
 {
     GtkApplication *app;
     int status;

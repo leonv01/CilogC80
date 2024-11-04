@@ -17,6 +17,10 @@ typedef struct Memory_t
 
     byte_t* rom;
     size_t romSize;
+
+    byte_t* io;
+    size_t ioSize;
+
 } Memory_t;
 
 void memoryInit(Memory_t* memory);

@@ -1,61 +1,184 @@
 @startuml
 
-class CPU
+
+' Define the types ----------------------------------------------------------- '
+class CPU_t
+class Memory_t
+class F_t
+class Emulator
+class FileReader
+class ErrorHandler
+class C80_Error_t
+class ErrorStack_t
+class InstructionHandler
+class InstructionHandler_t
+class C80_EmulationState_t
+' ---------------------------------------------------------------------------- '
+
+' Define classes ------------------------------------------------------------- '
+package GTK4 <<library>>
 {
-    +A:     byte
-    +B:     byte
-    +C:     byte
-    +D:     byte
-    +A_:    byte
-    +B_:    byte
-    +C_:    byte
-    +D_:    byte
-    +PC:    word
-    +SP:    word
-    +IR:    byte
-    +Flags: Flags
-    +frequency: float
-    +cyclesInFrame: int
-    +currentCycles: int
-    +totalCycles: int
-
-    +cpuInit(cpu *CPU): void
-    +cpuReset(cpu *CPU): void
-    +cpuEmulate(cpu *CPU, memory *Memory): void
 }
-
-class Flags
+class C80_EmulationState_t <<Enumeration>> {
+    +EMULATION_STATE_STOPPED
+    +EMULATION_STATE_RUNNING
+    +EMULATION_STATE_PAUSED
+}
+class F_t <<bitfield>>
 {
-    C: byte
-    N: byte
-    P: byte
-    _: byte
-    H: byte
-    Z: byte
-    S: byte
+    + C: 1
+    + N: 1
+    + P: 1
+    + H: 1
+    + Z: 1
+    + S: 1
+    + _: 2
 }
-
-class Memory
+class CPU_t
 {
-    +data: *byte
+    +A: byte_t 
+    +B: byte_t
+    +C: byte_t
+    +D: byte_t
+    +E: byte_t
+    +H: byte_t
+    +L: byte_t
 
-    +memoryInit(memory *Memory): void
-    +memoryDestroy(memory *Memory): void
+    +A_: byte_t 
+    +B_: byte_t
+    +C_: byte_t
+    +D_: byte_t
+    +E_: byte_t
+    +H_: byte_t
+    +L_: byte_t
 
-    +fetchByte(memory *Memory, address word): byte
-    +fetchWord(memory *Memory, address word): word
-    +storeByte(memory *Memory, address word, value byte): void
-    +storeWord(memory *Memory, address word, value word): void
+    +F:  F_t
+    +F_: F_t
+
+    +PC: word_t
+    +SP: word_t
+
+    +IX: word_t
+    +IY: word_t
+
+    +I: byte_t
+    +R: byte_t
+
+    +cpuInit(*cpu: CPU_t): void
+    +cpuReset(*cpu: CPU_t): void
+    +cpuStep(*cpu: CPU_t, *memory: Memory_t): void
 }
+class Memory_t
+{
+    +*ram: byte_t
+    +*rom: byte_t
+    +*io: byte_t
 
+    +ramSize: size_t
+    +romSize: size_t
+    +ioSize: size_t
+
+    +memoryInit(*memory: Memory_t): void
+    +memoryDestroy(*memory: Memory_t): void
+    
+    +fetchByte(*memory: Memory_t, address: word_t): byte_t
+    +fetchWord(*memory: Memory_t, address: word_t): word_t
+
+    +storeByte(*memory: Memory_t, address: word_t, data: byte_t): void
+    +storeWord(*memory: Memory_t, address: word_t, data: word_t): void
+}
 class Emulator
 {
-    +emulatorInit(argc: int, arv char**): void
-    +emulatorDestroy(): void
+    {static}-cpu: CPU_t
+    {static}-memory: Memory_t
+    {static}-emulationState: C80_EmulationState_t = EMULATION_STATE_STOPPED
+
+    +emulatorInit(argc: int, **argv: char): void
+    -graphicsInit(argc: int, **argv: char): int
 }
+class FileReader
+{
+    +loadFile(*memory: Memory_t, *filename: char {readonly}): void
+    +saveFile(*memory: Memory_t, *filename: char {readonly}): void
+}
+class ErrorHandler
+{
+    {static}-errorStack: ErrorStack_t
 
-CPU "1" *-left- "1" Flags
-CPU "1" o-right- "1" Memory
+    +setError(error: C80_Error_t): void
+    +clearError(error: C80_Error_t): void
+    +clearAllErrors(): void
+    +hasError(error: C80_Error_t): boolean
+    +getErrorCount(): int
+}
+class ErrorStack_t
+{
+    -*errors: C80_Error_t
+    -errorCount: int
+    -topIndex: int
 
+    +errorStackInit(*errorStack: ErrorStack_t): void
+    +errorStackDestroy(*errorStack: ErrorStack_t): void
+    +pushError(*errorStack: ErrorStack_t, error: C80_Error_t): void
+    +popError(*errorStack: ErrorStack_t): C80_Error_t
+    +peekError(*errorStack: ErrorStack_t): C80_Error_t
+    +getErrorCount(*errorStack: ErrorStack_t): int
+    +clearErrors(*errorStack: ErrorStack_t): void
+    +hasError(*errorStack: ErrorStack_t, error: C80_Error_t): boolean
+    +getError(*errorStack: ErrorStack_t, index: int): C80_Error_t
+    +getErrorString(error: C80_Error_t): char
+}
+class C80_Error_t <<Enumeration>>
+{
+    +C80_ERROR_NONE
+    +C80_ERROR_MEMORY_INIT_ERROR
+    +C80_ERROR_MEMORY_DESTROY_ERROR
+    +C80_ERROR_MEMORY_STORE_BYTE_ERROR
+    +C80_ERROR_MEMORY_STORE_WORD_ERROR
+    +C80_ERROR_MEMORY_FETCH_BYTE_ERROR
+    +C80_ERROR_MEMORY_FETCH_WORD_ERROR
+    ...
+}
+class InstructionHandler
+{
+    {static}-mainInstructionTable: InstructionHandler_t {readonly}
+    {static}-miscInstructionTable: InstructionHandler_t {readonly}
+
+    +executeInstruction(*cpu: CPU_t, *memory: Memory_t): int
+
+    -calculateParity(value: word_t): int
+    -setFlags(*cpu: CPU_t, regA: byte_t, operand: byte_t, result: word_t, isSubtraction: boolean): void
+    -setFlagsWord(*cpu: CPU_t, reg1: word_t, reg2: word_t, result: dword_t): void
+}
+class InstructionHandler_t <<typedef>>
+{
+    +(*InstructionHandler)(*cpu: CPU_t, *memory: Memory_t): int
+}
+' ---------------------------------------------------------------------------- '
+
+' Define class relationships ------------------------------------------------ '
+Emulator .up.> GTK4 : uses
+CPU_t *-right- F_t : contains 
+Emulator *-right- CPU_t : contains
+Emulator *-left- Memory_t : contains
+Emulator .down.> FileReader : uses
+Emulator *-- C80_EmulationState_t : contains
+CPU_t .up.> InstructionHandler : uses
+InstructionHandler *-right- InstructionHandler_t : contains
+ErrorHandler *-right- ErrorStack_t : contains
+ErrorHandler *-down- C80_Error_t : contain
+' ---------------------------------------------------------------------------- '
+
+' Define notes -------------------------------------------------------------- '
+note right of F_t
+    - C: Carry flag (1 bit)
+    - N: Add/Subtract flag (1 bit)
+    - P: Parity/Overflow flag (1 bit)
+    - H: Half carry flag (1 bit)
+    - Z: Zero flag (1 bit)
+    - S: Sign flag (1 bit)
+    - _: Unused (2 bits)
+end note
+' ---------------------------------------------------------------------------- '
 
 @enduml

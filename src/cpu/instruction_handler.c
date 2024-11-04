@@ -7,8 +7,7 @@
 
 #define MAX_INSTRUCTION_COUNT 256
 
-typedef int (*InstructionHandler)(CPU_t *, Memory_t *);
-
+typedef int (*InstructionHandler_t)(CPU_t *, Memory_t *);
 
 // CPU helper functions -------------------------------------------------------
 static byte_t flagsToByte(F_t flags);
@@ -477,7 +476,7 @@ static int slp(CPU_t *cpu, Memory_t *memory);
 static int rld(CPU_t *cpu, Memory_t *memory);
 
 // Instruction table -----------------------------------------------------------------
-static const InstructionHandler mainInstructionTable[MAX_INSTRUCTION_COUNT] = 
+static const InstructionHandler_t mainInstructionTable[MAX_INSTRUCTION_COUNT] = 
 {
 /*      0               1               2               3               4               5               6               7               8               9                   A                   B               C               D           E               F*/
 /*0x0*/ nop,            ld_bc_nn_imm,   ld_bc_a_addr,   inc_bc,         inc_b,          dec_b,          ld_b_n,         rlca,           ex_af_af_,      add_hl_bc_imm,      ld_a_bc_addr,       dec_bc,         inc_c,          dec_c,      ld_c_n,         rrca,
@@ -498,7 +497,7 @@ static const InstructionHandler mainInstructionTable[MAX_INSTRUCTION_COUNT] =
 /*0xF*/ ret_p,          pop_af,         jp_p_nn,        di,             call_p_nn,      push_af,        or_n,           rst_30h,        ret_m,          ld_sp_hl,           jp_m_nn,            ei,             call_m_nn,      iy_op,      cp_n,           rst_38h
 };
 
-static const InstructionHandler miscInstructionTable[MAX_INSTRUCTION_COUNT] =
+static const InstructionHandler_t miscInstructionTable[MAX_INSTRUCTION_COUNT] =
 {
 /*      0               1               2               3               4               5               6               7               8               9                   A                   B               C               D           E               F*/
 /*0x0*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_b,          noFunc,         noFunc,         noFunc,         in0_c_n,        out0_c_n,           noFunc,             noFunc,         tst_c,          noFunc,     noFunc,         noFunc,

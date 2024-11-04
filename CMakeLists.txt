@@ -15,10 +15,13 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
 endif()
-
 # Find PkgConfig and GTK
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK4 REQUIRED gtk4)
+
+# Include GTK4 directories
+include_directories(${GTK4_INCLUDE_DIRS})
+link_directories(${GTK4_LIBRARY_DIRS})
 
 # Include necessary directories
 include_directories(src/utils)
@@ -26,15 +29,6 @@ include_directories(src/cpu)
 include_directories(src/memory)
 include_directories(src/emulator)
 include_directories(extern/unity/src)
-
-# Include GTK4 directories
-include_directories(${GTK4_INCLUDE_DIRS})
-
-# Include GTK directories
-include_directories(${GTK_INCLUDE_DIRS})
-
-# Link GTK libraries
-link_directories(${GTK_LIBRARY_DIRS})
 
 file(GLOB MAIN_SOURCE
         src/main.c
