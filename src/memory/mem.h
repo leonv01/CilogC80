@@ -28,4 +28,6 @@ word_t fetchWord(Memory_t* memory, word_t address);
 void storeByte(Memory_t* memory, word_t address, byte_t value);
 void storeWord(Memory_t* memory, word_t address, word_t value);
 
+void loadFileToMemory(Memory_t* memory, byte_t* buffer, size_t bufferSize);
+
 #endif //CILOG_C80_MEMORY_H

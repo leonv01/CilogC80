@@ -1,6 +1,7 @@
 #include "emulator.h"
 
 #include <gtk/gtk.h>
+#include <glib.h>
 
 #include "cpu.h"
 #include "memory.h"
@@ -9,12 +10,22 @@
 #include "file_reader.h"
 #include "error_handler.h"
 
+typedef enum
+{
+    EMULATION_STATE_STOPPED,
+    EMULATION_STATE_RUNNING,
+    EMULATION_STATE_PAUSED
+} C80_EmulationState_t;
+
 // Global variables
 // -----------------------------------------------------------
 static CPU_t        cpu;
 static Memory_t     memory;
-static bool         emulationRunning = false;
-static GtkWidget *window;
+static C80_EmulationState_t emulationState = EMULATION_STATE_STOPPED;
+
+static GtkWidget    *window;
+static GThread      *emulationThread;
+static GMutex       emulationMutex;
 // -----------------------------------------------------------
 
 // Forward declarations
@@ -33,19 +44,13 @@ static void pauseEmulationCallback(GSimpleAction *action, GVariant *parameter, g
 static void stopEmulationCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data);
 
 // GTK functions
-static void activate(GtkApplication *app, gpointer user_data);
 int graphicsInit(int argc, char **argv);
+static void activate(GtkApplication *app, gpointer user_data);
+static gpointer emulatorThreadFunc(gpointer userData);
+static gboolean updateGuiWithEmulationState(gpointer userData);
 
 // Emulator functions
 void emulatorInit(int argc, char** argv);
-void emulatorRun();
-void emulatorStop();
-void emulatorReset();
-void emulatorStep();
-void emulatorStepOver();
-void emulatorStepOut();
-void emulatorPause();
-void emulatorResume();
 // -----------------------------------------------------------
 
 // Function definitions
@@ -56,72 +61,9 @@ void emulatorInit(int argc, char** argv)
     memoryInit(&memory);
     errorStackInit();
 
-    int status = loadFile(&memory, "../roms/ascii_chars.z80");
-
-    if(status != 0)
-    {
-        printf("Error loading file\n");
-        return;
-    }
-    else
-    {
-        printf("File loaded successfully\n");
-    }
+    loadFile(&memory, "../asm/main.bin");
 
     graphicsInit(argc, argv);
-}
-
-void emulatorRun()
-{
-
-    printf("Running emulator\n");
-    while(emulationRunning == true)
-    {
-        printf("Running\n");
-    }
-    /*
-    while(emulationRunning == true)
-    {
-        //cpuStep(&cpu, &memory);
-
-    }
-    */
-}
-
-void emulatorStop()
-{
-    emulationRunning = false;
-}
-
-void emulatorReset()
-{
-    cpuReset(&cpu);
-    // memoryReset(&memory);
-}
-
-void emulatorStep()
-{
-    // cpuStep(&cpu, &memory);
-}
-
-void emulatorStepOver()
-{
-    //TODO
-}
-
-void emulatorStepOut()
-{
-    //TODO
-}
-
-void emulatorPause()
-{
-    //TODO
-}
-
-void emulatorResume()
-{
-    //TODO
 }
 
 static void activate(GtkApplication *app, gpointer user_data)
@@ -166,8 +108,27 @@ int graphicsInit(int argc, char **argv)
 
     g_object_unref(app);
 
-
     return status;
+}
+
+static gpointer emulatorThreadFunc(gpointer userData)
+{
+    g_mutex_lock(&emulationMutex);
+    emulationState = EMULATION_STATE_RUNNING;
+    g_mutex_unlock(&emulationMutex);
+
+    while(emulationState == EMULATION_STATE_RUNNING)
+    {
+        cpuStep(&cpu, &memory);
+        printf("Running\n");
+        g_idle_add((GSourceFunc)updateGuiWithEmulationState, NULL);
+        g_usleep(1000);
+    }
+}
+static gboolean updateGuiWithEmulationState(gpointer userData)
+{
+    //TODO
+    return G_SOURCE_REMOVE;
 }
 
 static void createMenuBar(GtkWidget *grid)
@@ -242,16 +203,54 @@ static void createRAMView(GtkWidget *grid)
     gtk_grid_attach(GTK_GRID(grid), ramView, 1, 1, 1, 1);
 }
 
+static void onFileDialogResponse(GtkDialog *dialog, int response_id, gpointer user_data) {
+    if (response_id == GTK_RESPONSE_ACCEPT) {
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
+        GListModel *files = gtk_file_chooser_get_files(chooser);
+        
+        if (g_list_model_get_n_items(files) > 0) {
+            GFile *file = G_FILE(g_list_model_get_item(files, 0)); // Get the first selected file
+            char *filename = g_file_get_path(file);
+            g_print("Selected file: %s\n", filename);
+            
+            // Free resources
+            g_free(filename);
+            g_object_unref(file);
+        }
 
-int graphicsDestroy()
-{
-    
-    return 0;
+        g_object_unref(files); // Free the list model
+    }
+
+    // Destroy the dialog after handling the response
+    gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
-static void openCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+static void openCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data) 
 {
-    g_print("Open\n");
+    GtkWidget *dialog;
+    GtkFileFilter *filter;
+
+    // Create a file chooser dialog
+    dialog = gtk_file_chooser_dialog_new(
+        "Open File",
+        GTK_WINDOW(user_data),  // This should correctly reference the window passed from the button
+        GTK_FILE_CHOOSER_ACTION_OPEN,
+        "_Cancel", GTK_RESPONSE_CANCEL,
+        "_Open", GTK_RESPONSE_ACCEPT,
+        NULL
+    );
+
+    // Add a filter for text files (optional)
+    filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, "Text files");
+    gtk_file_filter_add_mime_type(filter, "text/plain");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+    // Connect the response handler
+    g_signal_connect(dialog, "response", G_CALLBACK(onFileDialogResponse), NULL);
+
+    // Show the dialog asynchronously
+    gtk_widget_show(dialog);
 }
 
 static void saveCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data)
@@ -265,16 +264,29 @@ static void quitCallback(GSimpleAction *action, GVariant *parameter, gpointer us
 }
 static void startEmulationCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    g_print("Start\n");
-    emulationRunning = true;
-
-    emulatorRun();
+    if(emulationThread == NULL)
+    {
+        emulationThread = g_thread_new("emulationThread", emulatorThreadFunc, NULL);
+        g_print("Emulation started.\n");
+    }
 }
 static void pauseEmulationCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    g_print("Pause\n");
+    g_print("Emulation paused.\n");
+    g_mutex_lock(&emulationMutex);
+    emulationState = EMULATION_STATE_PAUSED;
+    g_mutex_unlock(&emulationMutex);
 }
 static void stopEmulationCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    g_print("Stop\n");
+    g_mutex_lock(&emulationMutex);
+    emulationState = EMULATION_STATE_STOPPED;
+    g_mutex_unlock(&emulationMutex);
+
+    if(emulationThread != NULL)
+    {
+        g_thread_join(emulationThread);
+        emulationThread = NULL;
+        g_print("Emulation stopped.\n");
+    }
 }

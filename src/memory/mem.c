@@ -92,6 +92,7 @@ void storeByte(Memory_t* memory, word_t address, byte_t value)
     {
         if(address < ROM_SIZE)
         {
+            memory->rom[address] = value;
             setError(C80_ERROR_MEMORY_STORE_BYTE_ERROR);
         }
         else
@@ -112,4 +113,26 @@ void storeWord(Memory_t* memory, word_t address, word_t value)
         storeByte(memory, address, value & 0xFF);
         storeByte(memory, address + 1, value >> 8);
     }
+}
+
+void loadFileToMemory(Memory_t* memory, byte_t* buffer, size_t bufferSize)
+{
+    if(memory == NULL || memory->ram == NULL || memory->rom == NULL)
+    {
+        return;
+    }
+
+    if(buffer == NULL || bufferSize == 0)
+    {
+        setError(C80_ERROR_ROM_STORE_BYTE_ERROR);
+        return;
+    }
+
+    if(bufferSize > ROM_SIZE)
+    {
+        setError(C80_ERROR_ROM_FILE_TOO_LARGE);
+        return;
+    }
+
+    memcpy(memory->rom, buffer, bufferSize);
 }

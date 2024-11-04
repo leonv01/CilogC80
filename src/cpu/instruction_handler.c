@@ -522,6 +522,7 @@ static const InstructionHandler miscInstructionTable[MAX_INSTRUCTION_COUNT] =
 int executeInstruction(CPU_t *cpu, Memory_t *memory)
 {
     byte_t opcode = fetchByte(memory, cpu->PC);
+    cpu->PC++;
 
     int cycles = mainInstructionTable[opcode](cpu, memory);
 

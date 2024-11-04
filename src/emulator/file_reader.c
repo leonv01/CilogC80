@@ -13,18 +13,25 @@ int loadFile(Memory_t *memory, const char *filename)
         fseek(file, 0, SEEK_END);
         long fileSize = ftell(file);
         rewind(file);
-        /*
 
-        if(fileSize > memory->size)
+        byte_t *buffer = (byte_t*) malloc(fileSize);
+
+        if(buffer == NULL)
         {
             returnCode = -2;
         }
         else
         {
-            fread(memory->data, sizeof(uint8_t), fileSize, file);
+            fread(buffer, 1, fileSize, file);
             fclose(file);
         }
-        */
+
+        for(int i = 0; i < fileSize; i++)
+        {
+            storeByte(memory, i, buffer[i]);
+        }
+
+        //loadFileToMemory(memory, buffer, fileSize);
     }
 }
 

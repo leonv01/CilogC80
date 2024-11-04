@@ -11,8 +11,6 @@
 
 #define MAX_INSTRUCTION_COUNT 256
 
-int cpuExecute(CPU_t *cpu, Memory_t *memory);
-
 void cpuInit(CPU_t *cpu)
 {
     if (cpu == NULL)
@@ -53,7 +51,30 @@ void cpuReset(CPU_t *cpu)
     cpuInit(cpu);
 }
 
-void cpuEmulate(CPU_t *cpu, Memory_t *memory)
+void cpuStep(CPU_t *cpu, Memory_t *memory)
 {
-    
+    if (cpu == NULL || memory == NULL)
+    {
+        return;
+    }
+
+    int iterations = 0;
+    while (iterations < MAX_ITERATIONS)
+    {
+        if (cpu->cyclesInFrame <= 0)
+        {
+            cpu->cyclesInFrame = CYCLES_PER_FRAME(cpu->frequency);
+        }
+
+        int cycles = executeInstruction(cpu, memory);
+        cpu->cyclesInFrame -= cycles;
+        cpu->totalCycles += cycles;
+
+        if (cpu->cyclesInFrame <= 0)
+        {
+            break;
+        }
+
+        iterations++;
+    }
 }

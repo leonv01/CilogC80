@@ -57,7 +57,7 @@ void cpuReset(CPU_t* cpu);
  * @param cpu 
  * @param memory 
  */
-void cpuEmulate(CPU_t* cpu, Memory_t* memory);
+void cpuStep(CPU_t* cpu, Memory_t* memory);
 
 /**
  * @brief Execute one step of the CPU

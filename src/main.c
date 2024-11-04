@@ -5,6 +5,4 @@
 int main(int argc, char *argv[]) 
 {
     emulatorInit(argc, argv);
-
-    emulatorRun();
 }
