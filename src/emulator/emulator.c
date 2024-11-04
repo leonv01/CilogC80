@@ -31,9 +31,11 @@ static GMutex       emulationMutex;
 // Forward declarations
 // -----------------------------------------------------------
 // Graphics functions
-static void createMenuBar(GtkWidget *grid);
-static void createRegisterView(GtkWidget *grid);
-static void createRAMView(GtkWidget *grid);
+static void createMenuBar(GtkWidget *paned);
+static void createRegisterView(GtkWidget *paned);
+static void createRAMView(GtkWidget *paned);
+static void createTextEditorView(GtkWidget *paned);
+static void createOutputView(GtkWidget *paned);
 
 // Callback functions
 static void openCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data);
@@ -76,9 +78,24 @@ static void activate(GtkApplication *app, gpointer user_data)
     GtkWidget *grid = gtk_grid_new();
     gtk_window_set_child(GTK_WINDOW(window), grid);
 
+    // Create main paned
+    GtkWidget *mainPaned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(grid), mainPaned, 0, 1, 3, 1);
+
+    // Create left and right paned
+    GtkWidget *leftPaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+    gtk_paned_set_start_child(GTK_PANED(mainPaned), leftPaned);
+    gtk_widget_set_size_request(leftPaned, 100, -1);
+
+    GtkWidget *rightPaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+    gtk_paned_set_end_child(GTK_PANED(mainPaned), rightPaned);
+    gtk_widget_set_size_request(rightPaned, 500, -1);
+
     createMenuBar(grid);
-    createRegisterView(grid);
-    createRAMView(grid);
+    createRegisterView(leftPaned);
+    createRAMView(leftPaned);
+    createTextEditorView(rightPaned);
+    createOutputView(rightPaned);
 
     gtk_window_present(GTK_WINDOW(window));
 }
@@ -185,22 +202,57 @@ static void createMenuBar(GtkWidget *grid)
     GtkWidget *menubar = gtk_popover_menu_bar_new_from_model(G_MENU_MODEL(menu));
     g_object_unref(menu);
     gtk_grid_attach(GTK_GRID(grid), menubar, 0, 0, 2, 1);
+    gtk_widget_set_hexpand(menubar, TRUE);
 }
-
-static void createRegisterView(GtkWidget *grid)
+static void createRegisterView(GtkWidget *paned)
 {
     GtkWidget *registerView = gtk_frame_new("Register View");
     gtk_widget_set_hexpand(registerView, TRUE);
     gtk_widget_set_vexpand(registerView, TRUE);
-    gtk_grid_attach(GTK_GRID(grid), registerView, 0, 1, 1, 1);
+    gtk_paned_set_start_child(GTK_PANED(paned), registerView);
 }
-
-static void createRAMView(GtkWidget *grid)
+static void createRAMView(GtkWidget *paned)
 {
     GtkWidget *ramView = gtk_frame_new("RAM View");
     gtk_widget_set_hexpand(ramView, TRUE);
     gtk_widget_set_vexpand(ramView, TRUE);
-    gtk_grid_attach(GTK_GRID(grid), ramView, 1, 1, 1, 1);
+    gtk_paned_set_end_child(GTK_PANED(paned), ramView);
+}
+static void createTextEditorView(GtkWidget *paned)
+{
+    GtkWidget *textEditorView = gtk_frame_new("Text Editor View");
+    gtk_widget_set_hexpand(textEditorView, TRUE);
+    gtk_widget_set_vexpand(textEditorView, TRUE);
+    gtk_paned_set_start_child(GTK_PANED(paned), textEditorView);
+
+    GtkWidget *textEditor = gtk_text_view_new();
+    gtk_frame_set_child(GTK_FRAME(textEditorView), textEditor);    
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(textEditor), TRUE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(textEditor), TRUE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(textEditor), GTK_WRAP_WORD);
+    gtk_text_view_set_monospace(GTK_TEXT_VIEW(textEditor), TRUE);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(textEditor), 5);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(textEditor), 5);
+    gtk_text_view_set_top_margin(GTK_TEXT_VIEW(textEditor), 5);
+    gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(textEditor), 5);
+}
+static void createOutputView(GtkWidget *paned)
+{
+    GtkWidget *outputView = gtk_frame_new("Output View");
+    gtk_widget_set_hexpand(outputView, TRUE);
+    gtk_widget_set_vexpand(outputView, TRUE);
+    gtk_paned_set_end_child(GTK_PANED(paned), outputView);
+
+    GtkWidget *outputText = gtk_text_view_new();
+    gtk_frame_set_child(GTK_FRAME(outputView), outputText);
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(outputText), FALSE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(outputText), FALSE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(outputText), GTK_WRAP_WORD);
+    gtk_text_view_set_monospace(GTK_TEXT_VIEW(outputText), TRUE);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(outputText), 5);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(outputText), 5);
+    gtk_text_view_set_top_margin(GTK_TEXT_VIEW(outputText), 5);
+    gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(outputText), 5);
 }
 
 static void onFileDialogResponse(GtkDialog *dialog, int response_id, gpointer user_data) {
