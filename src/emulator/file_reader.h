@@ -10,4 +10,5 @@
 int loadFile(Memory_t *memory, const char *filename);
 int saveFile(Memory_t *memory, const char *filename);
 
+int loadFileIntoBuffer(char **lines, int *lineCount, const char *filename);
 #endif // FILE_READER_H

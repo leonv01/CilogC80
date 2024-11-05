@@ -37,6 +37,10 @@ static void createRAMView(GtkWidget *paned);
 static void createTextEditorView(GtkWidget *paned);
 static void createOutputView(GtkWidget *paned);
 
+static void openFileInNewTab(GtkNotebook *notebook, const char *filename);
+static void closeFileTab(GtkNotebook *notebook, GtkWidget *button);
+static void loadFileIntoTextView(GtkTextView *text_view, const char *filename);
+
 // Callback functions
 static void openCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data);
 static void saveCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data);
@@ -78,6 +82,12 @@ static void activate(GtkApplication *app, gpointer user_data)
     GtkWidget *grid = gtk_grid_new();
     gtk_window_set_child(GTK_WINDOW(window), grid);
 
+    GtkWidget *notebook = gtk_notebook_new();
+    //gtk_grid_attach(GTK_GRID(grid), notebook, 0, 1, 3, 1);
+
+    openFileInNewTab(GTK_NOTEBOOK(notebook), "../asm/file1.txt");
+    openFileInNewTab(GTK_NOTEBOOK(notebook), "../asm/file2.txt");
+
     // Create main paned
     GtkWidget *mainPaned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_grid_attach(GTK_GRID(grid), mainPaned, 0, 1, 3, 1);
@@ -94,8 +104,9 @@ static void activate(GtkApplication *app, gpointer user_data)
     createMenuBar(grid);
     createRegisterView(leftPaned);
     createRAMView(leftPaned);
-    createTextEditorView(rightPaned);
     createOutputView(rightPaned);
+
+    gtk_paned_set_start_child(GTK_PANED(rightPaned), notebook);
 
     gtk_window_present(GTK_WINDOW(window));
 }
@@ -253,6 +264,63 @@ static void createOutputView(GtkWidget *paned)
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(outputText), 5);
     gtk_text_view_set_top_margin(GTK_TEXT_VIEW(outputText), 5);
     gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(outputText), 5);
+}
+static void openFileInNewTab(GtkNotebook *notebook, const char *filename)
+{
+    // Create a new text view for the file content
+    GtkWidget *textView = gtk_text_view_new();
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(textView), TRUE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(textView), TRUE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(textView), GTK_WRAP_WORD);
+    gtk_text_view_set_monospace(GTK_TEXT_VIEW(textView), TRUE);
+
+    // Load the file content into the text view
+    loadFileIntoTextView(GTK_TEXT_VIEW(textView), filename);
+
+    // Create a new scrollable container for the text view
+    GtkWidget *scrolledWindow = gtk_scrolled_window_new();
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledWindow), textView);
+    gtk_widget_set_hexpand(scrolledWindow, TRUE);
+    gtk_widget_set_vexpand(scrolledWindow, TRUE);
+
+    // Add the scrollable container as a new tab in the notebook
+    GtkWidget *tabHbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    GtkWidget *tabLabel = gtk_label_new(filename);
+    GtkWidget *tabCloseButton = gtk_button_new_from_icon_name("window-close");
+
+    g_signal_connect(tabCloseButton, "clicked", G_CALLBACK(closeFileTab), notebook);
+    
+    gtk_box_append(GTK_BOX(tabHbox), tabLabel);
+    gtk_box_append(GTK_BOX(tabHbox), tabCloseButton);
+    
+    gtk_notebook_append_page(notebook, scrolledWindow, tabHbox);
+}
+static void loadFileIntoTextView(GtkTextView *textView, const char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        g_warning("Could not open file: %s", filename);
+        return;
+    }
+
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(textView);
+    gtk_text_buffer_set_text(buffer, "", -1); // Clear previous content
+
+    char line[256];
+    GtkTextIter iter;
+    gtk_text_buffer_get_start_iter(buffer, &iter);
+    while (fgets(line, sizeof(line), file)) {
+        gtk_text_buffer_insert(buffer, &iter, line, -1);
+    }
+
+    fclose(file);
+}
+static void closeFileTab(GtkNotebook *notebook, GtkWidget *button)
+{
+    g_print("Close tab\n");
+    GtkWidget *tabBox = gtk_widget_get_parent(button);
+    gint pageNum = gtk_notebook_page_num(notebook, tabBox);
+    g_print("Page number: %d\n", pageNum);
 }
 
 static void onFileDialogResponse(GtkDialog *dialog, int response_id, gpointer user_data) {
