@@ -24,6 +24,8 @@ static Memory_t     memory;
 static C80_EmulationState_t emulationState = EMULATION_STATE_STOPPED;
 
 static GtkWidget    *window;
+static GtkWidget    *notebook;
+static GtkWidget    *grid;
 static GThread      *emulationThread;
 static GMutex       emulationMutex;
 // -----------------------------------------------------------
@@ -79,14 +81,10 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
 
     // Create grid layout
-    GtkWidget *grid = gtk_grid_new();
+    grid = gtk_grid_new();
     gtk_window_set_child(GTK_WINDOW(window), grid);
 
-    GtkWidget *notebook = gtk_notebook_new();
-    //gtk_grid_attach(GTK_GRID(grid), notebook, 0, 1, 3, 1);
-
-    openFileInNewTab(GTK_NOTEBOOK(notebook), "../asm/file1.txt");
-    openFileInNewTab(GTK_NOTEBOOK(notebook), "../asm/file2.txt");
+    notebook = gtk_notebook_new();
 
     // Create main paned
     GtkWidget *mainPaned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
@@ -324,14 +322,51 @@ static void closeFileTab(GtkNotebook *notebook, GtkWidget *button)
 }
 static void onFileChosen(GObject *object, GAsyncResult *result, gpointer userData)
 {
-    g_print("File chosen\n");
+    GFile *file = gtk_file_dialog_open_finish(GTK_FILE_DIALOG(object), result, NULL);
+    if(file == NULL)
+    {
+        g_print("No file chosen.\n");
+        return;
+    }
+    else
+    {
+        const char *filename = g_file_get_path(file);
+        if(filename == NULL)
+        {
+            g_print("Invalid file name.\n");
+            return;
+        }
+        else
+        {
+            g_print("File chosen: %s\n", filename);
+            openFileInNewTab(GTK_NOTEBOOK(notebook), filename);
+        }
+    }
 }
 static void openCallback(GSimpleAction *action, GVariant *parameter, gpointer userData) 
 {
     GtkFileDialog *dialog;
-    GtkFileChooserAction chooserAction = GTK_FILE_CHOOSER_ACTION_OPEN;
+    GtkFileFilter *filterAsm = gtk_file_filter_new();
+    GtkFileFilter *filterBin = gtk_file_filter_new();
+    GtkFileFilter *filterAll = gtk_file_filter_new();
+
+    gtk_file_filter_add_suffix(filterAsm, "asm");
+    gtk_file_filter_set_name(filterAsm, "Assembly files");
+
+    gtk_file_filter_add_suffix(filterBin, "bin");
+    gtk_file_filter_set_name(filterBin, "Binary files");
+
+    gtk_file_filter_add_pattern(filterAll, "*");
+    gtk_file_filter_set_name(filterAll, "All files");
 
     dialog = gtk_file_dialog_new();
+
+    GListStore *filters = g_list_store_new(GTK_TYPE_FILE_FILTER);
+    g_list_store_append(filters, filterAsm);
+    g_list_store_append(filters, filterBin);
+    g_list_store_append(filters, filterAll);
+    gtk_file_dialog_set_filters(GTK_FILE_DIALOG(dialog), G_LIST_MODEL(filters));
+
     gtk_file_dialog_open(
         GTK_FILE_DIALOG(dialog), 
         GTK_WINDOW(window),
@@ -339,7 +374,7 @@ static void openCallback(GSimpleAction *action, GVariant *parameter, gpointer us
         onFileChosen,
         NULL);
 
-
+    g_object_unref(filters);
 }
 
 static void saveCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data)
