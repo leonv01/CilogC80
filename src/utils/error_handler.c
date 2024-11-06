@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#include "utils.h"
+
 #define MAX_ERRORS 128
 
 typedef struct
@@ -59,7 +61,9 @@ void setError(C80_Error_t error)
     errorStack.topIndex++;
     errorStack.errors[errorStack.topIndex].error = error;
 
+#if defined(DEBUG_MODE) && (DEBUG_MODE == 1)
     pollError();
+#endif
 }
 void clearError(C80_Error_t error)
 {

@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#define DEBUG_MODE 0
+
 #define UPPER_NIBBLE(x) ((x >> 4) & 0x0F)
 #define LOWER_NIBBLE(x) (x & 0x0F)
 #define UPPER_BYTE(x) ((x >> 8) & 0xFF)

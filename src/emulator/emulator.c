@@ -322,55 +322,24 @@ static void closeFileTab(GtkNotebook *notebook, GtkWidget *button)
     gint pageNum = gtk_notebook_page_num(notebook, tabBox);
     g_print("Page number: %d\n", pageNum);
 }
-
-static void onFileDialogResponse(GtkDialog *dialog, int response_id, gpointer user_data) {
-    if (response_id == GTK_RESPONSE_ACCEPT) {
-        GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
-        GListModel *files = gtk_file_chooser_get_files(chooser);
-        
-        if (g_list_model_get_n_items(files) > 0) {
-            GFile *file = G_FILE(g_list_model_get_item(files, 0)); // Get the first selected file
-            char *filename = g_file_get_path(file);
-            g_print("Selected file: %s\n", filename);
-            
-            // Free resources
-            g_free(filename);
-            g_object_unref(file);
-        }
-
-        g_object_unref(files); // Free the list model
-    }
-
-    // Destroy the dialog after handling the response
-    gtk_window_destroy(GTK_WINDOW(dialog));
-}
-
-static void openCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data) 
+static void onFileChosen(GObject *object, GAsyncResult *result, gpointer userData)
 {
-    GtkWidget *dialog;
-    GtkFileFilter *filter;
+    g_print("File chosen\n");
+}
+static void openCallback(GSimpleAction *action, GVariant *parameter, gpointer userData) 
+{
+    GtkFileDialog *dialog;
+    GtkFileChooserAction chooserAction = GTK_FILE_CHOOSER_ACTION_OPEN;
 
-    // Create a file chooser dialog
-    dialog = gtk_file_chooser_dialog_new(
-        "Open File",
-        GTK_WINDOW(user_data),  // This should correctly reference the window passed from the button
-        GTK_FILE_CHOOSER_ACTION_OPEN,
-        "_Cancel", GTK_RESPONSE_CANCEL,
-        "_Open", GTK_RESPONSE_ACCEPT,
-        NULL
-    );
+    dialog = gtk_file_dialog_new();
+    gtk_file_dialog_open(
+        GTK_FILE_DIALOG(dialog), 
+        GTK_WINDOW(window),
+        NULL,
+        onFileChosen,
+        NULL);
 
-    // Add a filter for text files (optional)
-    filter = gtk_file_filter_new();
-    gtk_file_filter_set_name(filter, "Text files");
-    gtk_file_filter_add_mime_type(filter, "text/plain");
-    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 
-    // Connect the response handler
-    g_signal_connect(dialog, "response", G_CALLBACK(onFileDialogResponse), NULL);
-
-    // Show the dialog asynchronously
-    gtk_widget_show(dialog);
 }
 
 static void saveCallback(GSimpleAction *action, GVariant *parameter, gpointer user_data)
