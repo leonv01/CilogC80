@@ -10,6 +10,8 @@
 #include "file_reader.h"
 #include "error_handler.h"
 
+// Enums
+// -----------------------------------------------------------
 typedef enum
 {
     EMULATION_STATE_STOPPED = 0,
@@ -17,15 +19,76 @@ typedef enum
     EMULATION_STATE_PAUSED
 } C80_EmulationState_t;
 
+// Data structures
+// -----------------------------------------------------------
+typedef struct TabEntry_t
+{
+    gchar *filename;
+    gint page;
+    struct TabEntry_t *next;
+} TabEntry_t;
+
+void tabEntryInit(TabEntry_t *list)
+{
+    list->filename = NULL;
+    list->page = -1;
+    list->next = NULL;
+}
+
+void addTabEntry(TabEntry_t *list, gchar *filename, gint page)
+{
+    TabEntry_t *entry = list;
+
+    if(entry->filename == NULL)
+    {
+        entry->filename = filename;
+        entry->page = page;
+        entry->next = NULL;
+        return;
+    }
+
+    while(entry->next != NULL)
+    {
+        entry = entry->next;
+    }
+
+    entry->next = malloc(sizeof(TabEntry_t));
+    entry->next->filename = filename;
+    entry->next->page = page;
+    entry->next->next = NULL;
+}
+
+gint removeTabEntry(TabEntry_t *list, gchar *filename)
+{
+    TabEntry_t *entry = list;
+    while(entry->next != NULL)
+    {
+        if(strcmp(entry->next->filename, filename) == 0)
+        {
+            TabEntry_t *temp = entry->next;
+            entry->next = entry->next->next;
+            gint page = temp->page;
+            free(temp);
+            return page;
+        }
+        entry = entry->next;
+    }
+
+    return -1;
+}
+
+
 // Global variables
 // -----------------------------------------------------------
-static CPU_t        cpu;
-static Memory_t     memory;
+static CPU_t                cpu;
+static Memory_t             memory;
 static C80_EmulationState_t emulationState = EMULATION_STATE_STOPPED;
+static TabEntry_t           *tabList = NULL;
 
 static GtkWidget    *window;
 static GtkWidget    *notebook;
 static GtkWidget    *grid;
+static GMenu        *menu;
 static GThread      *emulationThread;
 static GMutex       emulationMutex;
 // -----------------------------------------------------------
@@ -40,7 +103,7 @@ static void createTextEditorView(GtkWidget *paned);
 static void createOutputView(GtkWidget *paned);
 
 static void openFileInNewTab(GtkNotebook *notebook, const char *filename);
-static void closeFileTab(GtkNotebook *notebook, GtkWidget *button);
+static void closeFileTab(GtkWidget *button, gpointer userData);
 static void loadFileIntoTextView(GtkTextView *text_view, const char *filename);
 
 // Callback functions
@@ -68,8 +131,9 @@ void emulatorInit(int argc, char** argv)
     cpuInit(&cpu);
     memoryInit(&memory);
     errorStackInit();
-
-    loadFile(&memory, "../asm/main.bin");
+    
+    tabList = malloc(sizeof(TabEntry_t));
+    tabEntryInit(tabList);
 
     graphicsInit(argc, argv);
 }
@@ -160,12 +224,14 @@ static gboolean updateGuiWithEmulationState(gpointer userData)
 static void createMenuBar(GtkWidget *grid)
 {
     // Create menubar
-    GMenu *menu = g_menu_new();
+    menu = g_menu_new();
 
     // Create file menu
     GMenu *fileMenu = g_menu_new();
+    g_menu_append(fileMenu, "New File", "app.new");
     g_menu_append(fileMenu, "Open", "app.open");
     g_menu_append(fileMenu, "Save", "app.save");
+    g_menu_append(fileMenu, "Save As", "app.save-as");
     g_menu_append(fileMenu, "Exit", "app.quit");
     g_menu_insert_submenu(menu, 0, "File", G_MENU_MODEL(fileMenu));
     g_object_unref(fileMenu);
@@ -263,6 +329,9 @@ static void createOutputView(GtkWidget *paned)
     gtk_text_view_set_top_margin(GTK_TEXT_VIEW(outputText), 5);
     gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(outputText), 5);
 }
+
+// Notebook functions
+// -----------------------------------------------------------
 static void openFileInNewTab(GtkNotebook *notebook, const char *filename)
 {
     // Create a new text view for the file content
@@ -286,7 +355,7 @@ static void openFileInNewTab(GtkNotebook *notebook, const char *filename)
     GtkWidget *tabLabel = gtk_label_new(filename);
     GtkWidget *tabCloseButton = gtk_button_new_from_icon_name("window-close");
 
-    g_signal_connect(tabCloseButton, "clicked", G_CALLBACK(closeFileTab), notebook);
+    g_signal_connect(tabCloseButton, "clicked", G_CALLBACK(closeFileTab), filename);
     
     gtk_box_append(GTK_BOX(tabHbox), tabLabel);
     gtk_box_append(GTK_BOX(tabHbox), tabCloseButton);
@@ -295,30 +364,36 @@ static void openFileInNewTab(GtkNotebook *notebook, const char *filename)
 }
 static void loadFileIntoTextView(GtkTextView *textView, const char *filename)
 {
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        g_warning("Could not open file: %s", filename);
+    GFile *file = g_file_new_for_path(filename);
+    GError *error = NULL;
+    char *contents;
+    gsize length;
+
+    if (!g_file_load_contents(file, NULL, &contents, &length, NULL, &error)) {
+        g_warning("Could not open file: %s", error->message);
+        g_error_free(error);
+        g_object_unref(file);
         return;
     }
 
+    gint currentPage = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+    gchar *gfilename = g_strdup(filename);
+
+    addTabEntry(tabList, gfilename, currentPage);
+
     GtkTextBuffer *buffer = gtk_text_view_get_buffer(textView);
-    gtk_text_buffer_set_text(buffer, "", -1); // Clear previous content
+    gtk_text_buffer_set_text(buffer, contents, length);
 
-    char line[256];
-    GtkTextIter iter;
-    gtk_text_buffer_get_start_iter(buffer, &iter);
-    while (fgets(line, sizeof(line), file)) {
-        gtk_text_buffer_insert(buffer, &iter, line, -1);
-    }
-
-    fclose(file);
+    g_free(contents);
+    g_object_unref(file);
 }
-static void closeFileTab(GtkNotebook *notebook, GtkWidget *button)
+static void closeFileTab(GtkWidget *button, gpointer userData)
 {
-    g_print("Close tab\n");
-    GtkWidget *tabBox = gtk_widget_get_parent(button);
-    gint pageNum = gtk_notebook_page_num(notebook, tabBox);
-    g_print("Page number: %d\n", pageNum);
+    gchar *filename = (gchar *)userData;
+
+    gint pagNum = removeTabEntry(tabList, filename);
+
+    g_print("Close tab %d\n", pagNum);
 }
 static void onFileChosen(GObject *object, GAsyncResult *result, gpointer userData)
 {
@@ -338,9 +413,10 @@ static void onFileChosen(GObject *object, GAsyncResult *result, gpointer userDat
         }
         else
         {
-            g_print("File chosen: %s\n", filename);
             openFileInNewTab(GTK_NOTEBOOK(notebook), filename);
         }
+
+        g_object_unref(file);
     }
 }
 static void openCallback(GSimpleAction *action, GVariant *parameter, gpointer userData) 
