@@ -7,12 +7,13 @@
 
 #define MAX_INSTRUCTION_COUNT 256
 
+/**
+ * @brief Instruction function pointer
+ * 
+ */
 typedef int (*InstructionHandler_t)(CPU_t *, Memory_t *);
 
 // CPU helper functions -------------------------------------------------------
-static byte_t flagsToByte(F_t flags);
-static void byteToFlags(F_t *flags, byte_t value);
-
 static int calculateParity(word_t value);
 static void setFlags(CPU_t *cpu, byte_t regA, byte_t operand, word_t result, bool isSubstraction);
 static void setFlagsWord(CPU_t *cpu, word_t reg1, word_t reg2, dword_t result);
@@ -561,31 +562,6 @@ static void setFlagsWord(CPU_t *cpu, word_t reg1, word_t reg2, dword_t result)
     cpu->F.C = result > 0xFFFF;
 
     cpu->F.N = 0;
-}
-
-static byte_t flagsToByte(F_t flags)
-{
-    return (byte_t)(
-        (flags.S << 7) |
-        (flags.Z << 6) |
-        (flags._ << 5) |
-        (flags.H << 4) |
-        (flags._ << 3) |
-        (flags.P << 2) |
-        (flags.N << 1) |
-        (flags.C)
-    );
-}
-static void byteToFlags(F_t *flags, byte_t value)
-{
-    flags->S = (value & 0x80) >> 7;
-    flags->Z = (value & 0x40) >> 6;
-    flags->_ = (value & 0x20) >> 5;
-    flags->H = (value & 0x10) >> 4;
-    flags->_ = (value & 0x08) >> 3;
-    flags->P = (value & 0x04) >> 2;
-    flags->N = (value & 0x02) >> 1;
-    flags->C = (value & 0x01);
 }
 
 // Helper functions ------------------------------------------------------------

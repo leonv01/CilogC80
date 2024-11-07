@@ -52,7 +52,8 @@ static void quitCallback(GSimpleAction *action, GVariant *parameter, gpointer us
 static void onFileChosen(GObject *object, GAsyncResult *result, gpointer userData);
 // -----------------------------------------------------------
 
-
+// Function definitions
+// -----------------------------------------------------------
 int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
 {
     int status;
@@ -82,7 +83,6 @@ void graphicsDestroy()
 {
 
 }
-
 static void activate(GtkApplication *app, gpointer user_data)
 {
     window = gtk_application_window_new(app);
@@ -117,7 +117,6 @@ static void activate(GtkApplication *app, gpointer user_data)
 
     gtk_window_present(GTK_WINDOW(window));
 }
-
 static gpointer emulatorThreadFunc(gpointer userData)
 {
     g_mutex_lock(&emulationMutex);
@@ -137,11 +136,10 @@ static gboolean updateGuiWithEmulationState(gpointer userData)
     //TODO
     return G_SOURCE_REMOVE;
 }
-
+// -----------------------------------------------------------
 
 // GUI creation functions
 // -----------------------------------------------------------
-
 static void createMenuBar(GtkWidget *grid)
 {
     // Create menubar

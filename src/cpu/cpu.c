@@ -2,14 +2,8 @@
 #include "instructions.h"
 #include "instruction_handler.h"
 
-#include <stdio.h>
-
 #include <stdbool.h>
 
-#define CYCLES_PER_FRAME(x) ((int)((x * 1000000) / 60))
-#define MAX_ITERATIONS 1000000
-
-#define MAX_INSTRUCTION_COUNT 256
 
 void cpuInit(CPU_t *cpu)
 {
@@ -43,7 +37,6 @@ void cpuInit(CPU_t *cpu)
 
     cpu->cyclesInFrame = 0;
     cpu->frequency = 3.5f;
-
 }
 
 void cpuReset(CPU_t *cpu)
@@ -58,23 +51,34 @@ void cpuStep(CPU_t *cpu, Memory_t *memory)
         return;
     }
 
+    int cycles = executeInstruction(cpu, memory);
+    cpu->cyclesInFrame -= cycles;
+    cpu->totalCycles += cycles;
     int iterations = 0;
-    while (iterations < MAX_ITERATIONS)
-    {
-        if (cpu->cyclesInFrame <= 0)
-        {
-            cpu->cyclesInFrame = CYCLES_PER_FRAME(cpu->frequency);
-        }
+}
 
-        int cycles = executeInstruction(cpu, memory);
-        cpu->cyclesInFrame -= cycles;
-        cpu->totalCycles += cycles;
+static byte_t flagsToByte(F_t flags)
+{
+    return (byte_t)(
+        (flags.S << 7) |
+        (flags.Z << 6) |
+        (flags._ << 5) |
+        (flags.H << 4) |
+        (flags._ << 3) |
+        (flags.P << 2) |
+        (flags.N << 1) |
+        (flags.C)
+    );
+}
 
-        if (cpu->cyclesInFrame <= 0)
-        {
-            break;
-        }
-
-        iterations++;
-    }
+static void byteToFlags(F_t *flags, byte_t value)
+{
+    flags->S = (value & 0x80) >> 7;
+    flags->Z = (value & 0x40) >> 6;
+    flags->_ = (value & 0x20) >> 5;
+    flags->H = (value & 0x10) >> 4;
+    flags->_ = (value & 0x08) >> 3;
+    flags->P = (value & 0x04) >> 2;
+    flags->N = (value & 0x02) >> 1;
+    flags->C = (value & 0x01);
 }

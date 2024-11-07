@@ -4,7 +4,6 @@
 #include "memory.h"
 #include "utils.h"
 #include "stdbool.h"
-#include "file_reader.h"
 #include "error_handler.h"
 #include "graphics_interface.h"
 
@@ -26,9 +25,12 @@ static C80_EmulationState_t emulationState = EMULATION_STATE_STOPPED;
 // -----------------------------------------------------------
 
 // Emulator functions
+// -----------------------------------------------------------
 void emulatorInit(int argc, char** argv);
 // -----------------------------------------------------------
 
+// Emulator function definitions
+// -----------------------------------------------------------
 void emulatorInit(int argc, char** argv)
 {
     cpuInit(&cpu);
@@ -37,4 +39,4 @@ void emulatorInit(int argc, char** argv)
     
     graphicsInit(argc, argv, &cpu, &memory);
 }
-
+// -----------------------------------------------------------

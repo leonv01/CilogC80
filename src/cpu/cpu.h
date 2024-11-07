@@ -7,6 +7,10 @@
 #include "utils.h"
 #include "mem.h"
 
+/**
+ * @brief Flag struct
+ * 
+ */
 typedef struct F_t
 {
     byte_t C : 1;
@@ -18,6 +22,10 @@ typedef struct F_t
     byte_t S : 1;
 } F_t;
 
+/**
+ * @brief CPU struct
+ * 
+ */
 typedef struct CPU_t
 {   
     byte_t A, B, C, D, E, H, L;
@@ -52,12 +60,28 @@ void cpuInit(CPU_t* cpu);
 void cpuReset(CPU_t* cpu);
 
 /**
- * @brief Start the CPU emulation
+ * @brief Fetches the next instruction and executes it
  * 
  * @param cpu 
  * @param memory 
  */
 void cpuStep(CPU_t* cpu, Memory_t* memory);
+
+/**
+ * @brief Returns the current CPU flags as byte
+ * 
+ * @param flags 
+ * @return byte_t 
+ */
+static byte_t flagsToByte(F_t flags);
+
+/**
+ * @brief Takes a byte and sets the flags accordingly
+ * 
+ * @param flags 
+ * @param value 
+ */
+static void byteToFlags(F_t *flags, byte_t value);
 
 #endif
 
