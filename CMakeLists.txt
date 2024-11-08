@@ -28,6 +28,7 @@ include_directories(src/utils)
 include_directories(src/cpu)
 include_directories(src/memory)
 include_directories(src/emulator)
+include_directories(src/emulator/gui)
 include_directories(extern/unity/src)
 
 file(GLOB MAIN_SOURCE
@@ -39,6 +40,7 @@ file(GLOB_RECURSE APP_SOURCES
         src/memory/*.c
         src/utils/*.c
         src/emulator/*.c
+        src/emulator/gui/*.c
 )
 
 add_executable(CilogC80 ${APP_SOURCES} ${MAIN_SOURCE})

@@ -67,21 +67,5 @@ void cpuReset(CPU_t* cpu);
  */
 void cpuStep(CPU_t* cpu, Memory_t* memory);
 
-/**
- * @brief Returns the current CPU flags as byte
- * 
- * @param flags 
- * @return byte_t 
- */
-static byte_t flagsToByte(F_t flags);
-
-/**
- * @brief Takes a byte and sets the flags accordingly
- * 
- * @param flags 
- * @param value 
- */
-static void byteToFlags(F_t *flags, byte_t value);
-
 #endif
 

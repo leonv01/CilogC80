@@ -3,6 +3,10 @@
 #include <gtk/gtk.h>
 #include <glib.h>
 
+#include "gui/gui_menu_bar.h"
+#include "gui/gui_console.h"
+#include "gui/gui_internal_view.h"
+
 // Global variables
 // -----------------------------------------------------------
 // Emulator objects
@@ -14,6 +18,8 @@ static GtkApplication       *app;
 static GtkWidget            *window;
 static GtkWidget            *notebook;
 static GtkWidget            *grid;
+static GuiConsole_t         *console;
+static GuiInternalView_t    *internalView;
 static GMenu                *menu;
 static GtkWidget            *toolbar;
 
@@ -28,11 +34,9 @@ static void activate(GtkApplication *app, gpointer user_data);
 static gpointer emulatorThreadFunc(gpointer userData);
 static gboolean updateGuiWithEmulationState(gpointer userData);
 
-static void createMenuBar(GtkWidget *paned);
 static void createRegisterView(GtkWidget *paned);
 static void createRAMView(GtkWidget *paned);
 static void createTextEditorView(GtkWidget *paned);
-static void createOutputView(GtkWidget *paned);
 static void createToolbar(GtkWidget *grid);
 
 static void notebookOpenFile(GtkTextView *textView, const char *filename);
@@ -108,10 +112,12 @@ static void activate(GtkApplication *app, gpointer user_data)
     gtk_paned_set_end_child(GTK_PANED(mainPaned), rightPaned);
     gtk_widget_set_size_request(rightPaned, 500, -1);
 
-    createMenuBar(grid);
+    guiInternalViewInit(internalView, grid);
+    guiMenuBarInit(menu, grid);
+    guiConsoleInit(console, rightPaned);
     createRegisterView(leftPaned);
     createRAMView(leftPaned);
-    createOutputView(rightPaned);
+    //createOutputView(rightPaned);
 
     gtk_paned_set_start_child(GTK_PANED(rightPaned), notebook);
 
@@ -140,64 +146,6 @@ static gboolean updateGuiWithEmulationState(gpointer userData)
 
 // GUI creation functions
 // -----------------------------------------------------------
-static void createMenuBar(GtkWidget *grid)
-{
-    // Create menubar
-    menu = g_menu_new();
-
-    // Create file menu
-    GMenu *fileMenu = g_menu_new();
-    g_menu_append(fileMenu, "New File", "app.new");
-    g_menu_append(fileMenu, "Open", "app.open");
-    g_menu_append(fileMenu, "Save", "app.save");
-    g_menu_append(fileMenu, "Save As", "app.save-as");
-    g_menu_append(fileMenu, "Exit", "app.quit");
-    g_menu_insert_submenu(menu, 0, "File", G_MENU_MODEL(fileMenu));
-    g_object_unref(fileMenu);
-
-    // Create edit menu
-    GMenu *editMenu = g_menu_new();
-    g_menu_append(editMenu, "Undo", "app.undo");
-    g_menu_append(editMenu, "Redo", "app.redo");
-    g_menu_append(editMenu, "Cut", "app.cut");
-    g_menu_append(editMenu, "Copy", "app.copy");
-    g_menu_append(editMenu, "Paste", "app.paste");
-    g_menu_append(editMenu, "Delete", "app.delete");
-    g_menu_append(editMenu, "Select All", "app.select-all");
-    g_menu_append(editMenu, "Find", "app.find");
-    g_menu_append(editMenu, "Replace", "app.replace"); 
-    g_menu_append(editMenu, "Preferences", "app.preferences");
-    g_menu_insert_submenu(menu, 1, "Edit", G_MENU_MODEL(editMenu));
-    g_object_unref(editMenu);
-
-    // Create view menu
-    GMenu *viewMenu = g_menu_new();
-    g_menu_append(viewMenu, "Show RAM", "app.show-ram");
-    g_menu_append(viewMenu, "Show Registers", "app.show-registers");
-    g_menu_insert_submenu(menu, 2, "View", G_MENU_MODEL(viewMenu));
-    g_object_unref(viewMenu);
-
-    // Create emulation menu
-    GMenu *emulationMenu = g_menu_new();
-    g_menu_append(emulationMenu, "Start", "app.start");
-    g_menu_append(emulationMenu, "Pause", "app.pause");
-    g_menu_append(emulationMenu, "Stop", "app.stop");
-    g_menu_append(emulationMenu, "Load State", "app.load-state");
-    g_menu_append(emulationMenu, "Save State", "app.save-state");
-    g_menu_insert_submenu(menu, 3, "Emulation", G_MENU_MODEL(emulationMenu));
-    g_object_unref(emulationMenu);
-
-    // Create help menu
-    GMenu *helpMenu = g_menu_new();
-    g_menu_append(helpMenu, "About", "app.about");
-    g_menu_insert_submenu(menu, 4, "Help", G_MENU_MODEL(helpMenu));
-    g_object_unref(helpMenu);
-
-    GtkWidget *menubar = gtk_popover_menu_bar_new_from_model(G_MENU_MODEL(menu));
-    g_object_unref(menu);
-    gtk_grid_attach(GTK_GRID(grid), menubar, 0, 0, 2, 1);
-    gtk_widget_set_hexpand(menubar, TRUE);
-}
 static void createRegisterView(GtkWidget *paned)
 {
     GtkWidget *registerView = gtk_frame_new("Register View");
@@ -230,6 +178,7 @@ static void createTextEditorView(GtkWidget *paned)
     gtk_text_view_set_top_margin(GTK_TEXT_VIEW(textEditor), 5);
     gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(textEditor), 5);
 }
+/*
 static void createOutputView(GtkWidget *paned)
 {
     GtkWidget *outputView = gtk_frame_new("Output View");
@@ -248,6 +197,7 @@ static void createOutputView(GtkWidget *paned)
     gtk_text_view_set_top_margin(GTK_TEXT_VIEW(outputText), 5);
     gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(outputText), 5);
 }
+*/
 static void createToolbar(GtkWidget *grid)
 {
     // TODO: Create toolbar
