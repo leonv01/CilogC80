@@ -35,7 +35,7 @@ git submodule update --init --recursive
 
 ## External Libraries
 - [Unity](https://github.com/ThrowTheSwitch/Unity)
-- (optional)[SDL2](https://www.libsdl.org/)
+- [GTK4](https://www.gtk.org/)
 
 ## Sources
 - [Z80 CPU User Manual](https://www.zilog.com/docs/z80/um0080.pdf)
