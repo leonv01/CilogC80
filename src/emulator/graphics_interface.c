@@ -10,7 +10,6 @@
 // Emulator objects
 static CPU_t                *cpu;
 static Memory_t             *memory;
-
 // -----------------------------------------------------------
 
 
@@ -39,6 +38,8 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     {
         BeginDrawing();
         ClearBackground(RAYWHITE);
+
+        
 
         EndDrawing();
     }
