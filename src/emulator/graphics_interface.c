@@ -32,15 +32,15 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     InitWindow(800, 600, "Cilog C80 - Emulator");
     SetTargetFPS(60);
 
-    bool showMessageBox = false;
+    int showMessageBox = 0;
 
     while(!WindowShouldClose())
     {
         BeginDrawing();
         ClearBackground(RAYWHITE);
-
-        
-
+        {
+            GuiWindowF
+        }
         EndDrawing();
     }
 
