@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-#include "error_handler.h"
+#include "utils/error_handler.h"
 
 void memoryInit(Memory_t* memory)
 {

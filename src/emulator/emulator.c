@@ -1,11 +1,12 @@
 #include "emulator.h"
 
-#include "cpu.h"
-#include "memory.h"
-#include "utils.h"
-#include "stdbool.h"
-#include "error_handler.h"
-#include "graphics_interface.h"
+#include <stdbool.h>
+
+#include "cpu/cpu.h"
+#include "memory/mem.h"
+#include "utils/utils.h"
+#include "utils/error_handler.h"
+#include "emulator/graphics_interface.h"
 
 // Enums
 // -----------------------------------------------------------

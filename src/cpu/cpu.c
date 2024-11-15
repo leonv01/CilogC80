@@ -1,9 +1,9 @@
-#include "cpu.h"
-#include "instructions.h"
-#include "instruction_handler.h"
+#include "cpu/cpu.h"
 
 #include <stdbool.h>
 
+#include "cpu/instructions.h"
+#include "cpu/instruction_handler.h"
 
 void cpuInit(CPU_t *cpu)
 {

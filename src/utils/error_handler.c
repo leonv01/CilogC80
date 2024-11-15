@@ -1,8 +1,8 @@
-#include "error_handler.h"
+#include "utils/error_handler.h"
 
 #include <stdio.h>
 
-#include "utils.h"
+#include "utils/utils.h"
 
 #define MAX_ERRORS 128
 

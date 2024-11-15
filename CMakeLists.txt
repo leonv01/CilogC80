@@ -29,11 +29,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 # Include necessary directories
-include_directories(src/utils)
-include_directories(src/cpu)
-include_directories(src/memory)
-include_directories(src/emulator)
-include_directories(src/emulator/gui)
+include_directories(src)
 include_directories(extern/unity/src)
 
 file(GLOB MAIN_SOURCE

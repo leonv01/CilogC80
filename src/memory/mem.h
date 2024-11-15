@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "utils.h"
+#include "utils/utils.h"
 
 #define MEMORY_SIZE 0x10000
 #define ROM_SIZE 0x2000

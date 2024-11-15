@@ -1,5 +1,10 @@
 #include "graphics_interface.h"
 
+#include "raylib.h"
+
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
+
 // Global variables
 // -----------------------------------------------------------
 // Emulator objects
@@ -24,6 +29,21 @@ static Memory_t             *memory;
 int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
 {
     int status;
+
+    InitWindow(800, 600, "Cilog C80 - Emulator");
+    SetTargetFPS(60);
+
+    bool showMessageBox = false;
+
+    while(!WindowShouldClose())
+    {
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        EndDrawing();
+    }
+
+    CloseWindow();
 
     return status;
 }

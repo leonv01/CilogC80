@@ -1,9 +1,9 @@
 #include "instruction_handler.h"
 
 #include <stdio.h>
+#include <stdbool.h>
 
-#include "stdbool.h"
-#include "error_handler.h"
+#include "utils/error_handler.h"
 
 #define MAX_INSTRUCTION_COUNT 256
 
