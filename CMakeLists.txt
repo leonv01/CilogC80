@@ -41,10 +41,10 @@ file(GLOB_RECURSE APP_SOURCES
         src/memory/*.c
         src/utils/*.c
         src/emulator/*.c
-        src/emulator/gui/*.c
+        src/emulator/gui_components/*.c
 )
 
-add_executable(CilogC80 ${APP_SOURCES} ${MAIN_SOURCE} )
+add_executable(CilogC80 ${APP_SOURCES} ${MAIN_SOURCE})
 
 target_link_libraries(CilogC80 PRIVATE raylib)
 
