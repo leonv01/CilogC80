@@ -4,8 +4,8 @@
 #define GUI_WINDOW_FILE_DIALOG_H
 
 // Gui file dialog context data
-typedef struct {
-
+typedef struct 
+{
     // Window management variables
     bool windowActive;
     Rectangle windowBounds;
