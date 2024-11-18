@@ -3,6 +3,8 @@
 #include "raylib.h"
 
 #define RAYGUI_IMPLEMENTATION
+#define RAYGUI_CUSTOM_ICONS
+#include "gui_icons.h"
 #include "raygui.h"
 
 #undef RAYGUI_IMPLEMENTATION            // Avoid including raygui implementation again
@@ -18,13 +20,17 @@
 #define GUI_CPU_VIEW_IMPLEMENTATION
 #include "gui_components/gui_cpu_view.h"
 
+#define GUI_MENUBAR_IMPLEMENTATION
+#include "gui_components/gui_menubar.h"
+
+
+
 // Global variables
 // -----------------------------------------------------------
 // Emulator objects
 static CPU_t                *cpu;
 static Memory_t             *memory;
 // -----------------------------------------------------------
-
 
 /* -------------------------------------------------------------------------- */
 /*                            Forward declarations                            */
@@ -63,31 +69,14 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_VSYNC_HINT);
     InitWindow(screenWidth, screenHeight, "Cilog C80 - Emulator");
 
-    /* ------------------------- Menu Button definition ------------------------- */
-    const int buttonSize = 40;
-    const int buttonPadding = 10;
-    const int menuHeightOffset = 24;
 
-    GuiMenuButton newFileButton = { (Vector2){ buttonPadding, menuHeightOffset + buttonPadding}, "New File", false, ICON_FILE_ADD };
-    GuiMenuButton openFileButton = { (Vector2){ (buttonPadding * 2) + buttonSize, menuHeightOffset + buttonPadding}, "Open File", false, ICON_FILE_OPEN };
-    GuiMenuButton saveFileButton = { (Vector2){ (buttonSize * 2) + (buttonPadding * 3), menuHeightOffset + buttonPadding}, "Save File", false, ICON_FILE_SAVE_CLASSIC };
-    
-    GuiMenuButton cpuViewButton = { (Vector2){ (buttonSize * 3) + (buttonPadding * 4), menuHeightOffset + buttonPadding}, "Open CPU View", false, ICON_CPU};
-    GuiMenuButton memoryViewButton = { (Vector2){ (buttonSize * 4) + (buttonPadding * 5), menuHeightOffset + buttonPadding}, "Open Memory View", false, ICON_FILE_OPEN };
-    GuiMenuButton interruptViewButton = { (Vector2){ (buttonSize * 5) + (buttonPadding * 6), menuHeightOffset + buttonPadding}, "Open Interrupt View", false, ICON_FILE_OPEN };
-    GuiMenuButton preferencesButton = { (Vector2){ (buttonSize * 6) + (buttonPadding * 7), menuHeightOffset + buttonPadding}, "Open Preferences", false, ICON_FILE_OPEN };
-    GuiMenuButton aboutButton = { (Vector2){ (buttonSize * 7) + (buttonPadding * 8), menuHeightOffset + buttonPadding}, "About", false, ICON_FILE_OPEN };
-    GuiMenuButton helpButton = { (Vector2){ (buttonSize * 8) + (buttonPadding * 9), menuHeightOffset + buttonPadding}, "Help", false, ICON_FILE_OPEN };
-
-    GuiMenuButton menuButtons[] = { newFileButton, openFileButton, saveFileButton, cpuViewButton, memoryViewButton, interruptViewButton, preferencesButton, aboutButton, helpButton };
-    const int menuButtonsCount = sizeof(menuButtons) / sizeof(menuButtons[0]);
-    /* -------------------------------------------------------------------------- */
     GuiTooltipTextState tooltip = InitGuiToolTipText("Create new file", (Rectangle){ 0, 0, 150, 30 });
 
     // Variables for file dialog
     Texture texture = { 0 };
     char fileNameToLoad[512] = { 0 };
     GuiWindowFileDialogState fileDialogState = InitGuiWindowFileDialog(GetWorkingDirectory());
+    GuiMenubarState menubarState = InitGuiMenubar();
 
     GuiCpuViewState cpuViewState = InitGuiCpuView();
 
@@ -100,6 +89,13 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     
     SetWindowPosition(windowPosition.x, windowPosition.y);
     
+    char ** guiIconsName = GuiLoadIcons("./resources/icons.rgi", true);
+    if(guiIconsName == NULL)
+    {
+        TraceLog(LOG_ERROR, "Failed to load icons");
+        return 1;
+    }
+
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -126,23 +122,6 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             
             if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) dragWindow = false;
         }
-
-        bool isMouseOverButton = false;
-        for (int i = 0; i < menuButtonsCount; i++)
-        {
-            if(CheckCollisionPointRec(mousePosition, (Rectangle){ menuButtons[i].position.x, menuButtons[i].position.y, buttonSize, buttonSize }))
-            {
-                isMouseOverButton = true;
-                tooltip.isActive = true;
-                tooltip.text = menuButtons[i].tooltip;
-            }
-        }
-
-        if(isMouseOverButton == false)
-        {
-            tooltip.isActive = false;
-        }
-
         //----------------------------------------------------------------------------------
 
         /* ------------------------------ Begin Drawing ----------------------------- */
@@ -175,43 +154,32 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             }
 
             /* --------------------------------- Menubar -------------------------------- */
-            const int menuHeightOffset = 24;
-            const int menuButtonOffset = 10;
-            DrawRectangle(0, menuHeightOffset, GetScreenWidth(), buttonSize + (2 * buttonPadding), Fade(GRAY, 0.8f));
-            GuiGroupBox((Rectangle){ 0, menuHeightOffset, GetScreenWidth(), buttonSize + (2 * buttonPadding) }, "");
-
-            /* -------------------------------------------------------------------------- */
-            // New file button
-            if(GuiButton((Rectangle){ newFileButton.position.x, newFileButton.position.y, buttonSize, buttonSize }, GuiIconText(newFileButton.iconId, "")))
+            if(menubarState.fileNewFilePressed == true)
             {
                 fileDialogState.windowActive = true;
             }
-            // Open file button
-            if(GuiButton((Rectangle){ openFileButton.position.x, openFileButton.position.y, buttonSize, buttonSize }, GuiIconText(openFileButton.iconId, "")))
+            if(menubarState.fileOpenFilePressed == true)
             {
                 fileDialogState.windowActive = true;
-            }       
-            // Save file button
-            if(GuiButton((Rectangle){ saveFileButton.position.x, saveFileButton.position.y, buttonSize, buttonSize }, GuiIconText(saveFileButton.iconId, "")))
-            {
-                fileDialogState.windowActive = true;
-                // TOOD: Set save file mode
-                fileDialogState.saveFileMode = true;
             }
-            /* -------------------------------------------------------------------------- */
-            // CPU view button
-            if(GuiButton((Rectangle){ cpuViewButton.position.x, cpuViewButton.position.y, buttonSize, buttonSize }, GuiIconText(cpuViewButton.iconId, "")))
+            if(menubarState.fileSaveFilePressed == true)
+            {
+                fileDialogState.windowActive = true;
+            }
+            if(menubarState.fileCloseFilePressed == true)
+            {
+                fileDialogState.windowActive = false;
+            }
+            if(menubarState.viewCpuPressed == true)
             {
                 cpuViewState.cpuAndRegisterWindowActive = !cpuViewState.cpuAndRegisterWindowActive;
             }
-            // Memory view button
-            if(GuiButton((Rectangle){ memoryViewButton.position.x, memoryViewButton.position.y, buttonSize, buttonSize }, GuiIconText(memoryViewButton.iconId, "")))
-            {
-                fileDialogState.windowActive = true;
-            }
+            /* -------------------------------------------------------------------------- */
 
             GuiUnlock();
-            
+
+            GuiMenubar(&menubarState);
+
             GuiCpuView(&cpuViewState);
 
             GuiWindowFileDialog(&fileDialogState);
@@ -231,14 +199,3 @@ void graphicsDestroy()
 {
 
 }
-// -----------------------------------------------------------
-
-// GUI creation functions
-// -----------------------------------------------------------
-
-// -----------------------------------------------------------
-
-// Callback functions
-// -----------------------------------------------------------
-
-// -----------------------------------------------------------
