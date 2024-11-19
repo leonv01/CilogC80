@@ -1,0 +1,49 @@
+#
+# rgl layout text file (v4.0) - raygui layout file generated using rGuiLayout
+#
+# Number of controls:     33
+#
+# Ref. window:    r <x> <y> <width> <height>
+# Anchor info:    a <id> <name> <posx> <posy> <enabled>
+# Control info:   c <id> <type> <name> <rectangle> <anchor_id> <text>
+#
+r 0 40 -1 -1
+a 001 anchor01 0 24 1
+a 002 anchor02 488 24 1
+a 003 anchor03 192 24 1
+a 004 anchor04 800 24 1
+a 005 anchor05 1160 24 1
+a 006 anchor06 1032 24 1
+c 000 3 Panel000 0 0 192 40 1 
+c 001 5 fileNewFile 56 8 24 24 1 
+c 002 5 fileOpenFile 88 8 24 24 1 
+c 003 5 fileSaveFile 120 8 24 24 1 
+c 004 5 fileCloseFile 152 8 24 24 1 
+c 005 3 Panel005 0 0 296 40 3 
+c 006 5 viewCpu 56 8 24 24 3 
+c 007 5 viewMemory 88 8 24 24 3 
+c 008 5 viewInterrupt 120 8 24 24 3 
+c 009 5 viewAssembly 152 8 24 24 3 
+c 010 3 Panel010 0 0 312 40 2 
+c 011 4 Label013 16 8 56 24 2 Controls
+c 012 5 controlPlay 80 8 24 24 2 
+c 013 5 controlPause 112 8 24 24 2 
+c 014 5 controlStop 144 8 24 24 2 
+c 015 5 controlStep 176 8 24 24 2 
+c 016 5 controlStepInto 208 8 24 24 2 
+c 017 5 controlStepToBreakpoint 240 8 24 24 2 
+c 018 5 controlStepToCursor 272 8 24 24 2 
+c 019 5 viewBytecode 192 8 24 24 3 
+c 020 5 viewConsole 224 8 24 24 3 
+c 021 3 Panel023 0 0 232 40 4 
+c 022 3 Panel024 0 0 120 40 5 
+c 023 4 Label024 16 8 32 24 3 View
+c 024 4 Label025 16 8 32 24 1 File
+c 025 5 preferencesButton 16 8 24 24 5 
+c 026 5 aboutButton 48 8 24 24 5 
+c 027 5 helpButton 80 8 24 24 5 
+c 028 5 loadFileToMemory 16 8 24 24 4 
+c 029 11 fileToExecute 80 8 136 24 4 Choose Exec
+c 030 5 clearFileFromMemory 48 8 24 24 4 
+c 031 5 viewOverview 256 8 24 24 3 
+c 032 3 Panel032 0 0 128 40 6 

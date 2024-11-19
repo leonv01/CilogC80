@@ -1,0 +1,45 @@
+#
+# rgl layout text file (v4.0) - raygui layout file generated using rGuiLayout
+#
+# Number of controls:     34
+#
+# Ref. window:    r <x> <y> <width> <height>
+# Anchor info:    a <id> <name> <posx> <posy> <enabled>
+# Control info:   c <id> <type> <name> <rectangle> <anchor_id> <text>
+#
+r 0 40 -1 -1
+a 001 rootAnchor 288 96 1
+c 000 0 cpuAndRegisterWindow 0 0 360 528 1 CPU and Register View
+c 001 1 registerGroupBox 24 48 312 216 1 Registers
+c 002 1 flagGroupBox 24 288 312 120 1 Flags
+c 003 1 GroupBox016 24 432 312 72 1 
+c 004 12 registerBText 104 120 64 24 1 0
+c 005 12 registerCText 248 120 64 24 1 0
+c 006 12 registerDText 104 168 64 24 1 0
+c 007 12 registerHText 104 216 64 24 1 0
+c 008 12 registerEText 248 168 64 24 1 0
+c 009 12 TextBox020 248 216 64 24 1 0
+c 010 12 registerAText 104 72 64 24 1 0
+c 011 4 Label019 32 72 72 24 1 Register A
+c 012 4 Label020 32 120 72 24 1 Register B
+c 013 4 Label021 32 168 72 24 1 Register D
+c 014 4 Label022 32 216 72 24 1 Register H
+c 015 4 Label023 176 120 72 24 1 Register C
+c 016 4 Label024 176 168 72 24 1 Register E
+c 017 4 Label025 176 216 72 24 1 Register L
+c 018 12 flagCText 96 312 24 24 1 0
+c 019 4 Label021 48 312 48 24 1 Flag C
+c 020 4 Label022 144 312 48 24 1 Flag N
+c 021 12 flagNText 192 312 24 24 1 0
+c 022 4 Label024 240 312 48 24 1 Flag P
+c 023 12 flagPText 288 312 24 24 1 0
+c 024 4 Label026 48 360 48 24 1 Flag H
+c 025 12 flagHText 96 360 24 24 1 0
+c 026 4 Label028 144 360 48 24 1 Flag Z
+c 027 12 flagZText 192 360 24 24 1 0
+c 028 4 Label030 240 360 48 24 1 Flag S
+c 029 12 flagSText 288 360 24 24 1 0
+c 030 4 Label030 48 456 24 24 1 PC
+c 031 12 programCounterText 72 456 72 24 1 0
+c 032 12 stackPointerText 240 456 72 24 1 0
+c 033 4 Label033 216 456 24 24 1 SP

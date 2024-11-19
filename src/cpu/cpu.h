@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "utils.h"
-#include "mem.h"
+#include "utils/utils.h"
+#include "memory/mem.h"
 
 /**
  * @brief Flag struct

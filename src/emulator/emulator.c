@@ -1,11 +1,15 @@
 #include "emulator.h"
 
-#include "cpu.h"
-#include "memory.h"
-#include "utils.h"
-#include "stdbool.h"
-#include "error_handler.h"
-#include "graphics_interface.h"
+#include <stdbool.h>
+
+#include "cpu/cpu.h"
+#include "memory/mem.h"
+#include "utils/utils.h"
+#include "utils/error_handler.h"
+
+#if !defined(HEADLESS)
+#include "emulator/graphics_interface.h"
+#endif
 
 // Enums
 // -----------------------------------------------------------
@@ -37,6 +41,8 @@ void emulatorInit(int argc, char** argv)
     memoryInit(&memory);
     errorStackInit();
     
+    #if !defined(HEADLESS)
     graphicsInit(argc, argv, &cpu, &memory);
+    #endif
 }
 // -----------------------------------------------------------

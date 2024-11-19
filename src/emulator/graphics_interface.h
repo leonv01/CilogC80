@@ -1,8 +1,8 @@
 #ifndef GRAPHICS_INTERFACE_H
 #define GRAPHICS_INTERFACE_H
 
-#include "cpu.h"
-#include "mem.h"
+#include "cpu/cpu.h"
+#include "memory/mem.h"
 
 /**
  * @brief Initializes the graphical interface
