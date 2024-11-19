@@ -35,7 +35,8 @@ git submodule update --init --recursive
 
 ## External Libraries
 - [Unity](https://github.com/ThrowTheSwitch/Unity)
-- [GTK4](https://www.gtk.org/)
+- [raylib](https://github.com/raysan5/raylib/)
+- [raygui](https://github.com/raysan5/raygui/)
 
 ## Sources
 - [Z80 CPU User Manual](https://www.zilog.com/docs/z80/um0080.pdf)
