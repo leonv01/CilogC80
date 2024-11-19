@@ -23,7 +23,11 @@
 #define GUI_MENUBAR_IMPLEMENTATION
 #include "gui_components/gui_menubar.h"
 
+#define GUI_MEMORY_VIEW_IMPLEMENTATION
+#include "gui_components/gui_memory_view.h"
 
+#define GUI_FOOTER_BAR_IMPLEMENTATION
+#include "gui_components/gui_footer_bar.h"
 
 // Global variables
 // -----------------------------------------------------------
@@ -79,6 +83,10 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     GuiMenubarState menubarState = InitGuiMenubar();
 
     GuiCpuViewState cpuViewState = InitGuiCpuView();
+
+    GuiMemoryViewState memoryViewState = InitGuiMemoryView();
+
+    GuiFooterBarState footerBarState = InitGuiFooterBar();
 
     // Variables for the portable window
     Vector2 mousePosition = { 0 };
@@ -174,13 +182,21 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             {
                 cpuViewState.cpuAndRegisterWindowActive = !cpuViewState.cpuAndRegisterWindowActive;
             }
+            if(menubarState.viewMemoryPressed == true)
+            {
+                memoryViewState.memoryWindowActive = !memoryViewState.memoryWindowActive;
+            }
             /* -------------------------------------------------------------------------- */
 
             GuiUnlock();
 
             GuiMenubar(&menubarState);
 
+            GuiFooterBar(&footerBarState);
+
             GuiCpuView(&cpuViewState);
+
+            GuiMemoryView(&memoryViewState);
 
             GuiWindowFileDialog(&fileDialogState);
 

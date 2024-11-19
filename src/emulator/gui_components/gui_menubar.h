@@ -31,12 +31,6 @@
 #define GUI_MENUBAR_H
 
 typedef struct {
-    Vector2 anchor01;
-    Vector2 anchor02;
-    Vector2 anchor03;
-    Vector2 anchor04;
-    Vector2 anchor05;
-    
     bool fileNewFilePressed;
     bool fileOpenFilePressed;
     bool fileSaveFilePressed;
@@ -57,8 +51,11 @@ typedef struct {
     bool preferencesButtonPressed;
     bool aboutButtonPressed;
     bool helpButtonPressed;
-
-    Rectangle layoutRecs[28];
+    bool loadFileToMemoryPressed;
+    bool fileToExecuteEditMode;
+    int fileToExecuteActive;
+    bool clearFileFromMemoryPressed;
+    bool viewOverviewPressed;
 
     // Custom state variables (depend on development software)
     // NOTE: This variables should be added manually if required
@@ -117,12 +114,6 @@ GuiMenubarState InitGuiMenubar(void)
 {
     GuiMenubarState state = { 0 };
 
-    state.anchor01 = (Vector2){ 0, 24 };
-    state.anchor02 = (Vector2){ 448, 24 };
-    state.anchor03 = (Vector2){ 192, 24 };
-    state.anchor04 = (Vector2){ 760, 24 };
-    state.anchor05 = (Vector2){ 1160, 24 };
-    
     state.fileNewFilePressed = false;
     state.fileOpenFilePressed = false;
     state.fileSaveFilePressed = false;
@@ -143,35 +134,11 @@ GuiMenubarState InitGuiMenubar(void)
     state.preferencesButtonPressed = false;
     state.aboutButtonPressed = false;
     state.helpButtonPressed = false;
-
-    state.layoutRecs[0] = (Rectangle){ state.anchor01.x + 0, state.anchor01.y + 0, 192, 40 };
-    state.layoutRecs[1] = (Rectangle){ state.anchor01.x + 56, state.anchor01.y + 8, 24, 24 };
-    state.layoutRecs[2] = (Rectangle){ state.anchor01.x + 88, state.anchor01.y + 8, 24, 24 };
-    state.layoutRecs[3] = (Rectangle){ state.anchor01.x + 120, state.anchor01.y + 8, 24, 24 };
-    state.layoutRecs[4] = (Rectangle){ state.anchor01.x + 152, state.anchor01.y + 8, 24, 24 };
-    state.layoutRecs[5] = (Rectangle){ state.anchor03.x + 0, state.anchor03.y + 0, 256, 40 };
-    state.layoutRecs[6] = (Rectangle){ state.anchor03.x + 56, state.anchor03.y + 8, 24, 24 };
-    state.layoutRecs[7] = (Rectangle){ state.anchor03.x + 88, state.anchor03.y + 8, 24, 24 };
-    state.layoutRecs[8] = (Rectangle){ state.anchor03.x + 120, state.anchor03.y + 8, 24, 24 };
-    state.layoutRecs[9] = (Rectangle){ state.anchor03.x + 152, state.anchor03.y + 8, 24, 24 };
-    state.layoutRecs[10] = (Rectangle){ state.anchor02.x + 0, state.anchor02.y + 0, 312, 40 };
-    state.layoutRecs[11] = (Rectangle){ state.anchor02.x + 16, state.anchor02.y + 8, 56, 24 };
-    state.layoutRecs[12] = (Rectangle){ state.anchor02.x + 80, state.anchor02.y + 8, 24, 24 };
-    state.layoutRecs[13] = (Rectangle){ state.anchor02.x + 112, state.anchor02.y + 8, 24, 24 };
-    state.layoutRecs[14] = (Rectangle){ state.anchor02.x + 144, state.anchor02.y + 8, 24, 24 };
-    state.layoutRecs[15] = (Rectangle){ state.anchor02.x + 176, state.anchor02.y + 8, 24, 24 };
-    state.layoutRecs[16] = (Rectangle){ state.anchor02.x + 208, state.anchor02.y + 8, 24, 24 };
-    state.layoutRecs[17] = (Rectangle){ state.anchor02.x + 240, state.anchor02.y + 8, 24, 24 };
-    state.layoutRecs[18] = (Rectangle){ state.anchor02.x + 272, state.anchor02.y + 8, 24, 24 };
-    state.layoutRecs[19] = (Rectangle){ state.anchor03.x + 184, state.anchor03.y + 8, 24, 24 };
-    state.layoutRecs[20] = (Rectangle){ state.anchor03.x + 216, state.anchor03.y + 8, 24, 24 };
-    state.layoutRecs[21] = (Rectangle){ state.anchor04.x + 0, state.anchor04.y + 0, 400, 40 };
-    state.layoutRecs[22] = (Rectangle){ state.anchor05.x + 0, state.anchor05.y + 0, 120, 40 };
-    state.layoutRecs[23] = (Rectangle){ state.anchor03.x + 16, state.anchor03.y + 8, 32, 24 };
-    state.layoutRecs[24] = (Rectangle){ state.anchor01.x + 16, state.anchor01.y + 8, 32, 24 };
-    state.layoutRecs[25] = (Rectangle){ state.anchor05.x + 16, state.anchor05.y + 8, 24, 24 };
-    state.layoutRecs[26] = (Rectangle){ state.anchor05.x + 48, state.anchor05.y + 8, 24, 24 };
-    state.layoutRecs[27] = (Rectangle){ state.anchor05.x + 80, state.anchor05.y + 8, 24, 24 };
+    state.loadFileToMemoryPressed = false;
+    state.fileToExecuteEditMode = false;
+    state.fileToExecuteActive = 0;
+    state.clearFileFromMemoryPressed = false;
+    state.viewOverviewPressed = false;
 
     // Custom variables initialization
 
@@ -180,34 +147,43 @@ GuiMenubarState InitGuiMenubar(void)
 
 void GuiMenubar(GuiMenubarState *state)
 {
-    GuiPanel(state->layoutRecs[0], NULL);
-    state->fileNewFilePressed = GuiButton(state->layoutRecs[1], GuiIconText(ICON_FILE_ADD, "")); 
-    state->fileOpenFilePressed = GuiButton(state->layoutRecs[2], GuiIconText(ICON_FILE_OPEN, "")); 
-    state->fileSaveFilePressed = GuiButton(state->layoutRecs[3], GuiIconText(ICON_FILE_SAVE_CLASSIC, "")); 
-    state->fileCloseFilePressed = GuiButton(state->layoutRecs[4], GuiIconText(ICON_FILE_DELETE, "")); 
-    GuiPanel(state->layoutRecs[5], NULL);
-    state->viewCpuPressed = GuiButton(state->layoutRecs[6], GuiIconText(ICON_CPU, "")); 
-    state->viewMemoryPressed = GuiButton(state->layoutRecs[7], GuiIconText(ICON_ROM, "")); 
-    state->viewInterruptPressed = GuiButton(state->layoutRecs[8], GuiIconText(ICON_CONSOLE_VIEW, "")); 
-    state->viewAssemblyPressed = GuiButton(state->layoutRecs[9], NULL); 
-    GuiPanel(state->layoutRecs[10], NULL);
-    GuiLabel(state->layoutRecs[11], "Controls");
-    state->controlPlayPressed = GuiButton(state->layoutRecs[12], GuiIconText(ICON_PLAYER_PLAY, "")); 
-    state->controlPausePressed = GuiButton(state->layoutRecs[13], GuiIconText(ICON_PLAYER_PAUSE, "")); 
-    state->controlStopPressed = GuiButton(state->layoutRecs[14], GuiIconText(ICON_PLAYER_STOP, "")); 
-    state->controlStepPressed = GuiButton(state->layoutRecs[15], GuiIconText(ICON_STEP_OVER, "")); 
-    state->controlStepIntoPressed = GuiButton(state->layoutRecs[16], GuiIconText(ICON_STEP_INTO, "")); 
-    state->controlStepToBreakpointPressed = GuiButton(state->layoutRecs[17], NULL); 
-    state->controlStepToCursorPressed = GuiButton(state->layoutRecs[18], NULL); 
-    state->viewBytecodePressed = GuiButton(state->layoutRecs[19], GuiIconText(ICON_FILETYPE_BINARY, "")); 
-    state->viewConsolePressed = GuiButton(state->layoutRecs[20], GuiIconText(ICON_CONSOLE_VIEW, "")); 
-    GuiPanel(state->layoutRecs[21], NULL);
-    GuiPanel(state->layoutRecs[22], NULL);
-    GuiLabel(state->layoutRecs[23], "View");
-    GuiLabel(state->layoutRecs[24], "File");
-    state->preferencesButtonPressed = GuiButton(state->layoutRecs[25], NULL); 
-    state->aboutButtonPressed = GuiButton(state->layoutRecs[26], NULL); 
-    state->helpButtonPressed = GuiButton(state->layoutRecs[27], NULL); 
+    if (state->fileToExecuteEditMode) GuiLock();
+
+    GuiPanel((Rectangle){ 0, 24, 192, 40 }, NULL);
+    state->fileNewFilePressed = GuiButton((Rectangle){ 56, 32, 24, 24 }, NULL); 
+    state->fileOpenFilePressed = GuiButton((Rectangle){ 88, 32, 24, 24 }, NULL); 
+    state->fileSaveFilePressed = GuiButton((Rectangle){ 120, 32, 24, 24 }, NULL); 
+    state->fileCloseFilePressed = GuiButton((Rectangle){ 152, 32, 24, 24 }, NULL); 
+    GuiPanel((Rectangle){ 192, 24, 296, 40 }, NULL);
+    state->viewCpuPressed = GuiButton((Rectangle){ 248, 32, 24, 24 }, NULL); 
+    state->viewMemoryPressed = GuiButton((Rectangle){ 280, 32, 24, 24 }, NULL); 
+    state->viewInterruptPressed = GuiButton((Rectangle){ 312, 32, 24, 24 }, NULL); 
+    state->viewAssemblyPressed = GuiButton((Rectangle){ 344, 32, 24, 24 }, NULL); 
+    GuiPanel((Rectangle){ 488, 24, 312, 40 }, NULL);
+    GuiLabel((Rectangle){ 504, 32, 56, 24 }, "Controls");
+    state->controlPlayPressed = GuiButton((Rectangle){ 568, 32, 24, 24 }, NULL); 
+    state->controlPausePressed = GuiButton((Rectangle){ 600, 32, 24, 24 }, NULL); 
+    state->controlStopPressed = GuiButton((Rectangle){ 632, 32, 24, 24 }, NULL); 
+    state->controlStepPressed = GuiButton((Rectangle){ 664, 32, 24, 24 }, NULL); 
+    state->controlStepIntoPressed = GuiButton((Rectangle){ 696, 32, 24, 24 }, NULL); 
+    state->controlStepToBreakpointPressed = GuiButton((Rectangle){ 728, 32, 24, 24 }, NULL); 
+    state->controlStepToCursorPressed = GuiButton((Rectangle){ 760, 32, 24, 24 }, NULL); 
+    state->viewBytecodePressed = GuiButton((Rectangle){ 384, 32, 24, 24 }, NULL); 
+    state->viewConsolePressed = GuiButton((Rectangle){ 416, 32, 24, 24 }, NULL); 
+    GuiPanel((Rectangle){ 800, 24, 232, 40 }, NULL);
+    GuiPanel((Rectangle){ 1160, 24, 120, 40 }, NULL);
+    GuiLabel((Rectangle){ 208, 32, 32, 24 }, "View");
+    GuiLabel((Rectangle){ 16, 32, 32, 24 }, "File");
+    state->preferencesButtonPressed = GuiButton((Rectangle){ 1176, 32, 24, 24 }, NULL); 
+    state->aboutButtonPressed = GuiButton((Rectangle){ 1208, 32, 24, 24 }, NULL); 
+    state->helpButtonPressed = GuiButton((Rectangle){ 1240, 32, 24, 24 }, NULL); 
+    state->loadFileToMemoryPressed = GuiButton((Rectangle){ 816, 32, 24, 24 }, NULL); 
+    state->clearFileFromMemoryPressed = GuiButton((Rectangle){ 848, 32, 24, 24 }, NULL); 
+    state->viewOverviewPressed = GuiButton((Rectangle){ 448, 32, 24, 24 }, NULL); 
+    GuiPanel((Rectangle){ 1032, 24, 128, 40 }, NULL);
+    if (GuiDropdownBox((Rectangle){ 880, 32, 136, 24 }, "Choose Exec", &state->fileToExecuteActive, state->fileToExecuteEditMode)) state->fileToExecuteEditMode = !state->fileToExecuteEditMode;
+    
+    GuiUnlock();
 }
 
 #endif // GUI_MENUBAR_IMPLEMENTATION
