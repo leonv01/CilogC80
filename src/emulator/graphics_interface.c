@@ -17,6 +17,9 @@
 #define GUI_TOOLTIPTTEXT_IMPLEMENTATION
 #include "gui_components/gui_tooltiptext.h"
 
+#define GUI_CPU_VIEW_IMPLEMENTATION
+#include "gui_components/gui_cpu_view.h"
+
 // Global variables
 // -----------------------------------------------------------
 // Emulator objects
@@ -54,9 +57,10 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     InitWindow(screenWidth, screenHeight, "Cilog C80 - Emulator");
 
     /* -------------------------------- GUI Items ------------------------------- */
-    GuiMenuBarState menuBarState = InitGuiMenuBar((Vector2){ 0, 0 }, screenWidth, screenHeight * 0.05f);
+    GuiMenuBarState menuBarState = InitGuiMenuBar((Vector2){ 0, 0 }, screenWidth);
     GuiWindowFileDialogState fileDialogState = InitGuiWindowFileDialog(GetWorkingDirectory());
     GuiTooltipTextState tooltipTextState = InitGuiToolTipText("Tooltip text", (Rectangle){ 0, 0, 100, 20 });
+    GuiCpuViewState cpuViewState = InitGuiCpuView((Vector2){ screenWidth / 2, screenHeight / 2 }, 200, 400);
     //--------------------------------------------------------------------------------------
 
     /* -------------------------------- Main loop ------------------------------- */
@@ -67,14 +71,19 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
         {
             screenWidth = GetScreenWidth();
             screenHeight = GetScreenHeight();
-            GuiMenuBarResize(&menuBarState, screenWidth, screenHeight * 0.05f); //Todo: max and min height
+            GuiMenuBarResize(&menuBarState, screenWidth);
         }
         /* -------------------------------------------------------------------------- */
 
         /* ------------------------------ Logic updates ----------------------------- */
         if(menuBarState.openButtonActive)
         {
-            fileDialogState.windowActive = true;
+            fileDialogState.windowActive = !fileDialogState.windowActive;
+        }
+
+        if(menuBarState.cpuButtonActive)
+        {
+            cpuViewState.isWindowActive = !cpuViewState.isWindowActive;
         }
 
         bool isAnyHovered = false;
@@ -93,10 +102,11 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
         /* ------------------------------ Begin Drawing ----------------------------- */
         BeginDrawing();
         {
-            ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));  // Clear window background color
+            ClearBackground(GRAY); 
 
             /* -------------------------------- Draw GUI -------------------------------- */
             GuiMenuBar(&menuBarState);
+            GuiCpuView(&cpuViewState);
             GuiWindowFileDialog(&fileDialogState);
             GuiToolTipText(&tooltipTextState);
             /* -------------------------------------------------------------------------- */

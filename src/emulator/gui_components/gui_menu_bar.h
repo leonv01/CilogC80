@@ -61,8 +61,8 @@ typedef struct
 
 } GuiMenuBarState;
 
-GuiMenuBarState InitGuiMenuBar(const Vector2 position, const int maxWidth, const int maxHeight);
-void GuiMenuBarResize(GuiMenuBarState *state, const int maxWidth, const int maxHeight);
+GuiMenuBarState InitGuiMenuBar(const Vector2 position, const int maxWidth);
+void GuiMenuBarResize(GuiMenuBarState *state, const int maxWidth);
 void GuiMenuBar(GuiMenuBarState *state);
 char *GuiMenuBarGetTooltip(GuiMenuBarState *state, bool *isAnyHovered);
 
@@ -72,18 +72,18 @@ char *GuiMenuBarGetTooltip(GuiMenuBarState *state, bool *isAnyHovered);
 
 #include "raygui.h"
 
-GuiMenuBarState InitGuiMenuBar(const Vector2 position, const int maxWidth, const int maxHeight)
+GuiMenuBarState InitGuiMenuBar(const Vector2 position, const int maxWidth)
 {
     GuiMenuBarState state = { 0 };
 
     state.position = position;
     state.maxWidth = maxWidth;
-    state.maxHeight = maxHeight;
-    state.bounds = (Rectangle){ position.x, position.y, maxWidth, maxHeight };
+    state.maxHeight = 40;
+    state.bounds = (Rectangle){ position.x, position.y, maxWidth, state.maxHeight };
 
     state.buttonSize = 30;
 
-    state.buttonPadding = (maxHeight - state.buttonSize) / 2;
+    state.buttonPadding = (state.maxHeight - state.buttonSize) / 2;
 
     state.openButton = (GuiMenuButton){ 0 };
     state.openButton.position = (Vector2){ position.x + state.buttonPadding, position.y + state.buttonPadding };
@@ -91,12 +91,10 @@ GuiMenuBarState InitGuiMenuBar(const Vector2 position, const int maxWidth, const
     return state;
 }
 
-void GuiMenuBarResize(GuiMenuBarState *state, const int maxWidth, const int maxHeight)
+void GuiMenuBarResize(GuiMenuBarState *state, const int maxWidth)
 {
     state->maxWidth = maxWidth;
-    state->maxHeight = maxHeight;
     state->bounds.width = maxWidth;
-    state->bounds.height = maxHeight;
 }
 
 void GuiMenuBar(GuiMenuBarState *state)
@@ -146,7 +144,7 @@ void GuiMenuBar(GuiMenuBarState *state)
         state->buttonSize,
         state->buttonSize
     });
-
+    
     state->loadToMemoryButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
     {
         state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 1),
