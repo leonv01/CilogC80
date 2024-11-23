@@ -6,6 +6,7 @@
 #include "memory/mem.h"
 #include "utils/utils.h"
 #include "utils/error_handler.h"
+#include "file_grabber.h"
 
 #if !defined(HEADLESS)
 #include "emulator/graphics_interface.h"
@@ -40,6 +41,12 @@ void emulatorInit(int argc, char** argv)
     cpuInit(&cpu);
     memoryInit(&memory);
     errorStackInit();
+
+    if(loadFile("C:\\Users\\leonv\\Documents\\CilogC80\\asm\\sub_test.bin", memory.rom, memory.romSize) == false)
+    {
+        printf("Error loading file\n");
+        exit(-1);
+    }
     
     #if !defined(HEADLESS)
     graphicsInit(argc, argv, &cpu, &memory);

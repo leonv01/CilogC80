@@ -97,6 +97,14 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             tooltipTextState.text = toolTipText;
             tooltipTextState.isActive = true;
         }
+        if(IsKeyPressed(KEY_SPACE) == true)
+        {
+            printf("Space key pressed\n");
+            cpuStep(cpu, memory);
+            GuiCpuViewUpdateRegisters(&cpuViewState, cpu->A, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L);
+            GuiCpuViewUpdateFlags(&cpuViewState, cpu->F.C, cpu->F.N, cpu->F.P, cpu->F.H, cpu->F.Z, cpu->F.S);
+            GuiCpuViewUpdatePointers(&cpuViewState, cpu->PC, cpu->SP);
+        }
         /* -------------------------------------------------------------------------- */
 
         /* ------------------------------ Begin Drawing ----------------------------- */
