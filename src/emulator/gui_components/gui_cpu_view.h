@@ -7,7 +7,7 @@
 
 typedef struct
 {
-
+    /* ---------------------------- Window attributes --------------------------- */
     Rectangle bounds;
     Vector2 position;
     int width;
@@ -16,7 +16,7 @@ typedef struct
     int minHeight;
     int padding;
     int fontSize;
-
+    /* -------------------------------------------------------------------------- */
 
     /* ------------------------- Register GUI attributes ------------------------ */
     const char *registerALabelText;

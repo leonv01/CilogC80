@@ -20,6 +20,9 @@
 #define GUI_CPU_VIEW_IMPLEMENTATION
 #include "gui_components/gui_cpu_view.h"
 
+#define GUI_MEMORY_VIEW_IMPLEMENTATION
+#include "gui_components/gui_memory_view.h"
+
 // Global variables
 // -----------------------------------------------------------
 // Emulator objects
@@ -61,6 +64,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     GuiWindowFileDialogState fileDialogState = InitGuiWindowFileDialog(GetWorkingDirectory());
     GuiTooltipTextState tooltipTextState = InitGuiToolTipText("Tooltip text", (Rectangle){ 0, 0, 100, 20 });
     GuiCpuViewState cpuViewState = InitGuiCpuView((Vector2){ screenWidth / 2, screenHeight / 2 }, 350, 400);
+    GuiMemoryViewState memoryViewState = InitGuiMemoryView((Vector2){ screenWidth / 2, screenHeight / 2 }, 600, 500);   
     //--------------------------------------------------------------------------------------
 
     /* -------------------------------- Main loop ------------------------------- */
@@ -86,6 +90,11 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             cpuViewState.isWindowActive = !cpuViewState.isWindowActive;
         }
 
+        if(menuBarState.memoryButtonActive)
+        {
+            memoryViewState.isWindowActive = !memoryViewState.isWindowActive;
+        }
+
         bool isAnyHovered = false;
         char *toolTipText = GuiMenuBarGetTooltip(&menuBarState, &isAnyHovered);
         if(isAnyHovered == false)
@@ -101,9 +110,16 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
         {
             printf("Space key pressed\n");
             cpuStep(cpu, memory);
+
+            /* ----------------------------- CPU view update ---------------------------- */
             GuiCpuViewUpdateRegisters(&cpuViewState, cpu->A, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L);
             GuiCpuViewUpdateFlags(&cpuViewState, cpu->F.C, cpu->F.N, cpu->F.P, cpu->F.H, cpu->F.Z, cpu->F.S);
             GuiCpuViewUpdatePointers(&cpuViewState, cpu->PC, cpu->SP);
+            /* -------------------------------------------------------------------------- */
+
+            /* --------------------------- Memory view update --------------------------- */
+            GuiMemoryViewAddressUpdate(&memoryViewState, 0, memory->data, MEMORY_SIZE);
+            /* -------------------------------------------------------------------------- */
         }
         /* -------------------------------------------------------------------------- */
 
@@ -115,6 +131,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             /* -------------------------------- Draw GUI -------------------------------- */
             GuiMenuBar(&menuBarState);
             GuiCpuView(&cpuViewState);
+            GuiMemoryView(&memoryViewState);
             GuiWindowFileDialog(&fileDialogState);
             GuiToolTipText(&tooltipTextState);
             /* -------------------------------------------------------------------------- */

@@ -12,10 +12,9 @@
 
 typedef struct Memory_t
 {
-    byte_t* ram;
+    byte_t* data;
+    
     size_t ramSize;
-
-    byte_t* rom;
     size_t romSize;
 
     byte_t* io;
