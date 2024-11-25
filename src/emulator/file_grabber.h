@@ -11,4 +11,6 @@
 bool loadFile(const char *filename, byte_t *buffer, size_t bufferSize);
 bool saveFile(const char *filename, byte_t *buffer, size_t bufferSize);
 
+void createFilePath(const char *dir, const char *fileName, char *buffer, size_t bufferSize);
+
 #endif // FILE_GRABBER_H

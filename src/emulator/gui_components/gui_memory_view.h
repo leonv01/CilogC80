@@ -251,14 +251,13 @@ void GuiMemoryView(GuiMemoryViewState *state)
                 }, state->memoryEntry[x][y]);
             }
         }
-        
         if(GuiSpinner((Rectangle)
         {
             labelStartPos.x + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 2),
             labelStartPos.y + MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 17),
             state->memoryAddressLabelWidth + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 2),
             state->memoryAddressLabelHeight
-        }, "Memory address page", &state->memoryAddressSpinnerValue, 0, 0xFF, state->memoryAddressSpinnerActive))
+        }, "Memory address page", &state->memoryAddressSpinnerValue, 0, 0xFF, state->memoryAddressSpinnerActive) == true)
         {
             state->memoryAddressSpinnerActive = !state->memoryAddressSpinnerActive;
         }

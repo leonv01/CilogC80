@@ -23,6 +23,8 @@
 #define GUI_MEMORY_VIEW_IMPLEMENTATION
 #include "gui_components/gui_memory_view.h"
 
+#include "file_grabber.h"
+
 // Global variables
 // -----------------------------------------------------------
 // Emulator objects
@@ -50,12 +52,11 @@ enum UiSize
 /* -------------------------------------------------------------------------- */
 int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
 {
-    
     int status;
 
     int screenWidth = 1280;
     int screenHeight = 720;
-    
+
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_MINIMIZED);  // Set window configuration flags
     InitWindow(screenWidth, screenHeight, "Cilog C80 - Emulator");
 
@@ -93,6 +94,23 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
         if(menuBarState.memoryButtonActive)
         {
             memoryViewState.isWindowActive = !memoryViewState.isWindowActive;
+        }
+
+        if(fileDialogState.SelectFilePressed == true)
+        {
+            char selectedFileBuffer[2048];
+            createFilePath(fileDialogState.dirPathText, fileDialogState.fileNameText, selectedFileBuffer, sizeof(selectedFileBuffer));
+
+            fileDialogState.windowActive = false;
+            bool fileLoaded = loadFile(selectedFileBuffer, memory->data, MEMORY_SIZE);
+
+            if(fileLoaded == true)
+            {
+                GuiMemoryViewAddressUpdate(&memoryViewState, 0, memory->data, MEMORY_SIZE);
+                printf("File loaded\n");
+            }
+
+            fileDialogState.SelectFilePressed = false;
         }
 
         bool isAnyHovered = false;

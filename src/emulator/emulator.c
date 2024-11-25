@@ -42,12 +42,6 @@ void emulatorInit(int argc, char** argv)
     memoryInit(&memory);
     errorStackInit();
 
-    if(loadFile("C:\\Users\\leonv\\Documents\\CilogC80\\asm\\main.bin", memory.data, MEMORY_SIZE) == false)
-    {
-        printf("Error loading file\n");
-        exit(-1);
-    }
-    
     #if !defined(HEADLESS)
     graphicsInit(argc, argv, &cpu, &memory);
     #endif
