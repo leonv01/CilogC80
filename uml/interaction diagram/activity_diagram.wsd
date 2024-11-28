@@ -1,0 +1,23 @@
+@startuml
+skinparam linestyle ortho
+
+rectangle "User" as user
+rectangle "GUI" as gui
+rectangle "Emulator" as emulator
+rectangle "CPU" as cpu
+rectangle "Memory" as memory
+rectangle "Instruction Handler" as instructionHandler
+
+user -right-> gui: 1. Start/Step Command
+gui -right-> emulator: 2. Send Command
+emulator -down-> cpu: 3. Initialize/Execute
+cpu -right-> memory: 4. Fetch Opcode/Data
+memory -down-> cpu: 5. Return Opcode/Data
+cpu -down-> instructionHandler: 6. Execute Instruction with opcode/data
+instructionHandler -up-> cpu: 7. Update Registers/Flags
+instructionHandler -left-> memory: 8. Read/Write Data
+memory -up-> cpu: 9. Return Data
+cpu -left-> gui: 10. Update State
+gui -left-> user: 11. Display State
+
+@enduml
