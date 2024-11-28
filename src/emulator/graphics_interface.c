@@ -23,6 +23,12 @@
 #define GUI_MEMORY_VIEW_IMPLEMENTATION
 #include "gui_components/gui_memory_view.h"
 
+#define GUI_PREFERENCES_IMPLEMENTATION
+#include "gui_components/gui_preferences.h"
+
+#define GUI_TOAST_IMPLEMENTATION
+#include "gui_components/gui_toast.h"
+
 #include "file_grabber.h"
 
 // Global variables
@@ -65,7 +71,9 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     GuiWindowFileDialogState fileDialogState = InitGuiWindowFileDialog(GetWorkingDirectory());
     GuiTooltipTextState tooltipTextState = InitGuiToolTipText("Tooltip text", (Rectangle){ 0, 0, 100, 20 });
     GuiCpuViewState cpuViewState = InitGuiCpuView((Vector2){ screenWidth / 2, screenHeight / 2 }, 350, 400);
-    GuiMemoryViewState memoryViewState = InitGuiMemoryView((Vector2){ screenWidth / 2, screenHeight / 2 }, 600, 500);   
+    GuiMemoryViewState memoryViewState = InitGuiMemoryView((Vector2){ screenWidth / 2, screenHeight / 2 }, 600, 500);
+    GuiPreferencesState preferencesState = InitGuiPreferences((Vector2){ screenWidth / 2, screenHeight / 2 }, 400, 300);   
+    GuiToastState toastState = InitGuiToast((Vector2){ screenWidth / 2, screenHeight / 2 }, 200, 100);
     //--------------------------------------------------------------------------------------
 
     /* -------------------------------- Main loop ------------------------------- */
@@ -102,11 +110,13 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             createFilePath(fileDialogState.dirPathText, fileDialogState.fileNameText, selectedFileBuffer, sizeof(selectedFileBuffer));
 
             fileDialogState.windowActive = false;
-            bool fileLoaded = loadFile(selectedFileBuffer, memory->data, MEMORY_SIZE);
+            bool fileLoaded = loadFile(selectedFileBuffer, memory->data, memory->memorySize);
 
             if(fileLoaded == true)
             {
-                GuiMemoryViewAddressUpdate(&memoryViewState, 0, memory->data, MEMORY_SIZE);
+                GuiMemoryViewAddressUpdate(&memoryViewState, 0, memory->data, memory->memorySize);
+                cpuReset(cpu);
+                toastState.isWindowActive = true;
                 printf("File loaded\n");
             }
 
@@ -126,6 +136,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
         }
         if(IsKeyPressed(KEY_SPACE) == true)
         {
+            GuiCpuViewUpdateFontSize(&cpuViewState, 15);
             printf("Space key pressed\n");
             cpuStep(cpu, memory);
 
@@ -136,7 +147,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             /* -------------------------------------------------------------------------- */
 
             /* --------------------------- Memory view update --------------------------- */
-            GuiMemoryViewAddressUpdate(&memoryViewState, 0, memory->data, MEMORY_SIZE);
+            GuiMemoryViewAddressUpdate(&memoryViewState, 0, memory->data, memory->memorySize);
             /* -------------------------------------------------------------------------- */
         }
         /* -------------------------------------------------------------------------- */
@@ -147,11 +158,14 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             ClearBackground(GRAY); 
 
             /* -------------------------------- Draw GUI -------------------------------- */
+            GuiSetStyle(DEFAULT, TEXT_SIZE, 15);
             GuiMenuBar(&menuBarState);
             GuiCpuView(&cpuViewState);
             GuiMemoryView(&memoryViewState);
+            GuiPreferences(&preferencesState);
             GuiWindowFileDialog(&fileDialogState);
             GuiToolTipText(&tooltipTextState);
+            GuiToast(&toastState);
             /* -------------------------------------------------------------------------- */
         }
         EndDrawing();

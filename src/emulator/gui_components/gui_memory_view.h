@@ -68,7 +68,7 @@ GuiMemoryViewState InitGuiMemoryView(const Vector2 position, const int width, co
     GuiMemoryViewState state = { 0 };
 
     /* ---------------------------- Window attributes --------------------------- */
-    state.position = position;
+    state.position = (Vector2){ position.x - (width / 2), position.y - (height / 2) };
     state.width = width;
     state.height = height;
     state.padding = 12;

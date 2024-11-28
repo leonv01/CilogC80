@@ -94,6 +94,7 @@ void GuiCpuView(GuiCpuViewState *state);
 void GuiCpuViewUpdateRegisters(GuiCpuViewState *state, const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d, const uint8_t e, const uint8_t h, const uint8_t l);
 void GuiCpuViewUpdateFlags(GuiCpuViewState *state, const uint8_t c, const uint8_t n, const uint8_t p, const uint8_t h, const uint8_t z, const uint8_t s);
 void GuiCpuViewUpdatePointers(GuiCpuViewState *state, const uint16_t pc, const uint16_t sp);
+void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize);
 
 #endif // GUI_CPU_VIEW_H
 
@@ -105,7 +106,7 @@ GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const in
 {
     GuiCpuViewState state = { 0 };  
 
-    state.position = position;
+    state.position = (Vector2){ position.x - (width / 2), position.y - (height / 2) };
     state.width = width;
     state.height = height;
     state.padding = 12;
@@ -436,8 +437,8 @@ void GuiCpuView(GuiCpuViewState *state)
         { 
             flagsStartPos.x - state->padding, 
             flagsStartPos.y - state->padding,
-            CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 4) + state->padding, 
-            CPU_VIEW_SPACING(state->flagLabelHeight, state->padding, 2) + state->padding
+            flagsGroupBoxWidth, 
+            flagsGroupBoxHeight
         }, "Flags");
 
         // Flag C
@@ -541,7 +542,7 @@ void GuiCpuView(GuiCpuViewState *state)
         const Vector2 pointerStartPos = (Vector2)
         { 
             state->bounds.x + ( state->padding * 2 ), 
-            state->bounds.y + registerGroupBoxHeight + flagsGroupBoxHeight + state->padding
+            state->bounds.y + registerGroupBoxHeight + (state->padding * 4) + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + flagsGroupBoxHeight
         };
         const int pointerGroupBoxWidth = CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 4) + state->padding;
         const int pointerGroupBoxHeight = CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 2) + state->padding;
@@ -616,6 +617,25 @@ void GuiCpuViewUpdatePointers(GuiCpuViewState *state, const uint16_t pc, const u
 {
     sprintf(state->programCounterValue, "0x%04X", pc);
     sprintf(state->stackPointerValue, "0x%04X", sp);
+}
+
+void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize)
+{
+    state->fontSize = fontSize;
+
+    state->registerLabelHeight = fontSize + 10;
+    state->flagLabelHeight = fontSize + 10;
+    state->pointerLabelHeight = fontSize + 10;
+
+    state->registerTextWidth = 50 + (fontSize * 2);
+    state->flagLabelWidth = 25 + (fontSize);
+    state->pointerTextWidth = 50 + (fontSize * 2);
+
+    state->registerLabelWidth = 100 + (fontSize * 2);
+    state->flagLabelWidth = 25 + (fontSize * 2);
+    state->pointerLabelWidth = 100 + (fontSize * 2);
+
+    state->padding = 12 + (.5 * fontSize);
 }
 
 #endif // GUI_CPU_VIEW_IMPLEMENTATION

@@ -12,7 +12,11 @@ void memoryInit(Memory_t* memory)
         return;
     }
 
-    memory->data = (byte_t*) malloc(sizeof(byte_t) * MEMORY_SIZE);
+    memory->ramSize = 0xE000;
+    memory->romSize = 0x2000;
+    memory->memorySize = memory->romSize + memory->ramSize;
+
+    memory->data = (byte_t*) malloc(sizeof(byte_t) * memory->memorySize);
 
     if(memory->data == NULL)
     {
@@ -20,10 +24,7 @@ void memoryInit(Memory_t* memory)
         return;
     }
 
-    memset(memory->data, 0x00, MEMORY_SIZE);
-    
-    memory->ramSize = RAM_SIZE;
-    memory->romSize = ROM_SIZE;
+    memset(memory->data, 0x00, memory->memorySize);
 }
 
 void memoryDestroy(Memory_t* memory)
@@ -77,7 +78,7 @@ void storeByte(Memory_t* memory, word_t address, byte_t value)
     }
     else
     {
-        if(address < ROM_SIZE)
+        if(address < memory->romSize)
         {
             setError(C80_ERROR_MEMORY_STORE_BYTE_ERROR);
         }
