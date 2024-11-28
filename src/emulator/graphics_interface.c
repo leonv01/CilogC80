@@ -31,27 +31,48 @@
 
 #include "file_grabber.h"
 
-// Global variables
-// -----------------------------------------------------------
-// Emulator objects
+/* -------------------------------------------------------------------------- */
+/*                                   Defines                                  */
+/* -------------------------------------------------------------------------- */
+#define FONT_SIZE 10
+/* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------- */
+/*                              Global variables                              */
+/* -------------------------------------------------------------------------- */
 static CPU_t                *cpu;
 static Memory_t             *memory;
-// -----------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------- */
+/*                             Struct declarations                            */
+/* -------------------------------------------------------------------------- */
+typedef struct RenderObject
+{
+    void* state;
+    void (*renderFunction)(void* state);
+    size_t priority;
+} RenderObject;
+/* -------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------- */
 /*                            Forward declarations                            */
 /* -------------------------------------------------------------------------- */
-enum UiSize
-{
-    UI_SIZE_SMALL = 0,
-    UI_SIZE_MEDIUM,
-    UI_SIZE_LARGE
-};
+static inline void renderCpuViewCallback(void *state);
+static inline void renderMemoryViewCallback(void *state);
+static inline void renderPreferencesCallback(void *state);
+static inline void renderMenuBarCallback(void *state);
+static inline void renderFileDialogCallback(void *state);
+static inline void renderToolTipTextCallback(void *state);
+static inline void renderToastCallback(void *state);
 
+static void checkPriority(RenderObject *renderObjects, size_t *renderObjectsPriority, const size_t renderStatesCount);
 /* -------------------------------------------------------------------------- */
 /*                             Callback functions                             */
 /* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------- */
 /*                            Function definitions                            */
@@ -65,7 +86,8 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
 
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_MINIMIZED);  // Set window configuration flags
     InitWindow(screenWidth, screenHeight, "Cilog C80 - Emulator");
-
+    GuiSetStyle(DEFAULT, TEXT_SIZE, FONT_SIZE);
+    
     /* -------------------------------- GUI Items ------------------------------- */
     GuiMenuBarState menuBarState = InitGuiMenuBar((Vector2){ 0, 0 }, screenWidth);
     GuiWindowFileDialogState fileDialogState = InitGuiWindowFileDialog(GetWorkingDirectory());
@@ -75,6 +97,21 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     GuiPreferencesState preferencesState = InitGuiPreferences((Vector2){ screenWidth / 2, screenHeight / 2 }, 400, 300);   
     GuiToastState toastState = InitGuiToast((Vector2){ screenWidth / 2, screenHeight / 2 }, 200, 100);
     //--------------------------------------------------------------------------------------
+    RenderObject renderObjects[] = 
+    {
+        { &menuBarState, (void (*)(void *))renderMenuBarCallback, 0 },
+        { &cpuViewState, (void (*)(void *))renderCpuViewCallback, 1 },
+        { &memoryViewState, (void (*)(void *))renderMemoryViewCallback, 2 },
+        { &preferencesState, (void (*)(void *))renderPreferencesCallback, 3 },
+        { &fileDialogState, (void (*)(void *))renderFileDialogCallback, 4 },
+        { &tooltipTextState, (void (*)(void *))renderToolTipTextCallback, 5 },
+        { &toastState, (void (*)(void *))renderToastCallback, 6 }
+    };
+    const int renderStatesCount = sizeof(renderObjects) / sizeof(RenderObject);
+    size_t renderObjectsPriority[renderStatesCount];
+    for (int i = 0; i < renderStatesCount; i++) {
+        renderObjectsPriority[i] = i; // Store indices
+    }
 
     /* -------------------------------- Main loop ------------------------------- */
     while (WindowShouldClose() == false)
@@ -136,7 +173,6 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
         }
         if(IsKeyPressed(KEY_SPACE) == true)
         {
-            GuiCpuViewUpdateFontSize(&cpuViewState, 15);
             printf("Space key pressed\n");
             cpuStep(cpu, memory);
 
@@ -158,14 +194,12 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             ClearBackground(GRAY); 
 
             /* -------------------------------- Draw GUI -------------------------------- */
-            GuiSetStyle(DEFAULT, TEXT_SIZE, 15);
-            GuiMenuBar(&menuBarState);
-            GuiCpuView(&cpuViewState);
-            GuiMemoryView(&memoryViewState);
-            GuiPreferences(&preferencesState);
-            GuiWindowFileDialog(&fileDialogState);
-            GuiToolTipText(&tooltipTextState);
-            GuiToast(&toastState);
+            //checkPriority(renderObjects, renderObjectsPriority, renderStatesCount);
+            for(size_t i = 0; i < renderStatesCount; i++)
+            {
+                size_t priorityIndex = renderObjectsPriority[i];
+                renderObjects[priorityIndex].renderFunction(renderObjects[priorityIndex].state);
+            }
             /* -------------------------------------------------------------------------- */
         }
         EndDrawing();
@@ -179,4 +213,62 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
 void graphicsDestroy()
 {
 
+}
+
+static inline void renderCpuViewCallback(void *state)
+{
+    GuiCpuView((GuiCpuViewState *)state);
+}
+static inline void renderMemoryViewCallback(void *state)
+{
+    GuiMemoryView((GuiMemoryViewState *)state);
+}
+static inline void renderPreferencesCallback(void *state)
+{
+    GuiPreferences((GuiPreferencesState *)state);
+}
+static inline void renderMenuBarCallback(void *state)
+{
+    GuiMenuBar((GuiMenuBarState *)state);
+}
+static inline void renderFileDialogCallback(void *state)
+{
+    GuiWindowFileDialog((GuiWindowFileDialogState *)state);
+}
+static inline void renderToolTipTextCallback(void *state)
+{
+    GuiToolTipText((GuiTooltipTextState *)state);
+}
+static inline void renderToastCallback(void *state)
+{
+    GuiToast((GuiToastState *)state);
+}
+
+static void checkPriority(RenderObject *renderObjects, size_t *renderObjectsPriority, const size_t renderStatesCount)
+{
+    if(IsMouseButtonDown(MOUSE_LEFT_BUTTON) == true)
+    {
+        printf("Mouse button down\n");
+        for(size_t i = 0; i < renderStatesCount; i++)
+        {
+            if(CheckCollisionPointRec(GetMousePosition(), ((GuiMenuBarState *)renderObjects[i].state)->bounds))
+            {
+                // Check if the priority is already the highest
+                if(renderObjectsPriority[0] == renderObjects[i].priority)
+                {
+                    printf("Priority already highest\n");
+                    break;
+                }
+                else
+                {
+                    printf("Priority not highest\n");
+                    // Move the priority to the top
+                    size_t tempPriority = renderObjectsPriority[0];
+                    renderObjectsPriority[0] = renderObjects[i].priority;
+                    renderObjectsPriority[i] = tempPriority;
+                    break;
+                }
+            }
+        }
+    }
 }

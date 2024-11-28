@@ -431,7 +431,7 @@ void GuiCpuView(GuiCpuViewState *state)
             state->bounds.y + registerGroupBoxHeight + (state->padding * 3) + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT
         };        
         const int flagsGroupBoxWidth = CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 4) + state->padding;
-        const int flagsGroupBoxHeight = CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 4) + state->padding;
+        const int flagsGroupBoxHeight = CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 2) + state->padding;
 
         GuiGroupBox((Rectangle)
         { 
