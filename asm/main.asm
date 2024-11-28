@@ -1,12 +1,69 @@
-ORG 0x1000       ; Origin, start at address 0x0000
+; This is a simple program which is designed to print "inline"
+; strings.
+;
+; Of course such a thing is a little crazy, as it really messes
+; with disassemblers, but it's still a cute hack.
+;
+org 0
 
-LD A, 0x05       ; Load the value 5 into register A
-LD B, 0x03       ; Load the value 3 into register B
-ADD A, B         ; Add the value in register B to register A
-LD (0x8000), A   ; Store the result at memory location 0x8000
-LD A, 0x00
-LD A, (0x8000)   ; Load the value at memory location 0x8000 into register A
-LD C, 0x69       ; Load the value 69 into register C
-SUB A, C         ; Subtract the value in register C from register A
+   call print
+   db "This is a test!\n$"
 
-HALT             ; Halt the CPU
+   call print
+   db "As you can see we're printing INLINE strings!\n$"
+
+   halt
+
+
+;
+; This routine is designed to be CALLed, when it is invoked
+; the address of the next instruction will be placed on the
+; stack, which means we can find the address of the string to
+; print from there.
+;
+; We print each character until we find a '$' character, then
+; jmp back to the location after that.
+;
+print:
+   ;
+   ; The return address, i.e. the instruction after our call, will be
+   ; on the stack.  In our case we know that points to the string to be
+   ; printed.
+   ;
+print_loop:
+   pop hl
+
+   ;
+   ; Load the character in the hl-register into A.
+   ;
+   ld a,(hl)
+
+   ;
+   ; Bump to the next.
+   ;
+   inc hl
+
+   ;
+   ; Since we've incremented the HL register we're either
+   ; going to get the next character - or the address to
+   ; which we should return.  Push it onto the stack either way.
+   ;
+   push hl
+
+   ;
+   ; Is the character '$'?  If so we return - because we've
+   ; just stored the next address on the stack we'll go to
+   ; the correct location.
+   ;
+   cp '$'
+
+   ;
+   ; Return if we're done.
+   ;
+   ret z
+
+   ;
+   ; Otherwise output the single character, and start again.
+   ;
+   out (1),a
+   jp print_loop

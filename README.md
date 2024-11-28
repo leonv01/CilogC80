@@ -20,10 +20,7 @@ Cilog C80 is aimed to be a simple Zilog Z80 Microprocessor emulator written in C
 The project uses Unity as its testing framework. The tests are located in the `test` directory and can be run with CMake. The tests are automatically built when building the project.
 
 ## Building
-To build the project, a linux environment is currently required. The project uses CMake as its build system. Following dependencies are required:
-- CMake
-- GCC
-- (Optional) SDL2
+To build the project a C compiler is needed. Currently it's only tested with MinGW GNU compiler. 
 
 ## Cloning
 This project utilizes submodules. To clone the project with all submodules, use the following command:
