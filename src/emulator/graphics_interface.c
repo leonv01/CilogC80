@@ -99,13 +99,11 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     //--------------------------------------------------------------------------------------
     RenderObject renderObjects[] = 
     {
-        { &menuBarState, (void (*)(void *))renderMenuBarCallback, 0 },
-        { &cpuViewState, (void (*)(void *))renderCpuViewCallback, 1 },
-        { &memoryViewState, (void (*)(void *))renderMemoryViewCallback, 2 },
-        { &preferencesState, (void (*)(void *))renderPreferencesCallback, 3 },
-        { &fileDialogState, (void (*)(void *))renderFileDialogCallback, 4 },
-        { &tooltipTextState, (void (*)(void *))renderToolTipTextCallback, 5 },
-        { &toastState, (void (*)(void *))renderToastCallback, 6 }
+        { &cpuViewState, (void (*)(void *))renderCpuViewCallback, 0 },
+        { &memoryViewState, (void (*)(void *))renderMemoryViewCallback, 1 },
+        { &preferencesState, (void (*)(void *))renderPreferencesCallback, 2 },
+        { &fileDialogState, (void (*)(void *))renderFileDialogCallback, 3 },
+        { &toastState, (void (*)(void *))renderToastCallback, 4 }
     };
     const int renderStatesCount = sizeof(renderObjects) / sizeof(RenderObject);
     size_t renderObjectsPriority[renderStatesCount];
@@ -200,6 +198,8 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
                 size_t priorityIndex = renderObjectsPriority[i];
                 renderObjects[priorityIndex].renderFunction(renderObjects[priorityIndex].state);
             }
+            GuiMenuBar(&menuBarState);
+            GuiToolTipText(&tooltipTextState);
             /* -------------------------------------------------------------------------- */
         }
         EndDrawing();

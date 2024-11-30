@@ -180,7 +180,7 @@ GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const in
     state.dragMode = false;
     state.panOffset = (Vector2){ 0, 0 };
 
-    state.supportResize = true;
+    state.supportResize = false;
     state.resizeMode = false;
 
     return state;
@@ -284,7 +284,11 @@ void GuiCpuView(GuiCpuViewState *state)
         }
 
         state->resizerBounds = (Rectangle){ state->bounds.x + state->bounds.width - 16, state->bounds.y + state->bounds.height - 16, 16, 16 };
-
+        state->bounds.width = CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 4) + (state->padding * 3);
+        state->bounds.height = CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 4) + 
+                                CPU_VIEW_SPACING(state->flagLabelHeight, state->padding, 2) + 
+                                CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 2) + 
+                                (state->padding * 7) + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT;
         /* --------------------------- Render GUI elements -------------------------- */
         if(GuiWindowBox(state->bounds, "CPU view") == true)
         {
@@ -292,15 +296,18 @@ void GuiCpuView(GuiCpuViewState *state)
             state->isWindowActive = false;
         }
 
-        GuiDrawIcon(72, state->resizerBounds.x, state->resizerBounds.y, 1, BLACK);
-
+        if(state->supportResize == true)
+        {
+            GuiDrawIcon(72, state->resizerBounds.x, state->resizerBounds.y, 1, BLACK);
+        }
+        
         /* ---------------------------- Register elements --------------------------- */
         const Vector2 labelStartPos = (Vector2)
         { 
             state->bounds.x + ( state->padding * 2 ), 
             state->bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + (state->padding * 2) 
         };
-        const int registerGroupBoxWidth = CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 4) + state->padding;
+        const int registerGroupBoxWidth = state->bounds.width - (state->padding * 2);
         const int registerGroupBoxHeight = CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 4) + state->padding;
         GuiGroupBox((Rectangle)
         { 
@@ -430,7 +437,7 @@ void GuiCpuView(GuiCpuViewState *state)
             state->bounds.x + ( state->padding * 2 ), 
             state->bounds.y + registerGroupBoxHeight + (state->padding * 3) + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT
         };        
-        const int flagsGroupBoxWidth = CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 4) + state->padding;
+        const int flagsGroupBoxWidth = state->bounds.width - (state->padding * 2);
         const int flagsGroupBoxHeight = CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 2) + state->padding;
 
         GuiGroupBox((Rectangle)
@@ -544,7 +551,7 @@ void GuiCpuView(GuiCpuViewState *state)
             state->bounds.x + ( state->padding * 2 ), 
             state->bounds.y + registerGroupBoxHeight + (state->padding * 4) + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + flagsGroupBoxHeight
         };
-        const int pointerGroupBoxWidth = CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 4) + state->padding;
+        const int pointerGroupBoxWidth = state->bounds.width - (state->padding * 2);
         const int pointerGroupBoxHeight = CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 2) + state->padding;
 
         GuiGroupBox((Rectangle)
