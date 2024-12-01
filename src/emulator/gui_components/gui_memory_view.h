@@ -49,19 +49,28 @@ typedef struct
 
     int memoryAddressSpinnerValue;
     bool memoryAddressSpinnerActive;
+    bool memoryAddressFindByteActive;
+    bool isMemoryAdressFindPressed;
+
+    char memoryAddressFindByteText[10];
+
+    bool updateMemoryView;
     /* -------------------------------------------------------------------------- */
 
 } GuiMemoryViewState;
 
 GuiMemoryViewState InitGuiMemoryView(const Vector2 position, const int width, const int height);
 void GuiMemoryView(GuiMemoryViewState *state);
-void GuiMemoryViewAddressUpdate(GuiMemoryViewState *state, const int address, const uint8_t *memory, const size_t memorySize);
+void GuiMemoryViewAddressUpdate(GuiMemoryViewState *state, const uint8_t *memory, const size_t memorySize);
+void GuiMemoryViewUpdate(GuiMemoryViewState *state, bool update);
 
 #endif // GUI_MEMORY_VIEW_H
 
 #ifdef GUI_MEMORY_VIEW_IMPLEMENTATION
 
 #include "raygui.h"
+
+void GuiMemoryFindByteAtAddress(GuiMemoryViewState *state);
 
 GuiMemoryViewState InitGuiMemoryView(const Vector2 position, const int width, const int height)
 {
@@ -86,7 +95,7 @@ GuiMemoryViewState InitGuiMemoryView(const Vector2 position, const int width, co
     state.supportDrag = true;
     state.dragMode = false;
 
-    state.supportResize = true;
+    state.supportResize = false;
     state.resizeMode = false;
 
     state.panOffset = (Vector2){ 0, 0 };
@@ -114,6 +123,9 @@ GuiMemoryViewState InitGuiMemoryView(const Vector2 position, const int width, co
 
     state.memoryAddressSpinnerValue = 0;
     state.memoryAddressSpinnerActive = false;
+
+    state.memoryAddressFindByteActive = false;
+    state.isMemoryAdressFindPressed = false;
 
     state.memoryAddressLabelWidth = 100;
     state.memoryAddressLabelHeight = 20;
@@ -177,8 +189,14 @@ void GuiMemoryView(GuiMemoryViewState *state)
             // TODO: Resize with content
         }
 
-        state->resizerBounds = (Rectangle){ state->bounds.x + state->bounds.width - 16, state->bounds.y + state->bounds.height - 16, 16, 16 };
+        if(state->updateMemoryView == true)
+        {
 
+            state->updateMemoryView = false;
+        }
+
+        state->resizerBounds = (Rectangle){ state->bounds.x + state->bounds.width - 16, state->bounds.y + state->bounds.height - 16, 16, 16 };
+        state->bounds.width = MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 7) + (state->padding * 2);
         /* --------------------------- Render GUI elements -------------------------- */
         if(GuiWindowBox(state->bounds, "Memory view") == true)
         {
@@ -186,7 +204,10 @@ void GuiMemoryView(GuiMemoryViewState *state)
             state->isWindowActive = false;
         }
 
-        GuiDrawIcon(72, state->resizerBounds.x, state->resizerBounds.y, 1, BLACK);
+        if(state->supportResize == true)
+        {
+            GuiDrawIcon(72, state->resizerBounds.x, state->resizerBounds.y, 1, BLACK);
+        }
 
         /* ---------------------------- Address elements ---------------------------- */
         const Vector2 labelStartPos = (Vector2)
@@ -195,7 +216,7 @@ void GuiMemoryView(GuiMemoryViewState *state)
             state->bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + (state->padding * 2)
         };
         const int addressPosStartX = MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 1);
-        const int addressGroupBoxWidth = addressPosStartX + MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 16) + state->padding;
+        const int addressGroupBoxWidth = addressPosStartX + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 6);
         const int addressGroupBoxHeight = MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 19);
 
         GuiGroupBox((Rectangle)
@@ -254,22 +275,45 @@ void GuiMemoryView(GuiMemoryViewState *state)
         if(GuiSpinner((Rectangle)
         {
             labelStartPos.x + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 2),
-            labelStartPos.y + MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 17),
+            labelStartPos.y + MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 18),
             state->memoryAddressLabelWidth + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 2),
             state->memoryAddressLabelHeight
         }, "Memory address page", &state->memoryAddressSpinnerValue, 0, 0xFF, state->memoryAddressSpinnerActive) == true)
         {
             state->memoryAddressSpinnerActive = !state->memoryAddressSpinnerActive;
         }
-        /* -------------------------------------------------------------------------- */
-        /* -------------------------------------------------------------------------- */
 
+        /* -------------------------- Find byte at address -------------------------- */
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        if(GuiTextBox((Rectangle)
+        {
+            labelStartPos.x + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 2),
+            labelStartPos.y + MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 19),
+            state->memoryAddressLabelWidth + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 1),
+            state->memoryAddressLabelHeight
+        }, state->memoryAddressFindByteText, 10, state->memoryAddressFindByteActive) == true)
+        {
+            state->memoryAddressFindByteActive = !state->memoryAddressFindByteActive;
+        }
+        if(GuiButton((Rectangle)
+        {
+            labelStartPos.x + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 3) + state->memoryAddressLabelWidth,
+            labelStartPos.y + MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 19),
+            MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 1),
+            state->memoryAddressLabelHeight
+        }, "Find") == true)
+        {
+            state->memoryAddressFindByteActive = false;
+            state->isMemoryAdressFindPressed = true;
+            GuiMemoryFindByteAtAddress(state);
+        }
+        /* -------------------------------------------------------------------------- */
     }
 }
 
-void GuiMemoryViewAddressUpdate(GuiMemoryViewState *state, const int address, const uint8_t *memory, const size_t memorySize)
+void GuiMemoryViewAddressUpdate(GuiMemoryViewState *state, const uint8_t *memory, const size_t memorySize)
 {
-    if(state->isWindowActive == true)
+    if(state->isWindowActive == true && state->updateMemoryView == true)
     {
         if(state->memoryAddressSpinnerValue * 0x0100 <= memorySize)
         {
@@ -280,10 +324,30 @@ void GuiMemoryViewAddressUpdate(GuiMemoryViewState *state, const int address, co
                 {
                     sprintf(state->memoryEntry[x][y], "%02X", memory[(state->memoryAddressSpinnerValue * 0x0100) + (x * 0x10) + y]);
                 }
-                
             }
         }
+
+        state->updateMemoryView = false;
     }
+}
+
+void GuiMemoryFindByteAtAddress(GuiMemoryViewState *state)
+{
+    word_t address = 0;
+    sscanf(state->memoryAddressFindByteText, "%X", &address);
+
+    byte_t spinnerValue = UPPER_BYTE(address);
+
+    printf("Address: %X\n", spinnerValue);
+
+    state->memoryAddressSpinnerValue = spinnerValue;
+
+    GuiMemoryViewUpdate(state, true);
+}
+
+void GuiMemoryViewUpdate(GuiMemoryViewState *state, bool update)
+{
+    state->updateMemoryView = update;
 }
 
 #endif // GUI_MEMORY_VIEW_IMPLEMENTATION

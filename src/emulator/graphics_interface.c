@@ -149,7 +149,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
 
             if(fileLoaded == true)
             {
-                GuiMemoryViewAddressUpdate(&memoryViewState, 0, memory->data, memory->memorySize);
+                GuiMemoryViewUpdate(&memoryViewState, true);
                 cpuReset(cpu);
                 toastState.isWindowActive = true;
                 printf("File loaded\n");
@@ -171,19 +171,19 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
         }
         if(IsKeyPressed(KEY_SPACE) == true)
         {
-            printf("Space key pressed\n");
-            cpuStep(cpu, memory);
-
-            /* ----------------------------- CPU view update ---------------------------- */
-            GuiCpuViewUpdateRegisters(&cpuViewState, cpu->A, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L);
-            GuiCpuViewUpdateFlags(&cpuViewState, cpu->F.C, cpu->F.N, cpu->F.P, cpu->F.H, cpu->F.Z, cpu->F.S);
-            GuiCpuViewUpdatePointers(&cpuViewState, cpu->PC, cpu->SP);
-            /* -------------------------------------------------------------------------- */
-
-            /* --------------------------- Memory view update --------------------------- */
-            GuiMemoryViewAddressUpdate(&memoryViewState, 0, memory->data, memory->memorySize);
-            /* -------------------------------------------------------------------------- */
+            cpuStep(cpu, memory); 
+            
+            GuiMemoryViewUpdate(&memoryViewState, true);
+            GuiCpuViewUpdate(&cpuViewState, true);
         }
+        /* ----------------------------- CPU view update ---------------------------- */
+        GuiCpuViewUpdateRegisters(&cpuViewState, cpu->A, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L);
+        GuiCpuViewUpdateFlags(&cpuViewState, cpu->F.C, cpu->F.N, cpu->F.P, cpu->F.H, cpu->F.Z, cpu->F.S);
+        GuiCpuViewUpdatePointers(&cpuViewState, cpu->PC, cpu->SP);
+        /* -------------------------------------------------------------------------- */
+
+        /* --------------------------- Memory view update --------------------------- */
+        GuiMemoryViewAddressUpdate(&memoryViewState, memory->data, memory->memorySize);
         /* -------------------------------------------------------------------------- */
 
         /* ------------------------------ Begin Drawing ----------------------------- */
@@ -192,7 +192,6 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             ClearBackground(GRAY); 
 
             /* -------------------------------- Draw GUI -------------------------------- */
-            //checkPriority(renderObjects, renderObjectsPriority, renderStatesCount);
             for(size_t i = 0; i < renderStatesCount; i++)
             {
                 size_t priorityIndex = renderObjectsPriority[i];

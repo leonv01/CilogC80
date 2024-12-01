@@ -39,6 +39,14 @@ typedef struct
     int registerLabelHeight;
 
     int registerTextWidth;
+
+    bool registerATextActive;
+    bool registerBTextActive;
+    bool registerCTextActive;
+    bool registerDTextActive;
+    bool registerETextActive;
+    bool registerHTextActive;
+    bool registerLTextActive;
     /* -------------------------------------------------------------------------- */
 
     /* --------------------------- Flag GUI attributes -------------------------- */
@@ -60,6 +68,13 @@ typedef struct
     int flagLabelHeight;
 
     int flagTextWidth;
+
+    bool flagCTextActive;
+    bool flagNTextActive;
+    bool flagPTextActive;
+    bool flagHTextActive;
+    bool flagZTextActive;
+    bool flagSTextActive;
     /* -------------------------------------------------------------------------- */
 
     /* ------------------------- Pointer GUI attributes ------------------------- */
@@ -73,6 +88,9 @@ typedef struct
     int pointerLabelHeight;
 
     int pointerTextWidth;
+
+    bool pointerPcTextActive;
+    bool pointerSpTextActive;
     /* -------------------------------------------------------------------------- */
 
     Rectangle resizerBounds;
@@ -87,6 +105,11 @@ typedef struct
     bool supportResize;
     Vector2 panOffset;
 
+    bool registersEditable;
+    bool flagsEditable;
+    bool pointersEditable;
+
+    bool updateCpuView;
 } GuiCpuViewState;
 
 GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const int height);
@@ -95,6 +118,7 @@ void GuiCpuViewUpdateRegisters(GuiCpuViewState *state, const uint8_t a, const ui
 void GuiCpuViewUpdateFlags(GuiCpuViewState *state, const uint8_t c, const uint8_t n, const uint8_t p, const uint8_t h, const uint8_t z, const uint8_t s);
 void GuiCpuViewUpdatePointers(GuiCpuViewState *state, const uint16_t pc, const uint16_t sp);
 void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize);
+void GuiCpuViewUpdate(GuiCpuViewState *state, bool update);
 
 #endif // GUI_CPU_VIEW_H
 
@@ -140,6 +164,14 @@ GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const in
     strcpy(state.registerLValue, initText);
 
     state.registerTextWidth = 50;
+
+    state.registerATextActive = false;
+    state.registerBTextActive = false;
+    state.registerCTextActive = false;
+    state.registerDTextActive = false;
+    state.registerETextActive = false;
+    state.registerHTextActive = false;
+    state.registerLTextActive = false;
     /* -------------------------------------------------------------------------- */
 
     /* --------------------------- Flag GUI elements ---------------------------- */
@@ -159,6 +191,13 @@ GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const in
 
     state.flagLabelWidth = 20;
     state.flagLabelHeight = 20;
+
+    state.flagCTextActive = false;
+    state.flagNTextActive = false;
+    state.flagPTextActive = false;
+    state.flagHTextActive = false;
+    state.flagZTextActive = false;
+    state.flagSTextActive = false;
     /* -------------------------------------------------------------------------- */
 
     /* ------------------------- Pointer GUI elements --------------------------- */
@@ -172,6 +211,9 @@ GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const in
     state.pointerLabelHeight = 20;
 
     state.pointerTextWidth = 50;
+
+    state.pointerPcTextActive = false;
+    state.pointerSpTextActive = false;
     /* -------------------------------------------------------------------------- */
 
     state.resizerBounds = (Rectangle){ position.x + width - 16, position.y + height - 16, 16, 16 };
@@ -182,6 +224,12 @@ GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const in
 
     state.supportResize = false;
     state.resizeMode = false;
+
+    state.updateCpuView = false;
+
+    state.flagsEditable = true;
+    state.registersEditable = true;
+    state.pointersEditable = true;
 
     return state;
 }
@@ -326,13 +374,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->registerLabelWidth, 
             state->registerLabelHeight 
         }, state->registerALabelText);
-        GuiTextBox((Rectangle)
+        if(state->registerATextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             labelStartPos.x + CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 1), 
             labelStartPos.y + CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 0), 
             state->registerTextWidth, 
             state->registerLabelHeight 
-        }, state->registerAValue, 1, false);
+        }, state->registerAValue, 1, state->registerATextActive))
+        {
+            state->registerATextActive = !state->registerATextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Register B
         GuiLabel((Rectangle)
@@ -342,13 +398,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->registerLabelWidth, 
             state->registerLabelHeight 
         }, state->registerBLabelText);
-        GuiTextBox((Rectangle)
+        if(state->registerBTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             labelStartPos.x + CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 1), 
             labelStartPos.y + CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 1), 
             state->registerTextWidth, 
             state->registerLabelHeight 
-        }, state->registerBValue, 1, false);
+        }, state->registerBValue, 1, state->registerBTextActive))
+        {
+            state->registerBTextActive = !state->registerBTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Register C
         GuiLabel((Rectangle)
@@ -358,13 +422,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->registerLabelWidth, 
             state->registerLabelHeight 
         }, state->registerCLabelText);
-        GuiTextBox((Rectangle)
+        if(state->registerCTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             labelStartPos.x + CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 3), 
             labelStartPos.y + CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 1), 
             state->registerTextWidth, 
             state->registerLabelHeight 
-        }, state->registerCValue, 1, false);
+        }, state->registerCValue, 1, state->registerCTextActive))
+        {
+            state->registerCTextActive = !state->registerCTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Register D
         GuiLabel((Rectangle)
@@ -374,13 +446,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->registerLabelWidth, 
             state->registerLabelHeight 
         }, state->registerDLabelText);
-        GuiTextBox((Rectangle)
+        if(state->registerDTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             labelStartPos.x + CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 1), 
             labelStartPos.y + CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 2), 
             state->registerTextWidth, 
             state->registerLabelHeight 
-        }, state->registerDValue, 1, false);
+        }, state->registerDValue, 1, state->registerDTextActive))
+        {
+            state->registerDTextActive = !state->registerDTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Register E
         GuiLabel((Rectangle)
@@ -390,13 +470,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->registerLabelWidth, 
             state->registerLabelHeight 
         }, state->registerELabelText);
-        GuiTextBox((Rectangle)
+        if(state->registerETextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             labelStartPos.x + CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 3), 
             labelStartPos.y + CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 2), 
             state->registerTextWidth, 
             state->registerLabelHeight 
-        }, state->registerEValue, 1, false);
+        }, state->registerEValue, 1, state->registerETextActive))
+        {
+            state->registerETextActive = !state->registerETextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Register H
         GuiLabel((Rectangle)
@@ -406,13 +494,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->registerLabelWidth, 
             state->registerLabelHeight 
         }, state->registerHLabelText);
-        GuiTextBox((Rectangle)
+        if(state->registerHTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             labelStartPos.x + CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 1), 
             labelStartPos.y + CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 3), 
             state->registerTextWidth, 
             state->registerLabelHeight 
-        }, state->registerHValue, 1, false);
+        }, state->registerHValue, 1, state->registerHTextActive))
+        {
+            state->registerHTextActive = !state->registerHTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Register L
         GuiLabel((Rectangle)
@@ -422,13 +518,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->registerLabelWidth, 
             state->registerLabelHeight 
         }, state->registerLLabelText);
-        GuiTextBox((Rectangle)
+        if(state->registerLTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             labelStartPos.x + CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 3), 
             labelStartPos.y + CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 3), 
             state->registerTextWidth, 
             state->registerLabelHeight 
-        }, state->registerLValue, 1, false);
+        }, state->registerLValue, 1, state->registerLTextActive))
+        {
+            state->registerLTextActive = !state->registerLTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
         /* -------------------------------------------------------------------------- */
 
         /* ------------------------------ Flag elements ----------------------------- */
@@ -456,13 +560,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->flagLabelWidth, 
             state->flagLabelHeight 
         }, state->flagCLabelText);
-        GuiTextBox((Rectangle)
+        if(state->flagCTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             flagsStartPos.x + CPU_VIEW_SPACING(state->flagLabelWidth / 2, state->padding, 0) + state->padding, 
             flagsStartPos.y + CPU_VIEW_SPACING(state->flagLabelHeight, state->padding, 0), 
             state->flagLabelWidth, 
             state->flagLabelHeight 
-        }, state->flagCValue, 1, false);
+        }, state->flagCValue, 1, state->flagCTextActive))
+        {
+            state->flagCTextActive = !state->flagCTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Flag N
         GuiLabel((Rectangle)
@@ -472,13 +584,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->flagLabelWidth, 
             state->flagLabelHeight 
         }, state->flagNLabelText);
-        GuiTextBox((Rectangle)
+        if(state->flagNTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             flagsStartPos.x + CPU_VIEW_SPACING(state->flagLabelWidth / 2, state->padding, 4) + state->padding, 
             flagsStartPos.y + CPU_VIEW_SPACING(state->flagLabelHeight, state->padding, 0), 
             state->flagLabelWidth, 
             state->flagLabelHeight 
-        }, state->flagNValue, 1, false);
+        }, state->flagNValue, 1, state->flagNTextActive))
+        {
+            state->flagNTextActive = !state->flagNTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Flag P
         GuiLabel((Rectangle)
@@ -488,13 +608,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->flagLabelWidth, 
             state->flagLabelHeight 
         }, state->flagPLabelText);
-        GuiTextBox((Rectangle)
+        if(state->flagPTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             flagsStartPos.x + CPU_VIEW_SPACING(state->flagLabelWidth / 2, state->padding, 8) + state->padding, 
             flagsStartPos.y + CPU_VIEW_SPACING(state->flagLabelHeight, state->padding, 0), 
             state->flagLabelWidth, 
             state->flagLabelHeight 
-        }, state->flagPValue, 1, false);
+        }, state->flagPValue, 1, state->flagPTextActive))
+        {
+            state->flagPTextActive = !state->flagPTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Flag H
         GuiLabel((Rectangle)
@@ -504,13 +632,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->flagLabelWidth, 
             state->flagLabelHeight 
         }, state->flagHLabelText);
-        GuiTextBox((Rectangle)
+        if(state->flagHTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             flagsStartPos.x + CPU_VIEW_SPACING(state->flagLabelWidth / 2, state->padding, 0) + state->padding, 
             flagsStartPos.y + CPU_VIEW_SPACING(state->flagLabelHeight, state->padding, 1), 
             state->flagLabelWidth, 
             state->flagLabelHeight 
-        }, state->flagHValue, 1, false);
+        }, state->flagHValue, 1, state->flagHTextActive))
+        {
+            state->flagHTextActive = !state->flagHTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Flag Z
         GuiLabel((Rectangle)
@@ -520,13 +656,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->flagLabelWidth, 
             state->flagLabelHeight 
         }, state->flagZLabelText);
-        GuiTextBox((Rectangle)
+        if(state->flagZTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             flagsStartPos.x + CPU_VIEW_SPACING(state->flagLabelWidth / 2, state->padding, 4) + state->padding, 
             flagsStartPos.y + CPU_VIEW_SPACING(state->flagLabelHeight, state->padding, 1), 
             state->flagLabelWidth, 
             state->flagLabelHeight 
-        }, state->flagZValue, 1, false);
+        }, state->flagZValue, 1, state->flagZTextActive))
+        {
+            state->flagZTextActive = !state->flagZTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Flag S
         GuiLabel((Rectangle)
@@ -536,13 +680,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->flagLabelWidth, 
             state->flagLabelHeight 
         }, state->flagSLabelText);
-        GuiTextBox((Rectangle)
+        if(state->flagSTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         { 
             flagsStartPos.x + CPU_VIEW_SPACING(state->flagLabelWidth / 2, state->padding, 8) + state->padding, 
             flagsStartPos.y + CPU_VIEW_SPACING(state->flagLabelHeight, state->padding, 1), 
             state->flagLabelWidth, 
             state->flagLabelHeight 
-        }, state->flagSValue, 1, false);
+        }, state->flagSValue, 1, state->flagSTextActive))
+        {
+            state->flagSTextActive = !state->flagSTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
         /* -------------------------------------------------------------------------- */
 
         /* ----------------------------- Pointer elements --------------------------- */    
@@ -570,13 +722,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->pointerLabelWidth,
             state->pointerLabelHeight
         }, state->programCounterLabelText);
-        GuiTextBox((Rectangle)
+        if(state->pointerPcTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         {
             pointerStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 2) + state->padding,
             pointerStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 0),
             state->pointerTextWidth,
             state->pointerLabelHeight
-        }, state->programCounterValue, 1, false);
+        }, state->programCounterValue, 1, state->pointerPcTextActive))
+        {
+            state->pointerPcTextActive = !state->pointerPcTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
         // Stack pointer
         GuiLabel((Rectangle)
@@ -586,13 +746,21 @@ void GuiCpuView(GuiCpuViewState *state)
             state->pointerLabelWidth,
             state->pointerLabelHeight
         }, state->stackPointerLabelText);
-        GuiTextBox((Rectangle)
+        if(state->pointerSpTextActive == true)
+        {
+            GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        }
+        if(GuiTextBox((Rectangle)
         {
             pointerStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 2) + state->padding,
             pointerStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 1),
             state->pointerTextWidth,
             state->pointerLabelHeight
-        }, state->stackPointerValue, 1, false);
+        }, state->stackPointerValue, 1, state->pointerSpTextActive))
+        {
+            state->pointerSpTextActive = !state->pointerSpTextActive;
+        }
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
         /* -------------------------------------------------------------------------- */
 
         /* -------------------------------------------------------------------------- */
@@ -601,29 +769,38 @@ void GuiCpuView(GuiCpuViewState *state)
 
 void GuiCpuViewUpdateRegisters(GuiCpuViewState *state, const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d, const uint8_t e, const uint8_t h, const uint8_t l)
 {
-    sprintf(state->registerAValue, "0x%02X", a);
-    sprintf(state->registerBValue, "0x%02X", b);
-    sprintf(state->registerCValue, "0x%02X", c);
-    sprintf(state->registerDValue, "0x%02X", d);
-    sprintf(state->registerEValue, "0x%02X", e);
-    sprintf(state->registerHValue, "0x%02X", h);
-    sprintf(state->registerLValue, "0x%02X", l);
+    if(state->updateCpuView == true)
+    {
+        sprintf(state->registerAValue, "0x%02X", a);
+        sprintf(state->registerBValue, "0x%02X", b);
+        sprintf(state->registerCValue, "0x%02X", c);
+        sprintf(state->registerDValue, "0x%02X", d);
+        sprintf(state->registerEValue, "0x%02X", e);
+        sprintf(state->registerHValue, "0x%02X", h);
+        sprintf(state->registerLValue, "0x%02X", l);
+    }
 }
 
 void GuiCpuViewUpdateFlags(GuiCpuViewState *state, const uint8_t c, const uint8_t n, const uint8_t p, const uint8_t h, const uint8_t z, const uint8_t s)
 {
-    sprintf(state->flagCValue, "%d", c);
-    sprintf(state->flagNValue, "%d", n);
-    sprintf(state->flagPValue, "%d", p);
-    sprintf(state->flagHValue, "%d", h);
-    sprintf(state->flagZValue, "%d", z);
-    sprintf(state->flagSValue, "%d", s);
+    if(state->updateCpuView == true)
+    {
+        sprintf(state->flagCValue, "%d", c);
+        sprintf(state->flagNValue, "%d", n);
+        sprintf(state->flagPValue, "%d", p);
+        sprintf(state->flagHValue, "%d", h);
+        sprintf(state->flagZValue, "%d", z);
+        sprintf(state->flagSValue, "%d", s);
+    }
 }
 
 void GuiCpuViewUpdatePointers(GuiCpuViewState *state, const uint16_t pc, const uint16_t sp)
 {
-    sprintf(state->programCounterValue, "0x%04X", pc);
-    sprintf(state->stackPointerValue, "0x%04X", sp);
+    if(state->updateCpuView == true)
+    {
+        sprintf(state->programCounterValue, "0x%04X", pc);
+        sprintf(state->stackPointerValue, "0x%04X", sp);
+    }
 }
 
 void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize)
@@ -643,6 +820,11 @@ void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize)
     state->pointerLabelWidth = 100 + (fontSize * 2);
 
     state->padding = 12 + (.5 * fontSize);
+}
+
+void GuiCpuViewUpdate(GuiCpuViewState *state, bool update)
+{
+    state->updateCpuView = update;
 }
 
 #endif // GUI_CPU_VIEW_IMPLEMENTATION
