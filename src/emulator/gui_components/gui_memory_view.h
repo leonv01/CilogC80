@@ -2,6 +2,11 @@
 #define GUI_MEMORY_VIEW_H
 
 #include "raylib.h"
+#include "utils/utils.h"
+#include <stdint.h>
+#include <stdio.h>
+
+#define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT 20
 
 #define MEMORY_VIEW_SPACING(size, padding, count) ((size + padding) * count)
 

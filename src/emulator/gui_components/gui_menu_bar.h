@@ -28,6 +28,11 @@ typedef struct
     GuiMenuButton memoryButton;
     GuiMenuButton displayButton;
 
+    GuiMenuButton startEmulationButton;
+    GuiMenuButton pauseEmulationButton;
+    GuiMenuButton stepEmulationButton;
+    GuiMenuButton stopEmulationButton;
+
     GuiMenuButton settingsButton;
     GuiMenuButton aboutButton;
     GuiMenuButton helpButton;
@@ -41,6 +46,11 @@ typedef struct
     bool memoryButtonActive;
     bool displayButtonActive;
 
+    bool startEmulationButtonActive;
+    bool pauseEmulationButtonActive;
+    bool stepEmulationButtonActive;
+    bool stopEmulationButtonActive;
+
     bool settingsButtonActive;
     bool aboutButtonActive;
     bool helpButtonActive;
@@ -53,6 +63,12 @@ typedef struct
     bool cpuButtonHover;
     bool memoryButtonHover;
     bool displayButtonHover;
+
+    bool startEmulationButtonHover;
+    bool pauseEmulationButtonHover;
+    bool stepEmulationButtonHover;
+    bool stopEmulationButtonHover;
+
 
     bool settingsButtonHover;
     bool aboutButtonHover;
@@ -68,9 +84,13 @@ char *GuiMenuBarGetTooltip(GuiMenuBarState *state, bool *isAnyHovered);
 
 #endif // GUI_MENU_BAR_H
 
+#define GUI_MENU_BAR_IMPLEMENTATION
+
 #ifdef GUI_MENU_BAR_IMPLEMENTATION
 
 #include "raygui.h"
+
+#include <stdlib.h>
 
 GuiMenuBarState InitGuiMenuBar(const Vector2 position, const int maxWidth)
 {
@@ -134,6 +154,35 @@ void GuiMenuBar(GuiMenuBarState *state)
         state->buttonSize,
         state->buttonSize
     }, GuiIconText(ICON_ROM, ""));
+    
+    state->startEmulationButtonActive = GuiButton((Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 5),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    }, GuiIconText(ICON_PLAYER_PLAY, ""));
+    state->pauseEmulationButtonActive = GuiButton((Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 6),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    }, GuiIconText(ICON_PLAYER_PAUSE, ""));
+    state->stepEmulationButtonActive = GuiButton((Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 7),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    }, GuiIconText(ICON_STEP_OVER, ""));
+    state->stopEmulationButtonActive = GuiButton((Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 8),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    }, GuiIconText(ICON_PLAYER_STOP, ""));
     /* -------------------------------------------------------------------------- */
 
     /* ----------------------------- Check on hover ----------------------------- */

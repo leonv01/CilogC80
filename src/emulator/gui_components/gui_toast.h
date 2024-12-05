@@ -33,6 +33,9 @@ typedef struct
     Vector2 panOffset;
 
     GuiToastType toastType;
+
+    qword_t toastDuration;
+    qword_t toastStartTime;
     /* -------------------------------------------------------------------------- */
 
     /* ------------------------- Toast GUI attributes ---------------------------- */
@@ -53,6 +56,8 @@ void GuiToastShowMessage(GuiToastState *state, const char *message, GuiToastType
 
 #include "raygui.h"
 
+#include <time.h>
+
 GuiToastState InitGuiToast(const Vector2 position, const int width, const int height)
 {
     GuiToastState state = { 0 };
@@ -63,7 +68,7 @@ GuiToastState InitGuiToast(const Vector2 position, const int width, const int he
     state.height = height;
     state.padding = 12;
     state.fontSize = 20;
-    state.bounds = (Rectangle){ position.x, position.y, width, height };
+    state.bounds = (Rectangle){ position.x + state.padding, position.y + state.padding, width, height };
     state.isWindowActive = false;
 
     state.minHeight = 100;
@@ -73,7 +78,7 @@ GuiToastState InitGuiToast(const Vector2 position, const int width, const int he
     state.toastTextWidth = MeasureText(state.toastText, state.fontSize);
     state.toastTextHeight = state.fontSize;
 
-    state.toastType = GUI_TOAST_WARNING;
+    state.toastType = GUI_TOAST_MESSAGE;
 
     return state;
 }
@@ -115,7 +120,7 @@ void GuiToast(GuiToastState *state)
         DrawRectangleRec(state->bounds, toastBackgroundColor);
         DrawRectangleLinesEx(state->bounds, 2, outlineColor);
         
-        DrawText(state->toastText, state->position.x + state->padding, state->position.y + state->padding, state->fontSize, BLACK);
+        GuiLabel((Rectangle){ state->bounds.x + state->padding, state->bounds.y + state->padding, state->toastTextWidth, state->toastTextHeight }, state->toastText);
     }
 }
 

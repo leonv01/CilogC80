@@ -2,6 +2,7 @@
 #define GUI_CPU_VIEW_H
 
 #include "raylib.h"
+#include <stdint.h>
 
 #define CPU_VIEW_SPACING(size, padding, count) ((size + padding) * count)
 

@@ -95,7 +95,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     GuiCpuViewState cpuViewState = InitGuiCpuView((Vector2){ screenWidth / 2, screenHeight / 2 }, 350, 400);
     GuiMemoryViewState memoryViewState = InitGuiMemoryView((Vector2){ screenWidth / 2, screenHeight / 2 }, 600, 500);
     GuiPreferencesState preferencesState = InitGuiPreferences((Vector2){ screenWidth / 2, screenHeight / 2 }, 400, 300);   
-    GuiToastState toastState = InitGuiToast((Vector2){ screenWidth / 2, screenHeight / 2 }, 200, 100);
+    GuiToastState toastState = InitGuiToast((Vector2){ 0, 40 }, 240, 80);
     //--------------------------------------------------------------------------------------
     RenderObject renderObjects[] = 
     {
@@ -169,13 +169,15 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             tooltipTextState.text = toolTipText;
             tooltipTextState.isActive = true;
         }
-        if(IsKeyPressed(KEY_SPACE) == true)
+
+        if(menuBarState.stepEmulationButtonActive == true)
         {
             cpuStep(cpu, memory); 
-            
+
             GuiMemoryViewUpdate(&memoryViewState, true);
             GuiCpuViewUpdate(&cpuViewState, true);
         }
+
         /* ----------------------------- CPU view update ---------------------------- */
         GuiCpuViewUpdateRegisters(&cpuViewState, cpu->A, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L);
         GuiCpuViewUpdateFlags(&cpuViewState, cpu->F.C, cpu->F.N, cpu->F.P, cpu->F.H, cpu->F.Z, cpu->F.S);
