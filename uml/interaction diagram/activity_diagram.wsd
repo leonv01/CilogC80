@@ -2,11 +2,11 @@
 skinparam linestyle ortho
 
 rectangle "User" as user
-rectangle "GUI" as gui
-rectangle "Emulator" as emulator
-rectangle "CPU" as cpu
-rectangle "Memory" as memory
-rectangle "Instruction Handler" as instructionHandler
+rectangle ":GUI" as gui
+rectangle ":Emulator" as emulator
+rectangle ":CPU" as cpu
+rectangle ":Memory" as memory
+rectangle ":Instruction Handler" as instructionHandler
 
 user -right-> gui: 1. Start/Step Command
 gui -right-> emulator: 2. Send Command
