@@ -202,6 +202,7 @@ void GuiMemoryView(GuiMemoryViewState *state)
 
         state->resizerBounds = (Rectangle){ state->bounds.x + state->bounds.width - 16, state->bounds.y + state->bounds.height - 16, 16, 16 };
         state->bounds.width = MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 7) + (state->padding * 2);
+        state->bounds.height = MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 23);
         /* --------------------------- Render GUI elements -------------------------- */
         if(GuiWindowBox(state->bounds, "Memory view") == true)
         {
@@ -222,7 +223,7 @@ void GuiMemoryView(GuiMemoryViewState *state)
         };
         const int addressPosStartX = MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 1);
         const int addressGroupBoxWidth = addressPosStartX + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 6);
-        const int addressGroupBoxHeight = MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 19);
+        const int addressGroupBoxHeight = MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 21);
 
         GuiGroupBox((Rectangle)
         {

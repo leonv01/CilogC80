@@ -1,0 +1,16 @@
+@startuml State_Diagram
+[*] --> MainMenu : App Start
+
+state MainMenu {
+    [*] --> EmulationTab : Default
+    EmulationTab --> MemoryViewerTab : Click "Memory Viewer"
+    MemoryViewerTab --> DebuggerTab : Click "Debugger"
+    DebuggerTab --> EmulationTab : Click "Emulation"
+}
+
+MainMenu --> SettingsDialog : Click "Settings"
+SettingsDialog --> MainMenu : Close Dialog
+
+MainMenu --> Exit : Click "Exit"
+Exit --> [*]
+@enduml

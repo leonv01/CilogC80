@@ -151,7 +151,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             {
                 GuiMemoryViewUpdate(&memoryViewState, true);
                 cpuReset(cpu);
-                toastState.isWindowActive = true;
+                //toastState.isWindowActive = true;
                 printf("File loaded\n");
             }
 

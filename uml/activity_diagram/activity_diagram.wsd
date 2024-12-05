@@ -1,0 +1,25 @@
+@startuml
+start
+:Start Emulator;
+:Initialize CPU;
+:Load Program into Memory;
+
+repeat
+    :Fetch Next Instruction;
+    :Increment Program Counter;
+    :Decode Instruction;
+    if (Instruction is valid?) then (Yes)
+        :Execute Instruction;
+        if (Requires Memory Access?) then (Yes)
+        :Read/Write to Memory;
+        endif
+        if (Interrupt Pending?) then (Yes)
+        :Handle Interrupt;
+        endif
+    else (No)
+        :Raise Invalid Instruction Error;
+    endif
+repeat while (Not Halt Instruction)
+:Shutdown Emulator;
+stop
+@enduml

@@ -218,6 +218,34 @@ void GuiMenuBar(GuiMenuBarState *state)
         state->buttonSize
     });
 
+    state->startEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 5),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    });
+    state->pauseEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 6),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    });
+    state->stepEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 7),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    });
+    state->stopEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 8),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    });
     /* -------------------------------------------------------------------------- */
 }
 
@@ -228,8 +256,21 @@ char *GuiMenuBarGetTooltip(GuiMenuBarState *state, bool *isAnyHovered)
     else if(state->loadToMemoryButtonHover) text = "Load to memory";
     else if(state->cpuButtonHover) text = "Open CPU window";
     else if(state->memoryButtonHover) text = "Open Memory window";
+    else if(state->startEmulationButtonHover) text = "Start emulation";
+    else if(state->pauseEmulationButtonHover) text = "Pause emulation";
+    else if(state->stepEmulationButtonHover) text = "Step emulation";
+    else if(state->stopEmulationButtonHover) text = "Stop emulation";
 
-    if(state->openButtonHover || state->loadToMemoryButtonHover || state->cpuButtonHover || state->memoryButtonHover)
+
+    if(state->openButtonHover 
+    || state->loadToMemoryButtonHover 
+    || state->cpuButtonHover 
+    || state->memoryButtonHover
+    || state->startEmulationButtonHover
+    || state->pauseEmulationButtonHover
+    || state->stepEmulationButtonHover
+    || state->stopEmulationButtonHover
+    )
     {
         *isAnyHovered = true;
     }
