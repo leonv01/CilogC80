@@ -4,8 +4,8 @@
 state MainMenu {
     [*] --> EmulationTab : Default
     EmulationTab --> MemoryViewerTab : Click "Memory Viewer"
-    MemoryViewerTab --> DebuggerTab : Click "Debugger"
-    DebuggerTab --> EmulationTab : Click "Emulation"
+    EmulationTab --> CpuViewerTab : Click "CPU Viewer"
+    EmulationTab --> FileChooserTab : Click "Load file"
 }
 
 MainMenu --> SettingsDialog : Click "Settings"

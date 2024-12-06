@@ -178,6 +178,13 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             GuiCpuViewUpdate(&cpuViewState, true);
         }
 
+        if(IsKeyPressed(KEY_SPACE) == true)
+        {
+            cpuStep(cpu, memory); 
+
+            GuiMemoryViewUpdate(&memoryViewState, true);
+            GuiCpuViewUpdate(&cpuViewState, true); 
+        }
         /* ----------------------------- CPU view update ---------------------------- */
         GuiCpuViewUpdateRegisters(&cpuViewState, cpu->A, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L);
         GuiCpuViewUpdateFlags(&cpuViewState, cpu->F.C, cpu->F.N, cpu->F.P, cpu->F.H, cpu->F.Z, cpu->F.S);

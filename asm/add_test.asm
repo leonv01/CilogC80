@@ -1,0 +1,17 @@
+ORG 0x0000
+
+LD A, 0x20
+LD B, 0x01
+
+ADD A, B
+
+INC B
+
+LD (0x0040), A
+
+LD A, 0xFF
+INC A
+
+LD A, (0x0040)
+
+HALT
