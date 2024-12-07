@@ -113,7 +113,7 @@ typedef struct
     bool updateCpuView;
 } GuiCpuViewState;
 
-GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const int height);
+GuiCpuViewState InitGuiCpuView(void);
 void GuiCpuView(GuiCpuViewState *state);
 void GuiCpuViewUpdateRegisters(GuiCpuViewState *state, const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d, const uint8_t e, const uint8_t h, const uint8_t l);
 void GuiCpuViewUpdateFlags(GuiCpuViewState *state, const uint8_t c, const uint8_t n, const uint8_t p, const uint8_t h, const uint8_t z, const uint8_t s);
@@ -127,16 +127,12 @@ void GuiCpuViewUpdate(GuiCpuViewState *state, bool update);
 
 #include "raygui.h"
 
-GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const int height)
+GuiCpuViewState InitGuiCpuView(void)
 {
     GuiCpuViewState state = { 0 };  
 
-    state.position = (Vector2){ position.x - (width / 2), position.y - (height / 2) };
-    state.width = width;
-    state.height = height;
     state.padding = 12;
     state.fontSize = 20;
-    state.bounds = (Rectangle){ position.x, position.y, width, height }; 
     state.isWindowActive = false;
     state.isWindowMinimized = false;
 
@@ -217,8 +213,6 @@ GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const in
     state.pointerSpTextActive = false;
     /* -------------------------------------------------------------------------- */
 
-    state.resizerBounds = (Rectangle){ position.x + width - 16, position.y + height - 16, 16, 16 };
-
     state.supportDrag = true;
     state.dragMode = false;
     state.panOffset = (Vector2){ 0, 0 };
@@ -232,13 +226,22 @@ GuiCpuViewState InitGuiCpuView(const Vector2 position, const int width, const in
     state.registersEditable = true;
     state.pointersEditable = true;
 
+    state.bounds.width = CPU_VIEW_SPACING(state.registerLabelWidth / 2, state.padding, 4) + (state.padding * 3);
+    state.bounds.height = CPU_VIEW_SPACING(state.registerLabelHeight, state.padding, 4) + 
+                            CPU_VIEW_SPACING(state.flagLabelHeight, state.padding, 2) + 
+                            CPU_VIEW_SPACING(state.pointerLabelHeight, state.padding, 2) + 
+                            (state.padding * 7) + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT;
+    state.bounds.x = GetScreenWidth() / 2 - state.bounds.width / 2;
+    state.bounds.y = GetScreenHeight() / 2 - state.bounds.height / 2;
+
+    state.position = (Vector2){ state.bounds.x, state.bounds.y };
+
     return state;
 }
 
 void GuiCpuView(GuiCpuViewState *state)
 {
     // Only update if window is visible
-    // TODO: Minimize logic idk
     if(state->isWindowActive == true)
     {
         // Only update position if window supports dragging
@@ -289,55 +292,6 @@ void GuiCpuView(GuiCpuViewState *state)
             }
         }
 
-        // TODO: Resize with content
-        if(state->supportResize == true)
-        {
-            Vector2 mousePosition = GetMousePosition();
-
-            if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-            {
-                if(CheckCollisionPointRec(mousePosition, state->resizerBounds))
-                {
-                    state->resizeMode = true;
-                }
-            }
-
-            if(state->resizeMode == true)
-            {
-                state->bounds.width = mousePosition.x - state->bounds.x;
-                state->bounds.height = mousePosition.y - state->bounds.y;
-
-                if(state->bounds.width < state->minWidth)
-                {
-                    state->bounds.width = state->minWidth;
-                }
-                else if(state->bounds.width > GetScreenWidth())
-                {
-                    state->bounds.width = GetScreenWidth();
-                }
-
-                if(state->bounds.height < state->minHeight)
-                {
-                    state->bounds.height = state->minHeight;
-                }
-                else if(state->bounds.height > GetScreenHeight())
-                {
-                    state->bounds.height = GetScreenHeight();
-                }
-
-                if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
-                {
-                    state->resizeMode = false;
-                }
-            }
-        }
-
-        state->resizerBounds = (Rectangle){ state->bounds.x + state->bounds.width - 16, state->bounds.y + state->bounds.height - 16, 16, 16 };
-        state->bounds.width = CPU_VIEW_SPACING(state->registerLabelWidth / 2, state->padding, 4) + (state->padding * 3);
-        state->bounds.height = CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 4) + 
-                                CPU_VIEW_SPACING(state->flagLabelHeight, state->padding, 2) + 
-                                CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 2) + 
-                                (state->padding * 7) + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT;
         /* --------------------------- Render GUI elements -------------------------- */
         if(GuiWindowBox(state->bounds, "CPU view") == true)
         {
@@ -806,6 +760,7 @@ void GuiCpuViewUpdatePointers(GuiCpuViewState *state, const uint16_t pc, const u
 
 void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize)
 {
+    /*
     state->fontSize = fontSize;
 
     state->registerLabelHeight = fontSize + 10;
@@ -821,6 +776,7 @@ void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize)
     state->pointerLabelWidth = 100 + (fontSize * 2);
 
     state->padding = 12 + (.5 * fontSize);
+    */
 }
 
 void GuiCpuViewUpdate(GuiCpuViewState *state, bool update)

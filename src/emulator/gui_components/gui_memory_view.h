@@ -6,8 +6,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT 20
-
 #define MEMORY_VIEW_SPACING(size, padding, count) ((size + padding) * count)
 
 typedef struct
@@ -64,7 +62,7 @@ typedef struct
 
 } GuiMemoryViewState;
 
-GuiMemoryViewState InitGuiMemoryView(const Vector2 position, const int width, const int height);
+GuiMemoryViewState InitGuiMemoryView(void);
 void GuiMemoryView(GuiMemoryViewState *state);
 void GuiMemoryViewAddressUpdate(GuiMemoryViewState *state, const uint8_t *memory, const size_t memorySize);
 void GuiMemoryViewUpdate(GuiMemoryViewState *state, bool update);
@@ -77,17 +75,13 @@ void GuiMemoryViewUpdate(GuiMemoryViewState *state, bool update);
 
 void GuiMemoryFindByteAtAddress(GuiMemoryViewState *state);
 
-GuiMemoryViewState InitGuiMemoryView(const Vector2 position, const int width, const int height)
+GuiMemoryViewState InitGuiMemoryView(void)
 {
     GuiMemoryViewState state = { 0 };
 
     /* ---------------------------- Window attributes --------------------------- */
-    state.position = (Vector2){ position.x - (width / 2), position.y - (height / 2) };
-    state.width = width;
-    state.height = height;
     state.padding = 12;
     state.fontSize = 20;
-    state.bounds = (Rectangle){ position.x, position.y, width, height };
 
     state.minHeight = 100;
     state.minWidth = 100;
@@ -123,7 +117,6 @@ GuiMemoryViewState InitGuiMemoryView(const Vector2 position, const int width, co
         {
             sprintf(state.memoryEntry[x][y], "00");
         }
-        
     }
 
     state.memoryAddressSpinnerValue = 0;
@@ -139,6 +132,13 @@ GuiMemoryViewState InitGuiMemoryView(const Vector2 position, const int width, co
 
     state.memoryAddressTextWidth = 50;
     /* -------------------------------------------------------------------------- */
+
+    state.bounds.width = MEMORY_VIEW_SPACING(state.memoryAddressLabelWidth / 2, state.padding, 7) + (state.padding * 2);
+    state.bounds.height = MEMORY_VIEW_SPACING(state.memoryAddressLabelHeight / 2, state.padding, 23);
+    state.bounds.x = GetScreenWidth() / 2 - state.bounds.width / 2;
+    state.bounds.y = GetScreenHeight() / 2 - state.bounds.height / 2;
+    state.position = (Vector2){ state.bounds.x, state.bounds.y };
+
     return state;
 }
 void GuiMemoryView(GuiMemoryViewState *state)
@@ -200,9 +200,6 @@ void GuiMemoryView(GuiMemoryViewState *state)
             state->updateMemoryView = false;
         }
 
-        state->resizerBounds = (Rectangle){ state->bounds.x + state->bounds.width - 16, state->bounds.y + state->bounds.height - 16, 16, 16 };
-        state->bounds.width = MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 7) + (state->padding * 2);
-        state->bounds.height = MEMORY_VIEW_SPACING(state->memoryAddressLabelHeight / 2, state->padding, 23);
         /* --------------------------- Render GUI elements -------------------------- */
         if(GuiWindowBox(state->bounds, "Memory view") == true)
         {
@@ -217,9 +214,9 @@ void GuiMemoryView(GuiMemoryViewState *state)
 
         /* ---------------------------- Address elements ---------------------------- */
         const Vector2 labelStartPos = (Vector2)
-        {
-            state->bounds.x + (state->padding * 2),
-            state->bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + (state->padding * 2)
+        { 
+            state->bounds.x + ( state->padding * 2 ), 
+            state->bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + (state->padding * 2) 
         };
         const int addressPosStartX = MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 1);
         const int addressGroupBoxWidth = addressPosStartX + MEMORY_VIEW_SPACING(state->memoryAddressLabelWidth / 2, state->padding, 6);
@@ -343,8 +340,6 @@ void GuiMemoryFindByteAtAddress(GuiMemoryViewState *state)
     sscanf(state->memoryAddressFindByteText, "%X", &address);
 
     byte_t spinnerValue = UPPER_BYTE(address);
-
-    printf("Address: %X\n", spinnerValue);
 
     state->memoryAddressSpinnerValue = spinnerValue;
 

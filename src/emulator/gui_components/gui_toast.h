@@ -2,11 +2,14 @@
 #define GUI_TOAST_H
 
 #include "raylib.h"
+#include "utils/utils.h"
+#include <time.h>
 
 typedef enum
 {
     GUI_TOAST_MESSAGE = 0,
     GUI_TOAST_WARNING,
+    GUI_TOAST_SUCCESS,
     GUI_TOAST_ERROR
 } GuiToastType;
 
@@ -43,32 +46,35 @@ typedef struct
 
     int toastTextWidth;
     int toastTextHeight;
+
+    time_t startTime;
+    long long durationTime;
+    bool toastRunning;
+
     /* -------------------------------------------------------------------------- */
 } GuiToastState;
 
-GuiToastState InitGuiToast(const Vector2 position, const int width, const int height);
+GuiToastState InitGuiToast(void);
 void GuiToast(GuiToastState *state);
-void GuiToastShowMessage(GuiToastState *state, const char *message, GuiToastType type);
+void GuiToastDisplayMessage(GuiToastState *state, char *text, long duration, GuiToastType toastType);
+void GuiToastHideMessage(GuiToastState *state);
 
 #endif // GUI_TOAST_H
 
 #ifdef GUI_TOAST_IMPLEMENTATION
 
 #include "raygui.h"
+#include <stdio.h>
 
-#include <time.h>
+#include "gui_defines.h"
 
-GuiToastState InitGuiToast(const Vector2 position, const int width, const int height)
+GuiToastState InitGuiToast(void)
 {
     GuiToastState state = { 0 };
 
-    state.position.x = position.x - (width / 2);
-    state.position.y = position.y - (height / 2);
-    state.width = width;
-    state.height = height;
     state.padding = 12;
-    state.fontSize = 20;
-    state.bounds = (Rectangle){ position.x + state.padding, position.y + state.padding, width, height };
+    state.fontSize = 10;
+    state.bounds = (Rectangle){ 0, MENU_BAR_HEIGHT, GetScreenWidth(), state.fontSize + state.padding * 2 };
     state.isWindowActive = false;
 
     state.minHeight = 100;
@@ -79,6 +85,8 @@ GuiToastState InitGuiToast(const Vector2 position, const int width, const int he
     state.toastTextHeight = state.fontSize;
 
     state.toastType = GUI_TOAST_MESSAGE;
+    
+    state.toastRunning = false;
 
     return state;
 }
@@ -87,8 +95,18 @@ void GuiToast(GuiToastState *state)
 {
     if(state->isWindowActive == true)
     {
-        state->bounds.x = state->position.x;
-        state->bounds.y = state->position.y;
+
+        time_t endTime = clock();
+
+        if((endTime - state->startTime) > state->durationTime)
+        {
+            GuiToastHideMessage(state);
+        }
+
+        state->bounds.x = 0;
+        state->bounds.y = 40;
+        state->bounds.width = GetScreenWidth();
+        state->bounds.height = state->fontSize + state->padding * 2;
 
         Color toastBackgroundColor;
         Color outlineColor;
@@ -97,38 +115,52 @@ void GuiToast(GuiToastState *state)
         {
             case GUI_TOAST_MESSAGE:
             {
-                toastBackgroundColor = (Color){ 230, 230, 230, 255 };
+                toastBackgroundColor = (Color){ 230, 230, 230, 128 };
                 outlineColor = BLACK;
             } break;
             case GUI_TOAST_WARNING:
             {
-                toastBackgroundColor = (Color){ 227, 145, 64, 255 };
+                toastBackgroundColor = (Color){ 227, 145, 64, 128 };
                 outlineColor = ORANGE;
             } break;
             case GUI_TOAST_ERROR:
             {
-                toastBackgroundColor = (Color){ 227, 64, 64, 255 };
+                toastBackgroundColor = (Color){ 227, 64, 64, 128 };
                 outlineColor = RED;
+            } break;
+            case GUI_TOAST_SUCCESS:
+            {
+                toastBackgroundColor = (Color){ 64, 227, 64, 128 };
+                outlineColor = GREEN;
             } break;
             default:
             {
-                toastBackgroundColor = (Color){ 230, 230, 230, 255 };
+                toastBackgroundColor = (Color){ 230, 230, 230, 128 };
                 outlineColor = BLACK;
             } break;
         }
 
         DrawRectangleRec(state->bounds, toastBackgroundColor);
         DrawRectangleLinesEx(state->bounds, 2, outlineColor);
-        
-        GuiLabel((Rectangle){ state->bounds.x + state->padding, state->bounds.y + state->padding, state->toastTextWidth, state->toastTextHeight }, state->toastText);
+
+        DrawText(state->toastText, state->padding , state->bounds.y + state->padding, state->fontSize, BLACK);
     }
 }
 
-void GuiToastShowMessage(GuiToastState *state, const char *message, GuiToastType type)
+void GuiToastDisplayMessage(GuiToastState *state, char *text, long duration, GuiToastType toastType)
 {
-
+    state->startTime = clock();
+    state->durationTime = duration;
+    state->toastType = toastType;
+    state->toastText = text;
+    state->isWindowActive = true;
+    state->toastRunning = true;
 }
 
-
+void GuiToastHideMessage(GuiToastState *state)
+{
+    state->isWindowActive = false;
+    state->toastRunning = false;
+}
 
 #endif // GUI_TOAST_IMPLEMENTATION

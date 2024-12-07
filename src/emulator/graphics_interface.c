@@ -29,6 +29,9 @@
 #define GUI_TOAST_IMPLEMENTATION
 #include "gui_components/gui_toast.h"
 
+#define GUI_EMULATOR_INFO_VIEW_IMPLEMENTATION
+#include "gui_components/gui_emulator_info_view.h"
+
 #include "file_grabber.h"
 
 /* -------------------------------------------------------------------------- */
@@ -84,6 +87,8 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     int screenWidth = 1280;
     int screenHeight = 720;
 
+    bool isProgramLoaded = false;
+
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_MINIMIZED);  // Set window configuration flags
     InitWindow(screenWidth, screenHeight, "Cilog C80 - Emulator");
     GuiSetStyle(DEFAULT, TEXT_SIZE, FONT_SIZE);
@@ -92,10 +97,10 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     GuiMenuBarState menuBarState = InitGuiMenuBar((Vector2){ 0, 0 }, screenWidth);
     GuiWindowFileDialogState fileDialogState = InitGuiWindowFileDialog(GetWorkingDirectory());
     GuiTooltipTextState tooltipTextState = InitGuiToolTipText("Tooltip text", (Rectangle){ 0, 0, 100, 20 });
-    GuiCpuViewState cpuViewState = InitGuiCpuView((Vector2){ screenWidth / 2, screenHeight / 2 }, 350, 400);
-    GuiMemoryViewState memoryViewState = InitGuiMemoryView((Vector2){ screenWidth / 2, screenHeight / 2 }, 600, 500);
+    GuiCpuViewState cpuViewState = InitGuiCpuView();
+    GuiMemoryViewState memoryViewState = InitGuiMemoryView();
     GuiPreferencesState preferencesState = InitGuiPreferences((Vector2){ screenWidth / 2, screenHeight / 2 }, 400, 300);   
-    GuiToastState toastState = InitGuiToast((Vector2){ 0, 40 }, 240, 80);
+    GuiToastState toastState = InitGuiToast();
     //--------------------------------------------------------------------------------------
     RenderObject renderObjects[] = 
     {
@@ -149,10 +154,11 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
 
             if(fileLoaded == true)
             {
-                GuiMemoryViewUpdate(&memoryViewState, true);
                 cpuReset(cpu);
-                //toastState.isWindowActive = true;
-                printf("File loaded\n");
+                GuiMemoryViewUpdate(&memoryViewState, true);
+                GuiToastDisplayMessage(&toastState, "File loaded", 5000, GUI_TOAST_SUCCESS);
+
+                isProgramLoaded = true;
             }
 
             fileDialogState.SelectFilePressed = false;
@@ -170,21 +176,25 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             tooltipTextState.isActive = true;
         }
 
-        if(menuBarState.stepEmulationButtonActive == true)
+        if(
+            menuBarState.stepEmulationButtonActive == true
+            || IsKeyPressed(KEY_SPACE) == true
+        )
         {
+            if(isProgramLoaded == false)
+            {
+                GuiToastDisplayMessage(&toastState, "No program is loaded into memory.", 10000, GUI_TOAST_WARNING);
+            }
+            else
+            {
+                GuiToastDisplayMessage(&toastState, "Fugiat commodo incididunt do adipisicing excepteur quis.", 10000, GUI_TOAST_MESSAGE);
+            }
             cpuStep(cpu, memory); 
 
             GuiMemoryViewUpdate(&memoryViewState, true);
             GuiCpuViewUpdate(&cpuViewState, true);
         }
 
-        if(IsKeyPressed(KEY_SPACE) == true)
-        {
-            cpuStep(cpu, memory); 
-
-            GuiMemoryViewUpdate(&memoryViewState, true);
-            GuiCpuViewUpdate(&cpuViewState, true); 
-        }
         /* ----------------------------- CPU view update ---------------------------- */
         GuiCpuViewUpdateRegisters(&cpuViewState, cpu->A, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L);
         GuiCpuViewUpdateFlags(&cpuViewState, cpu->F.C, cpu->F.N, cpu->F.P, cpu->F.H, cpu->F.Z, cpu->F.S);

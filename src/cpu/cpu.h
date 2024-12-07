@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "utils/utils.h"
 #include "memory/mem.h"
@@ -43,6 +44,8 @@ typedef struct CPU_t
 
     int currentCycles;
     int totalCycles;
+
+    bool isHaltered;
 } CPU_t;
 
 /**
