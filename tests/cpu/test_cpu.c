@@ -13,7 +13,7 @@ void tearDown(void)
 }
 
 void check_registers(
-    CPU_t* cpu,
+    ZilogZ80_t* cpu,
     byte_t A, byte_t B, byte_t C, byte_t D, byte_t E, byte_t H, byte_t L, 
     word_t SP, word_t PC, word_t IX, word_t IY, 
     byte_t I, byte_t R,
@@ -45,8 +45,8 @@ void check_registers(
 
 void test_cpu_init_function(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     check_registers(&cpu,
     0, 0, 0, 0, 0, 0, 0,

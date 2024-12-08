@@ -13,7 +13,7 @@ void tearDown(void)
 }
 
 void check_registers(
-    CPU_t* cpu,
+    ZilogZ80_t* cpu,
     byte_t A, byte_t B, byte_t C, byte_t D, byte_t E, byte_t H, byte_t L, 
     word_t SP, word_t PC, word_t IX, word_t IY, 
     byte_t I, byte_t R,
@@ -45,8 +45,8 @@ void check_registers(
 
 void test_cpu_sub_n(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -77,8 +77,8 @@ void test_cpu_sub_n(void)
 }
 void test_cpu_sub_b(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -108,8 +108,8 @@ void test_cpu_sub_b(void)
 }
 void test_cpu_sub_c(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -140,8 +140,8 @@ void test_cpu_sub_c(void)
 }
 void test_cpu_sub_d(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -173,8 +173,8 @@ void test_cpu_sub_d(void)
 }
 void test_cpu_sub_e(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -206,8 +206,8 @@ void test_cpu_sub_e(void)
 }
 void test_cpu_sub_h(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -239,8 +239,8 @@ void test_cpu_sub_h(void)
 }
 void test_cpu_sub_l(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -272,8 +272,8 @@ void test_cpu_sub_l(void)
 }
 void test_cpu_sub_a(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);

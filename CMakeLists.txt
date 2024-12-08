@@ -39,6 +39,7 @@ file(GLOB MAIN_SOURCE
 file(GLOB_RECURSE APP_SOURCES
         src/cpu/*.c
         src/memory/*.c
+        src/graphics_unit/*.c
         src/utils/*.c
         src/emulator/*.c
         src/emulator/gui_components/*.c

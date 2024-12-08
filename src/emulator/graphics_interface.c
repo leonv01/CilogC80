@@ -43,7 +43,7 @@
 /* -------------------------------------------------------------------------- */
 /*                              Global variables                              */
 /* -------------------------------------------------------------------------- */
-static CPU_t                *cpu;
+static ZilogZ80_t                *cpu;
 static Memory_t             *memory;
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
@@ -80,7 +80,7 @@ static void checkPriority(RenderObject *renderObjects, size_t *renderObjectsPrio
 /* -------------------------------------------------------------------------- */
 /*                            Function definitions                            */
 /* -------------------------------------------------------------------------- */
-int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
+int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu, Memory_t *memory)
 {
     int status;
 
@@ -155,7 +155,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
 
             if(fileLoaded == true)
             {
-                cpuReset(cpu);
+                zilogZ80Reset(cpu);
                 GuiMemoryViewUpdate(&memoryViewState, true);
                 GuiToastDisplayMessage(&toastState, "File loaded.", 5000, GUI_TOAST_SUCCESS);
 
@@ -190,7 +190,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             {
                 GuiToastDisplayMessage(&toastState, "CPU step.", 2000, GUI_TOAST_MESSAGE);
             }
-            cpuStep(cpu, memory); 
+            zilogZ80Step(cpu, memory); 
 
             GuiMemoryViewUpdate(&memoryViewState, true);
             GuiCpuViewUpdate(&cpuViewState, true);

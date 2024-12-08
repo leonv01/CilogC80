@@ -6,6 +6,6 @@
 #include "cpu/instructions.h"
 #include "utils/utils.h"
 
-int executeInstruction(CPU_t *cpu, Memory_t *memory);
+int executeInstruction(ZilogZ80_t *cpu, Memory_t *memory);
 
 #endif // INSTRUCTION_HANDLER_H

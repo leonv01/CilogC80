@@ -5,14 +5,14 @@
 #include "cpu/instructions.h"
 #include "cpu/instruction_handler.h"
 
-void cpuInit(CPU_t *cpu)
+void zilogZ80Init(ZilogZ80_t *cpu)
 {
     if (cpu == NULL)
     {
         return;
     }
 
-    *cpu = (CPU_t){
+    *cpu = (ZilogZ80_t){
         .A = 0x00,
         .B = 0x00,
         .C = 0x00,
@@ -41,12 +41,12 @@ void cpuInit(CPU_t *cpu)
     cpu->isHaltered = false;
 }
 
-void cpuReset(CPU_t *cpu)
+void zilogZ80Reset(ZilogZ80_t *cpu)
 {
-    cpuInit(cpu);
+    zilogZ80Init(cpu);
 }
 
-void cpuStep(CPU_t *cpu, Memory_t *memory)
+void zilogZ80Step(ZilogZ80_t *cpu, Memory_t *memory)
 {
     if (cpu == NULL || memory == NULL)
     {

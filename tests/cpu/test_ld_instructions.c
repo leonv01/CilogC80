@@ -13,7 +13,7 @@ void tearDown(void)
 }
 
 void check_registers(
-    CPU_t* cpu,
+    ZilogZ80_t* cpu,
     byte_t A, byte_t B, byte_t C, byte_t D, byte_t E, byte_t H, byte_t L, 
     word_t SP, word_t PC, word_t IX, word_t IY, 
     byte_t I, byte_t R,
@@ -45,8 +45,8 @@ void check_registers(
 
 void test_cpu_load_a_n(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -67,8 +67,8 @@ void test_cpu_load_a_n(void)
 }
 void test_cpu_load_b_n(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -89,8 +89,8 @@ void test_cpu_load_b_n(void)
 }
 void test_cpu_load_c_n(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -111,8 +111,8 @@ void test_cpu_load_c_n(void)
 }
 void test_cpu_load_d_n(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -133,8 +133,8 @@ void test_cpu_load_d_n(void)
 }
 void test_cpu_load_e_n(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -155,8 +155,8 @@ void test_cpu_load_e_n(void)
 }
 void test_cpu_load_h_n(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -177,8 +177,8 @@ void test_cpu_load_h_n(void)
 }
 void test_cpu_load_l_n(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -200,8 +200,8 @@ void test_cpu_load_l_n(void)
 
 void test_cpu_load_a_nn(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -224,8 +224,8 @@ void test_cpu_load_a_nn(void)
 }
 void test_cpu_load_hl_nn(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -249,8 +249,8 @@ void test_cpu_load_hl_nn(void)
 }
 void test_cpu_load_bc_immediate(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -272,8 +272,8 @@ void test_cpu_load_bc_immediate(void)
 }
 void test_cpu_load_de_immediate(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -294,8 +294,8 @@ void test_cpu_load_de_immediate(void)
 }
 void test_cpu_load_hl_immediate(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -317,8 +317,8 @@ void test_cpu_load_hl_immediate(void)
 }
 void test_cpu_load_sp_immediate(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -341,8 +341,8 @@ void test_cpu_load_sp_immediate(void)
 
 void test_cpu_load_b_b(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -363,8 +363,8 @@ void test_cpu_load_b_b(void)
 }
 void test_cpu_load_b_c(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -385,8 +385,8 @@ void test_cpu_load_b_c(void)
 }
 void test_cpu_load_b_d(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -407,8 +407,8 @@ void test_cpu_load_b_d(void)
 }
 void test_cpu_load_b_e(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -429,8 +429,8 @@ void test_cpu_load_b_e(void)
 }
 void test_cpu_load_b_h(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -451,8 +451,8 @@ void test_cpu_load_b_h(void)
 }
 void test_cpu_load_b_l(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -473,8 +473,8 @@ void test_cpu_load_b_l(void)
 }
 void test_cpu_load_b_hl(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -499,8 +499,8 @@ void test_cpu_load_b_hl(void)
 }
 void test_cpu_load_b_a(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -522,8 +522,8 @@ void test_cpu_load_b_a(void)
 
 void test_cpu_load_c_b(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -544,8 +544,8 @@ void test_cpu_load_c_b(void)
 }
 void test_cpu_load_c_c(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -566,8 +566,8 @@ void test_cpu_load_c_c(void)
 }
 void test_cpu_load_c_d(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -588,8 +588,8 @@ void test_cpu_load_c_d(void)
 }
 void test_cpu_load_c_e(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -610,8 +610,8 @@ void test_cpu_load_c_e(void)
 }
 void test_cpu_load_c_h(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -632,8 +632,8 @@ void test_cpu_load_c_h(void)
 }
 void test_cpu_load_c_l(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -654,8 +654,8 @@ void test_cpu_load_c_l(void)
 }
 void test_cpu_load_c_hl(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -680,8 +680,8 @@ void test_cpu_load_c_hl(void)
 }
 void test_cpu_load_c_a(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -703,8 +703,8 @@ void test_cpu_load_c_a(void)
 
 void test_cpu_load_d_b(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -725,8 +725,8 @@ void test_cpu_load_d_b(void)
 }
 void test_cpu_load_d_c(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -747,8 +747,8 @@ void test_cpu_load_d_c(void)
 }
 void test_cpu_load_d_d(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -769,8 +769,8 @@ void test_cpu_load_d_d(void)
 }
 void test_cpu_load_d_e(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -791,8 +791,8 @@ void test_cpu_load_d_e(void)
 }
 void test_cpu_load_d_h(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -813,8 +813,8 @@ void test_cpu_load_d_h(void)
 }
 void test_cpu_load_d_l(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -835,8 +835,8 @@ void test_cpu_load_d_l(void)
 }
 void test_cpu_load_d_hl(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -861,8 +861,8 @@ void test_cpu_load_d_hl(void)
 }
 void test_cpu_load_d_a(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -884,8 +884,8 @@ void test_cpu_load_d_a(void)
 
 void test_cpu_load_e_b(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -906,8 +906,8 @@ void test_cpu_load_e_b(void)
 }
 void test_cpu_load_e_c(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -928,8 +928,8 @@ void test_cpu_load_e_c(void)
 }
 void test_cpu_load_e_d(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -950,8 +950,8 @@ void test_cpu_load_e_d(void)
 }
 void test_cpu_load_e_e(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -972,8 +972,8 @@ void test_cpu_load_e_e(void)
 }
 void test_cpu_load_e_h(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -994,8 +994,8 @@ void test_cpu_load_e_h(void)
 }
 void test_cpu_load_e_l(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -1016,8 +1016,8 @@ void test_cpu_load_e_l(void)
 }
 void test_cpu_load_e_hl(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -1042,8 +1042,8 @@ void test_cpu_load_e_hl(void)
 }
 void test_cpu_load_e_a(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);

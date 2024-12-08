@@ -27,7 +27,7 @@ typedef struct F_t
  * @brief CPU struct
  * 
  */
-typedef struct CPU_t
+typedef struct ZilogZ80_t
 {   
     byte_t A, B, C, D, E, H, L;
     byte_t A_, B_, C_, D_, E_, H_, L_;
@@ -46,21 +46,24 @@ typedef struct CPU_t
     int totalCycles;
 
     bool isHaltered;
-} CPU_t;
+
+    Memory_t rom;
+    Memory_t ram;
+} ZilogZ80_t;
 
 /**
  * @brief Initialize the CPU
  * 
  * @param cpu The CPU to initialize
  */
-void cpuInit(CPU_t* cpu);
+void zilogZ80Init(ZilogZ80_t* cpu);
 
 /**
  * @brief Resets the CPU
  * 
  * @param cpu The CPU to reset
  */
-void cpuReset(CPU_t* cpu);
+void zilogZ80Reset(ZilogZ80_t* cpu);
 
 /**
  * @brief Fetches the next instruction and executes it
@@ -68,7 +71,7 @@ void cpuReset(CPU_t* cpu);
  * @param cpu 
  * @param memory 
  */
-void cpuStep(CPU_t* cpu, Memory_t* memory);
+void zilogZ80Step(ZilogZ80_t* cpu, Memory_t* memory);
 
 #endif
 

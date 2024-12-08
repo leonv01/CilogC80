@@ -24,7 +24,7 @@ typedef enum
 
 // Global variables
 // -----------------------------------------------------------
-static CPU_t                cpu;
+static ZilogZ80_t                cpu;
 static Memory_t             memory;
 static C80_EmulationState_t emulationState = EMULATION_STATE_STOPPED;
 // -----------------------------------------------------------
@@ -38,7 +38,7 @@ void emulatorInit(int argc, char** argv);
 // -----------------------------------------------------------
 void emulatorInit(int argc, char** argv)
 {
-    cpuInit(&cpu);
+    zilogZ80Init(&cpu);
     memoryInit(&memory);
     errorStackInit();
 

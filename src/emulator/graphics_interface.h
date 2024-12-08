@@ -13,7 +13,7 @@
  * @param memory 
  * @return int 
  */
-int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory);
+int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu, Memory_t *memory);
 
 /**
  * @brief Destroys the graphical interface

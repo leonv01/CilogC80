@@ -13,7 +13,7 @@ void tearDown(void)
 }
 
 void check_registers(
-    CPU_t* cpu,
+    ZilogZ80_t* cpu,
     byte_t A, byte_t B, byte_t C, byte_t D, byte_t E, byte_t H, byte_t L, 
     word_t SP, word_t PC, word_t IX, word_t IY, 
     byte_t I, byte_t R,
@@ -45,8 +45,8 @@ void check_registers(
 
 void test_cpu_add_a_n(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -74,8 +74,8 @@ void test_cpu_add_a_n(void)
 }
 void test_cpu_add_a_hl(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -105,8 +105,8 @@ void test_cpu_add_a_hl(void)
 }
 void test_cpu_add_a_b(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -138,8 +138,8 @@ void test_cpu_add_a_b(void)
 }
 void test_cpu_add_a_c(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -171,8 +171,8 @@ void test_cpu_add_a_c(void)
 }
 void test_cpu_add_a_d(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -204,8 +204,8 @@ void test_cpu_add_a_d(void)
 }
 void test_cpu_add_a_e(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -237,8 +237,8 @@ void test_cpu_add_a_e(void)
 }
 void test_cpu_add_a_h(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -270,8 +270,8 @@ void test_cpu_add_a_h(void)
 }
 void test_cpu_add_a_l(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
@@ -303,8 +303,8 @@ void test_cpu_add_a_l(void)
 }
 void test_cpu_add_a_a(void)
 {
-    CPU_t cpu;
-    cpuInit(&cpu);
+    ZilogZ80_t cpu;
+    zilogZ80Init(&cpu);
 
     Memory_t memory;
     memoryInit(&memory);
