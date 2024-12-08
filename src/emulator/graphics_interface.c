@@ -112,7 +112,8 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
     };
     const int renderStatesCount = sizeof(renderObjects) / sizeof(RenderObject);
     size_t renderObjectsPriority[renderStatesCount];
-    for (int i = 0; i < renderStatesCount; i++) {
+    for (int i = 0; i < renderStatesCount; i++) 
+    {
         renderObjectsPriority[i] = i; // Store indices
     }
 
@@ -156,7 +157,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             {
                 cpuReset(cpu);
                 GuiMemoryViewUpdate(&memoryViewState, true);
-                GuiToastDisplayMessage(&toastState, "File loaded", 5000, GUI_TOAST_SUCCESS);
+                GuiToastDisplayMessage(&toastState, "File loaded.", 5000, GUI_TOAST_SUCCESS);
 
                 isProgramLoaded = true;
             }
@@ -187,7 +188,7 @@ int graphicsInit(int argc, char **argv, CPU_t *cpu, Memory_t *memory)
             }
             else
             {
-                GuiToastDisplayMessage(&toastState, "Fugiat commodo incididunt do adipisicing excepteur quis.", 10000, GUI_TOAST_MESSAGE);
+                GuiToastDisplayMessage(&toastState, "CPU step.", 2000, GUI_TOAST_MESSAGE);
             }
             cpuStep(cpu, memory); 
 

@@ -37,6 +37,8 @@ void cpuInit(CPU_t *cpu)
 
     cpu->cyclesInFrame = 0;
     cpu->frequency = 3.5f;
+
+    cpu->isHaltered = false;
 }
 
 void cpuReset(CPU_t *cpu)
@@ -48,12 +50,16 @@ void cpuStep(CPU_t *cpu, Memory_t *memory)
 {
     if (cpu == NULL || memory == NULL)
     {
-        return;
     }
-
-    int cycles = executeInstruction(cpu, memory);
-    cpu->cyclesInFrame -= cycles;
-    cpu->totalCycles += cycles;
-    int iterations = 0;
+    else
+    {
+        if(cpu->isHaltered == false)
+        {
+            int cycles = executeInstruction(cpu, memory);
+            cpu->cyclesInFrame -= cycles;
+            cpu->totalCycles += cycles;
+            int iterations = 0;
+        }
+    }
 }
 

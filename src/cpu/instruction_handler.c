@@ -796,6 +796,7 @@ static int nop(CPU_t *cpu, Memory_t *memory)
 // HALT     -----------------------------------------------------------------------------
 static int halt(CPU_t *cpu, Memory_t *memory)
 {
+    cpu->isHaltered = true;
     return 4;
 }
 
