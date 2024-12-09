@@ -1,5 +1,5 @@
-#ifndef GUI_MEMORY_VIEW_H
-#define GUI_MEMORY_VIEW_H
+#ifndef GUI_ROM_MEMORY_VIEW_H
+#define GUI_ROM_MEMORY_VIEW_H
 
 #include "raylib.h"
 #include "utils/utils.h"
@@ -60,24 +60,24 @@ typedef struct
     bool updateMemoryView;
     /* -------------------------------------------------------------------------- */
 
-} GuiMemoryViewState;
+} GuiRomMemoryViewState;
 
-GuiMemoryViewState InitGuiMemoryView(void);
-void GuiMemoryView(GuiMemoryViewState *state);
-void GuiMemoryViewAddressUpdate(GuiMemoryViewState *state, const uint8_t *memory, const size_t memorySize);
-void GuiMemoryViewUpdate(GuiMemoryViewState *state, bool update);
+GuiRomMemoryViewState InitGuiRomMemoryView(void);
+void GuiRomMemoryView(GuiRomMemoryViewState *state);
+void GuiRomMemoryViewAddressUpdate(GuiRomMemoryViewState *state, const uint8_t *memory, const size_t memorySize);
+void GuiRomMemoryViewUpdate(GuiRomMemoryViewState *state, bool update);
 
-#endif // GUI_MEMORY_VIEW_H
+#endif //GUI_ROM_MEMORY_VIEW_H
 
-#ifdef GUI_MEMORY_VIEW_IMPLEMENTATION
+#ifdef GUI_ROM_MEMORY_VIEW_IMPLEMENTATION
 
 #include "raygui.h"
 
-void GuiMemoryFindByteAtAddress(GuiMemoryViewState *state);
+void GuiRomMemoryFindByteAtAddress(GuiRomMemoryViewState *state);
 
-GuiMemoryViewState InitGuiMemoryView(void)
+GuiRomMemoryViewState InitGuiRomMemoryView(void)
 {
-    GuiMemoryViewState state = { 0 };
+    GuiRomMemoryViewState state = { 0 };
 
     /* ---------------------------- Window attributes --------------------------- */
     state.padding = 12;
@@ -141,7 +141,7 @@ GuiMemoryViewState InitGuiMemoryView(void)
 
     return state;
 }
-void GuiMemoryView(GuiMemoryViewState *state)
+void GuiRomMemoryView(GuiRomMemoryViewState *state)
 {
     if(state->isWindowActive == true)
     {
@@ -201,7 +201,7 @@ void GuiMemoryView(GuiMemoryViewState *state)
         }
 
         /* --------------------------- Render GUI elements -------------------------- */
-        if(GuiWindowBox(state->bounds, "Memory view") == true)
+        if(GuiWindowBox(state->bounds, "ROM view") == true)
         {
             state->isWindowMinimized = !state->isWindowMinimized;
             state->isWindowActive = false;
@@ -308,13 +308,13 @@ void GuiMemoryView(GuiMemoryViewState *state)
         {
             state->memoryAddressFindByteActive = false;
             state->isMemoryAdressFindPressed = true;
-            GuiMemoryFindByteAtAddress(state);
+            GuiRomMemoryFindByteAtAddress(state);
         }
         /* -------------------------------------------------------------------------- */
     }
 }
 
-void GuiMemoryViewAddressUpdate(GuiMemoryViewState *state, const uint8_t *memory, const size_t memorySize)
+void GuiRomMemoryViewAddressUpdate(GuiRomMemoryViewState *state, const uint8_t *memory, const size_t memorySize)
 {
     if(state->isWindowActive == true && state->updateMemoryView == true)
     {
@@ -334,7 +334,7 @@ void GuiMemoryViewAddressUpdate(GuiMemoryViewState *state, const uint8_t *memory
     }
 }
 
-void GuiMemoryFindByteAtAddress(GuiMemoryViewState *state)
+void GuiRomMemoryFindByteAtAddress(GuiRomMemoryViewState *state)
 {
     word_t address = 0;
     sscanf(state->memoryAddressFindByteText, "%X", &address);
@@ -343,10 +343,10 @@ void GuiMemoryFindByteAtAddress(GuiMemoryViewState *state)
 
     state->memoryAddressSpinnerValue = spinnerValue;
 
-    GuiMemoryViewUpdate(state, true);
+    GuiRomMemoryViewUpdate(state, true);
 }
 
-void GuiMemoryViewUpdate(GuiMemoryViewState *state, bool update)
+void GuiRomMemoryViewUpdate(GuiRomMemoryViewState *state, bool update)
 {
     state->updateMemoryView = update;
 }

@@ -533,7 +533,7 @@ int executeInstruction(ZilogZ80_t *cpu)
     cpu->currentCycles = cycles;
     cpu->totalCycles += cycles;
 
-    return 0;
+        return 0;
 }
 
 
@@ -2479,6 +2479,7 @@ static int in_a_n(ZilogZ80_t *cpu)
 static int out_n_a_addr(ZilogZ80_t *cpu)
 {
     // TODO: Port
+    cpu->PC++;
     return 11;
 }
 static int daa(ZilogZ80_t *cpu)

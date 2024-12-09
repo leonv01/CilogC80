@@ -25,7 +25,8 @@ typedef struct
     GuiMenuButton loadToMemoryButton;
 
     GuiMenuButton cpuButton;
-    GuiMenuButton memoryButton;
+    GuiMenuButton ramMemoryButton;
+    GuiMenuButton romMemoryButton;
     GuiMenuButton displayButton;
 
     GuiMenuButton startEmulationButton;
@@ -43,7 +44,8 @@ typedef struct
     bool loadToMemoryButtonActive;
 
     bool cpuButtonActive;
-    bool memoryButtonActive;
+    bool ramMemoryButtonActive;
+    bool romMemoryButtonActive;
     bool displayButtonActive;
 
     bool startEmulationButtonActive;
@@ -61,7 +63,8 @@ typedef struct
     bool loadToMemoryButtonHover;
     
     bool cpuButtonHover;
-    bool memoryButtonHover;
+    bool ramMemoryButtonHover;
+    bool romMemoryButtonHover;
     bool displayButtonHover;
 
     bool startEmulationButtonHover;
@@ -147,9 +150,17 @@ void GuiMenuBar(GuiMenuBarState *state)
         state->buttonSize
     }, GuiIconText(ICON_CPU, ""));
 
-    state->memoryButtonActive = GuiButton((Rectangle)
+    state->ramMemoryButtonActive = GuiButton((Rectangle)
     {
         state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 3),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    }, GuiIconText(ICON_ROM, ""));
+
+    state->romMemoryButtonActive = GuiButton((Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 4),
         state->openButton.position.y,
         state->buttonSize,
         state->buttonSize
@@ -157,28 +168,28 @@ void GuiMenuBar(GuiMenuBarState *state)
     
     state->startEmulationButtonActive = GuiButton((Rectangle)
     {
-        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 5),
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 6),
         state->openButton.position.y,
         state->buttonSize,
         state->buttonSize
     }, GuiIconText(ICON_PLAYER_PLAY, ""));
     state->pauseEmulationButtonActive = GuiButton((Rectangle)
     {
-        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 6),
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 7),
         state->openButton.position.y,
         state->buttonSize,
         state->buttonSize
     }, GuiIconText(ICON_PLAYER_PAUSE, ""));
     state->stepEmulationButtonActive = GuiButton((Rectangle)
     {
-        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 7),
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 8),
         state->openButton.position.y,
         state->buttonSize,
         state->buttonSize
     }, GuiIconText(ICON_STEP_OVER, ""));
     state->stopEmulationButtonActive = GuiButton((Rectangle)
     {
-        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 8),
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 9),
         state->openButton.position.y,
         state->buttonSize,
         state->buttonSize
@@ -210,7 +221,7 @@ void GuiMenuBar(GuiMenuBarState *state)
         state->buttonSize
     });
 
-    state->memoryButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    state->ramMemoryButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
     {
         state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 3),
         state->openButton.position.y,
@@ -218,30 +229,38 @@ void GuiMenuBar(GuiMenuBarState *state)
         state->buttonSize
     });
 
-    state->startEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    state->romMemoryButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
     {
-        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 5),
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 4),
         state->openButton.position.y,
         state->buttonSize,
         state->buttonSize
     });
-    state->pauseEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+
+    state->startEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
     {
         state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 6),
         state->openButton.position.y,
         state->buttonSize,
         state->buttonSize
     });
-    state->stepEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    state->pauseEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
     {
         state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 7),
         state->openButton.position.y,
         state->buttonSize,
         state->buttonSize
     });
-    state->stopEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    state->stepEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
     {
         state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 8),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    });
+    state->stopEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 9),
         state->openButton.position.y,
         state->buttonSize,
         state->buttonSize
@@ -255,7 +274,8 @@ char *GuiMenuBarGetTooltip(GuiMenuBarState *state, bool *isAnyHovered)
     if(state->openButtonHover) text = "Open file";
     else if(state->loadToMemoryButtonHover) text = "Load to memory";
     else if(state->cpuButtonHover) text = "Open CPU window";
-    else if(state->memoryButtonHover) text = "Open Memory window";
+    else if(state->ramMemoryButtonHover) text = "Open RAM window";
+    else if(state->romMemoryButtonHover) text = "Open ROM window";
     else if(state->startEmulationButtonHover) text = "Start emulation";
     else if(state->pauseEmulationButtonHover) text = "Pause emulation";
     else if(state->stepEmulationButtonHover) text = "Step emulation";
@@ -265,7 +285,8 @@ char *GuiMenuBarGetTooltip(GuiMenuBarState *state, bool *isAnyHovered)
     if(state->openButtonHover 
     || state->loadToMemoryButtonHover 
     || state->cpuButtonHover 
-    || state->memoryButtonHover
+    || state->ramMemoryButtonHover
+    || state->romMemoryButtonHover
     || state->startEmulationButtonHover
     || state->pauseEmulationButtonHover
     || state->stepEmulationButtonHover

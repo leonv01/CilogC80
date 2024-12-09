@@ -1,7 +1,6 @@
 #ifndef CILOG_C80_MEMORY_H
 #define CILOG_C80_MEMORY_H
 
-#include <sal.h>
 #include <stdint.h>
 #include <stdlib.h>
 

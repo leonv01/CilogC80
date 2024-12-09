@@ -20,8 +20,11 @@
 #define GUI_CPU_VIEW_IMPLEMENTATION
 #include "gui_components/gui_cpu_view.h"
 
-#define GUI_MEMORY_VIEW_IMPLEMENTATION
-#include "gui_components/gui_memory_view.h"
+#define GUI_RAM_MEMORY_VIEW_IMPLEMENTATION
+#include "gui_components/gui_ram_memory_view.h"
+
+#define GUI_ROM_MEMORY_VIEW_IMPLEMENTATION
+#include "gui_components/gui_rom_memory_view.h"
 
 #define GUI_PREFERENCES_IMPLEMENTATION
 #include "gui_components/gui_preferences.h"
@@ -62,7 +65,8 @@ typedef struct RenderObject
 /*                            Forward declarations                            */
 /* -------------------------------------------------------------------------- */
 static inline void renderCpuViewCallback(void *state);
-static inline void renderMemoryViewCallback(void *state);
+static inline void renderRamMemoryViewCallback(void *state);
+static inline void renderRomMemoryViewCallback(void *state);
 static inline void renderPreferencesCallback(void *state);
 static inline void renderMenuBarCallback(void *state);
 static inline void renderFileDialogCallback(void *state);
@@ -97,17 +101,19 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
     GuiWindowFileDialogState fileDialogState = InitGuiWindowFileDialog(GetWorkingDirectory());
     GuiTooltipTextState tooltipTextState = InitGuiToolTipText("Tooltip text", (Rectangle){ 0, 0, 100, 20 });
     GuiCpuViewState cpuViewState = InitGuiCpuView();
-    GuiMemoryViewState memoryViewState = InitGuiMemoryView();
+    GuiRamMemoryViewState ramMemoryViewState = InitGuiRamMemoryView();
+    GuiRomMemoryViewState romMemoryViewState = InitGuiRomMemoryView();
     GuiPreferencesState preferencesState = InitGuiPreferences((Vector2){ screenWidth / 2, screenHeight / 2 }, 400, 300);   
     GuiToastState toastState = InitGuiToast();
     //--------------------------------------------------------------------------------------
     RenderObject renderObjects[] = 
     {
         { &cpuViewState, (void (*)(void *))renderCpuViewCallback, 0 },
-        { &memoryViewState, (void (*)(void *))renderMemoryViewCallback, 1 },
-        { &preferencesState, (void (*)(void *))renderPreferencesCallback, 2 },
-        { &fileDialogState, (void (*)(void *))renderFileDialogCallback, 3 },
-        { &toastState, (void (*)(void *))renderToastCallback, 4 }
+        { &ramMemoryViewState, (void (*)(void *))renderRamMemoryViewCallback, 1 },
+        { &romMemoryViewState, (void (*)(void *))renderRomMemoryViewCallback, 2},
+        { &preferencesState, (void (*)(void *))renderPreferencesCallback, 3 },
+        { &fileDialogState, (void (*)(void *))renderFileDialogCallback, 4 },
+        { &toastState, (void (*)(void *))renderToastCallback, 5 }
     };
     const int renderStatesCount = sizeof(renderObjects) / sizeof(RenderObject);
     size_t renderObjectsPriority[renderStatesCount];
@@ -129,19 +135,23 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
         /* -------------------------------------------------------------------------- */
 
         /* ------------------------------ Logic updates ----------------------------- */
-        if(menuBarState.openButtonActive)
+        if(menuBarState.openButtonActive == true)
         {
             fileDialogState.windowActive = !fileDialogState.windowActive;
         }
 
-        if(menuBarState.cpuButtonActive)
+        if(menuBarState.cpuButtonActive == true)
         {
             cpuViewState.isWindowActive = !cpuViewState.isWindowActive;
         }
 
-        if(menuBarState.memoryButtonActive)
+        if(menuBarState.ramMemoryButtonActive == true)
         {
-            memoryViewState.isWindowActive = !memoryViewState.isWindowActive;
+            ramMemoryViewState.isWindowActive = !ramMemoryViewState.isWindowActive;
+        }
+        if(menuBarState.romMemoryButtonActive == true)
+        {
+            romMemoryViewState.isWindowActive = !romMemoryViewState.isWindowActive;
         }
 
         if(fileDialogState.SelectFilePressed == true)
@@ -158,7 +168,8 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
             if(fileLoaded == true)
             {
                 zilogZ80Reset(cpu);
-                GuiMemoryViewUpdate(&memoryViewState, true);
+                GuiRamMemoryViewUpdate(&ramMemoryViewState, true);
+                GuiRomMemoryViewUpdate(&romMemoryViewState, true);
                 GuiToastDisplayMessage(&toastState, "File loaded.", 5000, GUI_TOAST_SUCCESS);
 
                 isProgramLoaded = true;
@@ -194,7 +205,8 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
             }
             zilogZ80Step(cpu); 
 
-            GuiMemoryViewUpdate(&memoryViewState, true);
+            GuiRamMemoryViewUpdate(&ramMemoryViewState, true);
+            GuiRomMemoryViewUpdate(&romMemoryViewState, true);
             GuiCpuViewUpdate(&cpuViewState, true);
         }
 
@@ -205,7 +217,8 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
         /* -------------------------------------------------------------------------- */
 
         /* --------------------------- Memory view update --------------------------- */
-        GuiMemoryViewAddressUpdate(&memoryViewState, cpu->memory.data, cpu->memory.memorySize);
+        GuiRamMemoryViewAddressUpdate(&ramMemoryViewState, cpu->ram.data, cpu->ram.memorySize);
+        GuiRomMemoryViewAddressUpdate(&romMemoryViewState, cpu->rom.data, cpu->rom.memorySize);
         /* -------------------------------------------------------------------------- */
 
         /* ------------------------------ Begin Drawing ----------------------------- */
@@ -240,9 +253,13 @@ static inline void renderCpuViewCallback(void *state)
 {
     GuiCpuView((GuiCpuViewState *)state);
 }
-static inline void renderMemoryViewCallback(void *state)
+static inline void renderRamMemoryViewCallback(void *state)
 {
-    GuiMemoryView((GuiMemoryViewState *)state);
+    GuiRamMemoryView((GuiRamMemoryViewState *)state);
+}
+static inline void renderRomMemoryViewCallback(void *state)
+{
+    GuiRomMemoryView((GuiRomMemoryViewState *)state);
 }
 static inline void renderPreferencesCallback(void *state)
 {
