@@ -1,6 +1,7 @@
 #ifndef CILOG_C80_MEMORY_H
 #define CILOG_C80_MEMORY_H
 
+#include <sal.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -9,14 +10,8 @@
 typedef struct Memory_t
 {
     byte_t* data;
-    
 
-
-    byte_t* io;
-    size_t ioSize;
-
-    size_t ramSize;
-    size_t romSize;
+    size_t memoryStartAddress;
     size_t memorySize;
 } Memory_t;
 
@@ -25,14 +20,21 @@ typedef struct Memory_t
  * 
  * @param memory 
  */
-void memoryInit(Memory_t* memory);
+void memoryInit(Memory_t* memory, size_t memoryStartAddress, size_t memorySize);
 
 /**
- * @brief Destroys the memory objects
+ * @brief Destroys the memory object
  * 
  * @param memory 
  */
 void memoryDestroy(Memory_t* memory);
+
+/**
+ * @brief Clears the memory object
+ * 
+ * @param memory 
+ */
+void memoryReset(Memory_t *memory);
 
 /**
  * @brief Fetches byte from memory, depending on the address | Sets error if the address is invalid
@@ -74,5 +76,15 @@ void storeByte(Memory_t* memory, word_t address, byte_t value);
  * @param value 
  */
 void storeWord(Memory_t* memory, word_t address, word_t value);
+
+void loadProgramToRom(Memory_t *rom, byte_t *program, size_t programSize);
+
+void loadProgramToRam(Memory_t *ram, byte_t *program, size_t programSize);
+
+byte_t fetchByteAddressSpace(Memory_t *ram, Memory_t *rom, word_t address);
+void storeByteAddressSpace(Memory_t *ram, Memory_t *rom, word_t address, byte_t value);
+
+word_t fetchWordAddressSpace(Memory_t *ram, Memory_t *rom, word_t address);
+void storeWordAddressSpace(Memory_t *ram, Memory_t *rom, word_t address, word_t value);
 
 #endif //CILOG_C80_MEMORY_H

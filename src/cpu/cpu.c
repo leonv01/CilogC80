@@ -39,27 +39,50 @@ void zilogZ80Init(ZilogZ80_t *cpu)
     cpu->frequency = 3.5f;
 
     cpu->isHaltered = false;
+
+    memoryInit(&cpu->memory, 0x0000, 0x10000);
+    memoryInit(&cpu->rom, 0x0000, 0x4000);
+    memoryInit(&cpu->ram, 0x8000, 0x8000);
 }
 
 void zilogZ80Reset(ZilogZ80_t *cpu)
 {
-    zilogZ80Init(cpu);
+    cpu->A = 0x00;
+    cpu->B = 0x00;
+    cpu->C = 0x00;
+    cpu->D = 0x00;
+    cpu->E = 0x00;
+    cpu->H = 0x00;
+    cpu->L = 0x00;
+    cpu->SP = 0x0000;
+    cpu->PC = 0x0000;
+    cpu->IX = 0x0000;
+    cpu->IY = 0x0000;
+    cpu->I = 0x00;
+    cpu->R = 0x00;
+    cpu->F = (F_t){
+            .C = 0,
+            .N = 0,
+            .P = 0,
+            ._ = 0,
+            .H = 0,
+            .Z = 0,
+            .S = 0};
+
+    cpu->cyclesInFrame = 0;
+    cpu->frequency = 3.5f;
+
+    cpu->isHaltered = false;
 }
 
-void zilogZ80Step(ZilogZ80_t *cpu, Memory_t *memory)
+void zilogZ80Step(ZilogZ80_t *cpu)
 {
-    if (cpu == NULL || memory == NULL)
+    if(cpu->isHaltered == false)
     {
-    }
-    else
-    {
-        if(cpu->isHaltered == false)
-        {
-            int cycles = executeInstruction(cpu, memory);
-            cpu->cyclesInFrame -= cycles;
-            cpu->totalCycles += cycles;
-            int iterations = 0;
-        }
+        int cycles = executeInstruction(cpu);
+        cpu->cyclesInFrame -= cycles;
+        cpu->totalCycles += cycles;
+        int iterations = 0;
     }
 }
 

@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include "utils/utils.h"
 
 #include "utils/error_handler.h"
 
@@ -11,7 +12,7 @@
  * @brief Instruction function pointer
  * 
  */
-typedef int (*InstructionHandler_t)(ZilogZ80_t *, Memory_t *);
+typedef int (*InstructionHandler_t)(ZilogZ80_t *);
 
 // CPU helper functions -------------------------------------------------------
 static byte_t flagsToByte(F_t flags);
@@ -39,15 +40,15 @@ static void orWithRegister(ZilogZ80_t *cpu, byte_t value);
 static void xorWithRegister(ZilogZ80_t *cpu, byte_t value);
 static void cpWithRegister(ZilogZ80_t *cpu, byte_t value);
 
-static void pushWord(ZilogZ80_t *cpu, Memory_t *memory, word_t value);
-static void popWord(ZilogZ80_t *cpu, Memory_t *memory, byte_t *upperByte, byte_t *lowerByte);
+static void pushWord(ZilogZ80_t *cpu, word_t value);
+static void popWord(ZilogZ80_t *cpu, byte_t *upperByte, byte_t *lowerByte);
 
-static int returnHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition);
-static int callHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition);
-static int jumpHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition);
-static int jumpRelativeHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition);
+static int returnHelper(ZilogZ80_t *cpu, bool condition);
+static int callHelper(ZilogZ80_t *cpu, bool condition);
+static int jumpHelper(ZilogZ80_t *cpu, bool condition);
+static int jumpRelativeHelper(ZilogZ80_t *cpu, bool condition);
 
-static void rst(ZilogZ80_t *cpu, Memory_t *memory, byte_t address);
+static void rst(ZilogZ80_t *cpu, byte_t address);
 
 static void exWord(ZilogZ80_t *cpu, word_t *reg1, word_t *reg2);
 
@@ -56,428 +57,428 @@ static void ldPair(ZilogZ80_t *cpu, byte_t *upperByte, byte_t *lowerByte, word_t
 // -----------------------------------------------------------------------------
 
 // NO Func  -----------------------------------------------------------------------------
-static int noFunc(ZilogZ80_t *cpu, Memory_t *memory);
+static int noFunc(ZilogZ80_t *cpu);
 
 // NOP      -----------------------------------------------------------------------------
-static int nop(ZilogZ80_t *cpu, Memory_t *memory);
+static int nop(ZilogZ80_t *cpu);
 
 // HALT     -----------------------------------------------------------------------------
-static int halt(ZilogZ80_t *cpu, Memory_t *memory);
+static int halt(ZilogZ80_t *cpu);
 
 // ADD  -----------------------------------------------------------------------------
-static int add_hl_bc_imm(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_hl_de_imm(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_hl_hl_imm(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_hl_sp_imm(ZilogZ80_t *cpu, Memory_t *memory);
+static int add_hl_bc_imm(ZilogZ80_t *cpu);
+static int add_hl_de_imm(ZilogZ80_t *cpu);
+static int add_hl_hl_imm(ZilogZ80_t *cpu);
+static int add_hl_sp_imm(ZilogZ80_t *cpu);
 
-static int add_a_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_a_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_a_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_a_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_a_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_a_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_a_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_a_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int add_a_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int add_a_n(ZilogZ80_t *cpu);
+static int add_a_a(ZilogZ80_t *cpu);
+static int add_a_b(ZilogZ80_t *cpu);
+static int add_a_c(ZilogZ80_t *cpu);
+static int add_a_d(ZilogZ80_t *cpu);
+static int add_a_e(ZilogZ80_t *cpu);
+static int add_a_h(ZilogZ80_t *cpu);
+static int add_a_l(ZilogZ80_t *cpu);
+static int add_a_hl_addr(ZilogZ80_t *cpu);
 
 // ADC      -----------------------------------------------------------------------------
-static int adc_a_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_a_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_a_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_a_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_a_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_a_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_a_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_a_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_a_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int adc_a_n(ZilogZ80_t *cpu);
+static int adc_a_a(ZilogZ80_t *cpu);
+static int adc_a_b(ZilogZ80_t *cpu);
+static int adc_a_c(ZilogZ80_t *cpu);
+static int adc_a_d(ZilogZ80_t *cpu);
+static int adc_a_e(ZilogZ80_t *cpu);
+static int adc_a_h(ZilogZ80_t *cpu);
+static int adc_a_l(ZilogZ80_t *cpu);
+static int adc_a_hl_addr(ZilogZ80_t *cpu);
 
-static int adc_hl_bc(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_hl_de(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_hl_hl(ZilogZ80_t *cpu, Memory_t *memory);
-static int adc_hl_sp(ZilogZ80_t *cpu, Memory_t *memory);
+static int adc_hl_bc(ZilogZ80_t *cpu);
+static int adc_hl_de(ZilogZ80_t *cpu);
+static int adc_hl_hl(ZilogZ80_t *cpu);
+static int adc_hl_sp(ZilogZ80_t *cpu);
 
 // INC      -----------------------------------------------------------------------------
-static int inc_bc(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_de(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_hl(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_sp(ZilogZ80_t *cpu, Memory_t *memory);
+static int inc_bc(ZilogZ80_t *cpu);
+static int inc_de(ZilogZ80_t *cpu);
+static int inc_hl(ZilogZ80_t *cpu);
+static int inc_sp(ZilogZ80_t *cpu);
 
-static int inc_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int inc_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int inc_a(ZilogZ80_t *cpu);
+static int inc_b(ZilogZ80_t *cpu);
+static int inc_c(ZilogZ80_t *cpu);
+static int inc_d(ZilogZ80_t *cpu);
+static int inc_e(ZilogZ80_t *cpu);
+static int inc_h(ZilogZ80_t *cpu);
+static int inc_l(ZilogZ80_t *cpu);
+static int inc_hl_addr(ZilogZ80_t *cpu);
 
 // SUB      -----------------------------------------------------------------------------
-static int sub_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int sub_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int sub_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int sub_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int sub_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int sub_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int sub_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int sub_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int sub_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int sub_n(ZilogZ80_t *cpu);
+static int sub_a(ZilogZ80_t *cpu);
+static int sub_b(ZilogZ80_t *cpu);
+static int sub_c(ZilogZ80_t *cpu);
+static int sub_d(ZilogZ80_t *cpu);
+static int sub_e(ZilogZ80_t *cpu);
+static int sub_h(ZilogZ80_t *cpu);
+static int sub_l(ZilogZ80_t *cpu);
+static int sub_hl_addr(ZilogZ80_t *cpu);
 
 // SBC      -----------------------------------------------------------------------------
-static int sbc_a_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_a_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int sbc_a_n(ZilogZ80_t *cpu);
+static int sbc_a_a(ZilogZ80_t *cpu);
+static int sbc_b(ZilogZ80_t *cpu);
+static int sbc_c(ZilogZ80_t *cpu);
+static int sbc_d(ZilogZ80_t *cpu);
+static int sbc_e(ZilogZ80_t *cpu);
+static int sbc_h(ZilogZ80_t *cpu);
+static int sbc_l(ZilogZ80_t *cpu);
+static int sbc_hl_addr(ZilogZ80_t *cpu);
 
-static int sbc_hl_bc(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_hl_de(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_hl_hl(ZilogZ80_t *cpu, Memory_t *memory);
-static int sbc_hl_sp(ZilogZ80_t *cpu, Memory_t *memory);
+static int sbc_hl_bc(ZilogZ80_t *cpu);
+static int sbc_hl_de(ZilogZ80_t *cpu);
+static int sbc_hl_hl(ZilogZ80_t *cpu);
+static int sbc_hl_sp(ZilogZ80_t *cpu);
 
 // DEC      -----------------------------------------------------------------------------
-static int dec_bc(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_de(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_hl(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_sp(ZilogZ80_t *cpu, Memory_t *memory);
+static int dec_bc(ZilogZ80_t *cpu);
+static int dec_de(ZilogZ80_t *cpu);
+static int dec_hl(ZilogZ80_t *cpu);
+static int dec_sp(ZilogZ80_t *cpu);
 
-static int dec_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int dec_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int dec_a(ZilogZ80_t *cpu);
+static int dec_b(ZilogZ80_t *cpu);
+static int dec_c(ZilogZ80_t *cpu);
+static int dec_d(ZilogZ80_t *cpu);
+static int dec_e(ZilogZ80_t *cpu);
+static int dec_h(ZilogZ80_t *cpu);
+static int dec_l(ZilogZ80_t *cpu);
+static int dec_hl_addr(ZilogZ80_t *cpu);
 
 // AND      -----------------------------------------------------------------------------
-static int and_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int and_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int and_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int and_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int and_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int and_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int and_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int and_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int and_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int and_n(ZilogZ80_t *cpu);
+static int and_a(ZilogZ80_t *cpu);
+static int and_b(ZilogZ80_t *cpu);
+static int and_c(ZilogZ80_t *cpu);
+static int and_d(ZilogZ80_t *cpu);
+static int and_e(ZilogZ80_t *cpu);
+static int and_h(ZilogZ80_t *cpu);
+static int and_l(ZilogZ80_t *cpu);
+static int and_hl_addr(ZilogZ80_t *cpu);
 
 // OR       -----------------------------------------------------------------------------
-static int or_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int or_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int or_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int or_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int or_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int or_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int or_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int or_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int or_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int or_n(ZilogZ80_t *cpu);
+static int or_a(ZilogZ80_t *cpu);
+static int or_b(ZilogZ80_t *cpu);
+static int or_c(ZilogZ80_t *cpu);
+static int or_d(ZilogZ80_t *cpu);
+static int or_e(ZilogZ80_t *cpu);
+static int or_h(ZilogZ80_t *cpu);
+static int or_l(ZilogZ80_t *cpu);
+static int or_hl_addr(ZilogZ80_t *cpu);
 
 // XOR      -----------------------------------------------------------------------------
-static int xor_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int xor_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int xor_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int xor_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int xor_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int xor_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int xor_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int xor_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int xor_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int xor_n(ZilogZ80_t *cpu);
+static int xor_a(ZilogZ80_t *cpu);
+static int xor_b(ZilogZ80_t *cpu);
+static int xor_c(ZilogZ80_t *cpu);
+static int xor_d(ZilogZ80_t *cpu);
+static int xor_e(ZilogZ80_t *cpu);
+static int xor_h(ZilogZ80_t *cpu);
+static int xor_l(ZilogZ80_t *cpu);
+static int xor_hl_addr(ZilogZ80_t *cpu);
 
 // CP       -----------------------------------------------------------------------------
-static int cp_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int cp_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int cp_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int cp_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int cp_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int cp_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int cp_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int cp_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int cp_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int cpi(ZilogZ80_t *cpu, Memory_t *memory);
-static int cpir(ZilogZ80_t *cpu, Memory_t *memory);
+static int cp_n(ZilogZ80_t *cpu);
+static int cp_a(ZilogZ80_t *cpu);
+static int cp_b(ZilogZ80_t *cpu);
+static int cp_c(ZilogZ80_t *cpu);
+static int cp_d(ZilogZ80_t *cpu);
+static int cp_e(ZilogZ80_t *cpu);
+static int cp_h(ZilogZ80_t *cpu);
+static int cp_l(ZilogZ80_t *cpu);
+static int cp_hl_addr(ZilogZ80_t *cpu);
+static int cpi(ZilogZ80_t *cpu);
+static int cpir(ZilogZ80_t *cpu);
 
 // PUSH     -----------------------------------------------------------------------------
-static int push_bc(ZilogZ80_t *cpu, Memory_t *memory);
-static int push_de(ZilogZ80_t *cpu, Memory_t *memory);
-static int push_hl(ZilogZ80_t *cpu, Memory_t *memory);
-static int push_af(ZilogZ80_t *cpu, Memory_t *memory);
+static int push_bc(ZilogZ80_t *cpu);
+static int push_de(ZilogZ80_t *cpu);
+static int push_hl(ZilogZ80_t *cpu);
+static int push_af(ZilogZ80_t *cpu);
 
 // POP      -----------------------------------------------------------------------------
-static int pop_bc(ZilogZ80_t *cpu, Memory_t *memory);
-static int pop_de(ZilogZ80_t *cpu, Memory_t *memory);
-static int pop_hl(ZilogZ80_t *cpu, Memory_t *memory);
-static int pop_af(ZilogZ80_t *cpu, Memory_t *memory);
+static int pop_bc(ZilogZ80_t *cpu);
+static int pop_de(ZilogZ80_t *cpu);
+static int pop_hl(ZilogZ80_t *cpu);
+static int pop_af(ZilogZ80_t *cpu);
 
 // CALL     -----------------------------------------------------------------------------
-static int call_nz_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int call_z_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int call_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int call_nc_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int call_c_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int call_po_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int call_pe_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int call_p_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int call_m_nn(ZilogZ80_t *cpu, Memory_t *memory);
+static int call_nz_nn(ZilogZ80_t *cpu);
+static int call_z_nn(ZilogZ80_t *cpu);
+static int call_nn(ZilogZ80_t *cpu);
+static int call_nc_nn(ZilogZ80_t *cpu);
+static int call_c_nn(ZilogZ80_t *cpu);
+static int call_po_nn(ZilogZ80_t *cpu);
+static int call_pe_nn(ZilogZ80_t *cpu);
+static int call_p_nn(ZilogZ80_t *cpu);
+static int call_m_nn(ZilogZ80_t *cpu);
 
 // RET      -----------------------------------------------------------------------------
-static int ret_nz(ZilogZ80_t *cpu, Memory_t *memory);
-static int ret_z(ZilogZ80_t *cpu, Memory_t *memory);
-static int ret_nc(ZilogZ80_t *cpu, Memory_t *memory);
-static int ret_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int ret_po(ZilogZ80_t *cpu, Memory_t *memory);
-static int ret_pe(ZilogZ80_t *cpu, Memory_t *memory);
-static int ret_p(ZilogZ80_t *cpu, Memory_t *memory);
-static int ret_m(ZilogZ80_t *cpu, Memory_t *memory);
-static int ret(ZilogZ80_t *cpu, Memory_t *memory);
-static int retn(ZilogZ80_t *cpu, Memory_t *memory);
-static int reti(ZilogZ80_t *cpu, Memory_t *memory);
+static int ret_nz(ZilogZ80_t *cpu);
+static int ret_z(ZilogZ80_t *cpu);
+static int ret_nc(ZilogZ80_t *cpu);
+static int ret_c(ZilogZ80_t *cpu);
+static int ret_po(ZilogZ80_t *cpu);
+static int ret_pe(ZilogZ80_t *cpu);
+static int ret_p(ZilogZ80_t *cpu);
+static int ret_m(ZilogZ80_t *cpu);
+static int ret(ZilogZ80_t *cpu);
+static int retn(ZilogZ80_t *cpu);
+static int reti(ZilogZ80_t *cpu);
 
 // ROTATE   -----------------------------------------------------------------------------
-static int rlca(ZilogZ80_t *cpu, Memory_t *memory);
-static int rrca(ZilogZ80_t *cpu, Memory_t *memory);
-static int rla(ZilogZ80_t *cpu, Memory_t *memory);
-static int rra(ZilogZ80_t *cpu, Memory_t *memory);
+static int rlca(ZilogZ80_t *cpu);
+static int rrca(ZilogZ80_t *cpu);
+static int rla(ZilogZ80_t *cpu);
+static int rra(ZilogZ80_t *cpu);
 
 // RST      -----------------------------------------------------------------------------
-static int rst_00h(ZilogZ80_t *cpu, Memory_t *memory);
-static int rst_08h(ZilogZ80_t *cpu, Memory_t *memory);
-static int rst_10h(ZilogZ80_t *cpu, Memory_t *memory);
-static int rst_18h(ZilogZ80_t *cpu, Memory_t *memory);
-static int rst_20h(ZilogZ80_t *cpu, Memory_t *memory);
-static int rst_28h(ZilogZ80_t *cpu, Memory_t *memory);
-static int rst_30h(ZilogZ80_t *cpu, Memory_t *memory);
-static int rst_38h(ZilogZ80_t *cpu, Memory_t *memory);
+static int rst_00h(ZilogZ80_t *cpu);
+static int rst_08h(ZilogZ80_t *cpu);
+static int rst_10h(ZilogZ80_t *cpu);
+static int rst_18h(ZilogZ80_t *cpu);
+static int rst_20h(ZilogZ80_t *cpu);
+static int rst_28h(ZilogZ80_t *cpu);
+static int rst_30h(ZilogZ80_t *cpu);
+static int rst_38h(ZilogZ80_t *cpu);
 
 // JUMP     -----------------------------------------------------------------------------
-static int djnz_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int jr_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int jr_nz_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int jr_z_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int jr_nc_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int jr_c_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int jp_nz_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int jp_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int jp_z_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int jp_nc_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int jp_c_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int jp_po_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int jp_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int jp_p_nn(ZilogZ80_t *cpu, Memory_t *memory);
-static int jp_m_nn(ZilogZ80_t *cpu, Memory_t *memory);
+static int djnz_d(ZilogZ80_t *cpu);
+static int jr_d(ZilogZ80_t *cpu);
+static int jr_nz_d(ZilogZ80_t *cpu);
+static int jr_z_b(ZilogZ80_t *cpu);
+static int jr_nc_d(ZilogZ80_t *cpu);
+static int jr_c_b(ZilogZ80_t *cpu);
+static int jp_nz_nn(ZilogZ80_t *cpu);
+static int jp_nn(ZilogZ80_t *cpu);
+static int jp_z_nn(ZilogZ80_t *cpu);
+static int jp_nc_nn(ZilogZ80_t *cpu);
+static int jp_c_nn(ZilogZ80_t *cpu);
+static int jp_po_nn(ZilogZ80_t *cpu);
+static int jp_hl_addr(ZilogZ80_t *cpu);
+static int jp_p_nn(ZilogZ80_t *cpu);
+static int jp_m_nn(ZilogZ80_t *cpu);
 
 // EXCHANGE -----------------------------------------------------------------------------
-static int exx(ZilogZ80_t *cpu, Memory_t *memory);
-static int ex_af_af_(ZilogZ80_t *cpu, Memory_t *memory);
-static int ex_sp_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ex_de_hl(ZilogZ80_t *cpu, Memory_t *memory);
+static int exx(ZilogZ80_t *cpu);
+static int ex_af_af_(ZilogZ80_t *cpu);
+static int ex_sp_hl_addr(ZilogZ80_t *cpu);
+static int ex_de_hl(ZilogZ80_t *cpu);
 
 // LD       -----------------------------------------------------------------------------
-static int ld_a_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_a_n(ZilogZ80_t *cpu);
+static int ld_a_a(ZilogZ80_t *cpu);
+static int ld_a_b(ZilogZ80_t *cpu);
+static int ld_a_c(ZilogZ80_t *cpu);
+static int ld_a_d(ZilogZ80_t *cpu);
+static int ld_a_e(ZilogZ80_t *cpu);
+static int ld_a_h(ZilogZ80_t *cpu);
+static int ld_a_l(ZilogZ80_t *cpu);
+static int ld_a_hl_addr(ZilogZ80_t *cpu);
 
-static int ld_b_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_b_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_b_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_b_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_b_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_b_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_b_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_b_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_b_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_b_n(ZilogZ80_t *cpu);
+static int ld_b_a(ZilogZ80_t *cpu);
+static int ld_b_b(ZilogZ80_t *cpu);
+static int ld_b_c(ZilogZ80_t *cpu);
+static int ld_b_d(ZilogZ80_t *cpu);
+static int ld_b_e(ZilogZ80_t *cpu);
+static int ld_b_h(ZilogZ80_t *cpu);
+static int ld_b_l(ZilogZ80_t *cpu);
+static int ld_b_hl_addr(ZilogZ80_t *cpu);
 
-static int ld_c_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_c_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_c_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_c_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_c_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_c_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_c_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_c_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_c_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_c_n(ZilogZ80_t *cpu);
+static int ld_c_a(ZilogZ80_t *cpu);
+static int ld_c_b(ZilogZ80_t *cpu);
+static int ld_c_c(ZilogZ80_t *cpu);
+static int ld_c_d(ZilogZ80_t *cpu);
+static int ld_c_e(ZilogZ80_t *cpu);
+static int ld_c_h(ZilogZ80_t *cpu);
+static int ld_c_l(ZilogZ80_t *cpu);
+static int ld_c_hl_addr(ZilogZ80_t *cpu);
 
-static int ld_d_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_d_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_d_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_d_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_d_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_d_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_d_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_d_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_d_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_d_n(ZilogZ80_t *cpu);
+static int ld_d_a(ZilogZ80_t *cpu);
+static int ld_d_b(ZilogZ80_t *cpu);
+static int ld_d_c(ZilogZ80_t *cpu);
+static int ld_d_d(ZilogZ80_t *cpu);
+static int ld_d_e(ZilogZ80_t *cpu);
+static int ld_d_h(ZilogZ80_t *cpu);
+static int ld_d_l(ZilogZ80_t *cpu);
+static int ld_d_hl_addr(ZilogZ80_t *cpu);
 
-static int ld_e_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_e_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_e_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_e_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_e_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_e_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_e_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_e_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_e_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_e_n(ZilogZ80_t *cpu);
+static int ld_e_a(ZilogZ80_t *cpu);
+static int ld_e_b(ZilogZ80_t *cpu);
+static int ld_e_c(ZilogZ80_t *cpu);
+static int ld_e_d(ZilogZ80_t *cpu);
+static int ld_e_e(ZilogZ80_t *cpu);
+static int ld_e_h(ZilogZ80_t *cpu);
+static int ld_e_l(ZilogZ80_t *cpu);
+static int ld_e_hl_addr(ZilogZ80_t *cpu);
 
-static int ld_h_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_h_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_h_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_h_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_h_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_h_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_h_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_h_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_h_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_h_n(ZilogZ80_t *cpu);
+static int ld_h_a(ZilogZ80_t *cpu);
+static int ld_h_b(ZilogZ80_t *cpu);
+static int ld_h_c(ZilogZ80_t *cpu);
+static int ld_h_d(ZilogZ80_t *cpu);
+static int ld_h_e(ZilogZ80_t *cpu);
+static int ld_h_h(ZilogZ80_t *cpu);
+static int ld_h_l(ZilogZ80_t *cpu);
+static int ld_h_hl_addr(ZilogZ80_t *cpu);
 
-static int ld_l_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_l_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_l_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_l_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_l_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_l_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_l_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_l_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_l_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_l_n(ZilogZ80_t *cpu);
+static int ld_l_a(ZilogZ80_t *cpu);
+static int ld_l_b(ZilogZ80_t *cpu);
+static int ld_l_c(ZilogZ80_t *cpu);
+static int ld_l_d(ZilogZ80_t *cpu);
+static int ld_l_e(ZilogZ80_t *cpu);
+static int ld_l_h(ZilogZ80_t *cpu);
+static int ld_l_l(ZilogZ80_t *cpu);
+static int ld_l_hl_addr(ZilogZ80_t *cpu);
 
-static int ld_hl_n_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_hl_a_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_hl_b_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_hl_c_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_hl_d_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_hl_e_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_hl_h_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_hl_l_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_hl_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_hl_n_addr(ZilogZ80_t *cpu);
+static int ld_hl_a_addr(ZilogZ80_t *cpu);
+static int ld_hl_b_addr(ZilogZ80_t *cpu);
+static int ld_hl_c_addr(ZilogZ80_t *cpu);
+static int ld_hl_d_addr(ZilogZ80_t *cpu);
+static int ld_hl_e_addr(ZilogZ80_t *cpu);
+static int ld_hl_h_addr(ZilogZ80_t *cpu);
+static int ld_hl_l_addr(ZilogZ80_t *cpu);
+static int ld_hl_hl_addr(ZilogZ80_t *cpu);
 
-static int ld_hl_nn_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_nn_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_bc_nn_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_de_nn_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_sp_nn_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_hl_nn_addr(ZilogZ80_t *cpu);
+static int ld_a_nn_addr(ZilogZ80_t *cpu);
+static int ld_bc_nn_addr(ZilogZ80_t *cpu);
+static int ld_de_nn_addr(ZilogZ80_t *cpu);
+static int ld_sp_nn_addr(ZilogZ80_t *cpu);
 
-static int ld_nn_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_nn_a_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_nn_bc_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_nn_de_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_nn_sp_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_nn_hl_addr(ZilogZ80_t *cpu);
+static int ld_nn_a_addr(ZilogZ80_t *cpu);
+static int ld_nn_bc_addr(ZilogZ80_t *cpu);
+static int ld_nn_de_addr(ZilogZ80_t *cpu);
+static int ld_nn_sp_addr(ZilogZ80_t *cpu);
 
-static int ld_de_nn_imm(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_de_a_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_de_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_de_nn_imm(ZilogZ80_t *cpu);
+static int ld_de_a_addr(ZilogZ80_t *cpu);
+static int ld_a_de_addr(ZilogZ80_t *cpu);
 
-static int ld_bc_nn_imm(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_bc_a_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_bc_addr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_bc_nn_imm(ZilogZ80_t *cpu);
+static int ld_bc_a_addr(ZilogZ80_t *cpu);
+static int ld_a_bc_addr(ZilogZ80_t *cpu);
 
-static int ld_hl_nn_imm(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_hl_nn_imm(ZilogZ80_t *cpu);
 
-static int ld_sp_nn_imm(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_sp_nn_imm(ZilogZ80_t *cpu);
 
-static int ld_sp_hl(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_sp_hl(ZilogZ80_t *cpu);
 
-static int ldi(ZilogZ80_t *cpu, Memory_t *memory);
-static int ldir(ZilogZ80_t *cpu, Memory_t *memory);
-static int ldd(ZilogZ80_t *cpu, Memory_t *memory);
-static int lddr(ZilogZ80_t *cpu, Memory_t *memory);
+static int ldi(ZilogZ80_t *cpu);
+static int ldir(ZilogZ80_t *cpu);
+static int ldd(ZilogZ80_t *cpu);
+static int lddr(ZilogZ80_t *cpu);
 
-static int ld_nn_bc_imm(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_nn_de_imm(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_nn_hl_imm(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_nn_sp_imm(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_nn_bc_imm(ZilogZ80_t *cpu);
+static int ld_nn_de_imm(ZilogZ80_t *cpu);
+static int ld_nn_hl_imm(ZilogZ80_t *cpu);
+static int ld_nn_sp_imm(ZilogZ80_t *cpu);
 
-static int ld_r_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int ld_a_r(ZilogZ80_t *cpu, Memory_t *memory);
+static int ld_r_a(ZilogZ80_t *cpu);
+static int ld_a_r(ZilogZ80_t *cpu);
 
 
 // OTHER INSTRUCTION    -----------------------------------------------------------------------------
-static int bit_op(ZilogZ80_t *cpu, Memory_t *memory);
-static int ix_op(ZilogZ80_t *cpu, Memory_t *memory);
-static int misc_op(ZilogZ80_t *cpu, Memory_t *memory);
-static int iy_op(ZilogZ80_t *cpu, Memory_t *memory);
+static int bit_op(ZilogZ80_t *cpu);
+static int ix_op(ZilogZ80_t *cpu);
+static int misc_op(ZilogZ80_t *cpu);
+static int iy_op(ZilogZ80_t *cpu);
 
 // INTERRUPTS           -----------------------------------------------------------------------------
-static int di(ZilogZ80_t *cpu, Memory_t *memory);
-static int ei(ZilogZ80_t *cpu, Memory_t *memory);
+static int di(ZilogZ80_t *cpu);
+static int ei(ZilogZ80_t *cpu);
 
 // PORT     -----------------------------------------------------------------------------
-static int in_a_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int in_b_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int in_d_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int in_e_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int in_h_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int in_l_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int ini(ZilogZ80_t *cpu, Memory_t *memory);
-static int inir(ZilogZ80_t *cpu, Memory_t *memory);
-static int in_c_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int in_a_c(ZilogZ80_t *cpu, Memory_t *memory);
+static int in_a_n(ZilogZ80_t *cpu);
+static int in_b_c(ZilogZ80_t *cpu);
+static int in_d_c(ZilogZ80_t *cpu);
+static int in_e_c(ZilogZ80_t *cpu);
+static int in_h_c(ZilogZ80_t *cpu);
+static int in_l_c(ZilogZ80_t *cpu);
+static int ini(ZilogZ80_t *cpu);
+static int inir(ZilogZ80_t *cpu);
+static int in_c_c(ZilogZ80_t *cpu);
+static int in_a_c(ZilogZ80_t *cpu);
 
-static int in0_c_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int in0_e_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int in0_l_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int in0_a_n(ZilogZ80_t *cpu, Memory_t *memory);
+static int in0_c_n(ZilogZ80_t *cpu);
+static int in0_e_n(ZilogZ80_t *cpu);
+static int in0_l_n(ZilogZ80_t *cpu);
+static int in0_a_n(ZilogZ80_t *cpu);
 
-static int out_n_a_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int out_c_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int out_c_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int out_c_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int out_c_0(ZilogZ80_t *cpu, Memory_t *memory);
-static int out_c_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int out_c_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int out_c_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int out_c_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int outi(ZilogZ80_t *cpu, Memory_t *memory);
-static int otir(ZilogZ80_t *cpu, Memory_t *memory);
+static int out_n_a_addr(ZilogZ80_t *cpu);
+static int out_c_b(ZilogZ80_t *cpu);
+static int out_c_d(ZilogZ80_t *cpu);
+static int out_c_h(ZilogZ80_t *cpu);
+static int out_c_0(ZilogZ80_t *cpu);
+static int out_c_c(ZilogZ80_t *cpu);
+static int out_c_e(ZilogZ80_t *cpu);
+static int out_c_l(ZilogZ80_t *cpu);
+static int out_c_a(ZilogZ80_t *cpu);
+static int outi(ZilogZ80_t *cpu);
+static int otir(ZilogZ80_t *cpu);
 
-static int out0_c_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int out0_e_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int out0_l_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int out0_a_n(ZilogZ80_t *cpu, Memory_t *memory);
+static int out0_c_n(ZilogZ80_t *cpu);
+static int out0_e_n(ZilogZ80_t *cpu);
+static int out0_l_n(ZilogZ80_t *cpu);
+static int out0_a_n(ZilogZ80_t *cpu);
 
-static int daa(ZilogZ80_t *cpu, Memory_t *memory);
-static int scf(ZilogZ80_t *cpu, Memory_t *memory);
+static int daa(ZilogZ80_t *cpu);
+static int scf(ZilogZ80_t *cpu);
 
-static int otim(ZilogZ80_t *cpu, Memory_t *memory);
-static int otimr(ZilogZ80_t *cpu, Memory_t *memory);
-static int otdm(ZilogZ80_t *cpu, Memory_t *memory);
-static int otdmr(ZilogZ80_t *cpu, Memory_t *memory);
-static int outd(ZilogZ80_t *cpu, Memory_t *memory);
-static int otdr(ZilogZ80_t *cpu, Memory_t *memory);
+static int otim(ZilogZ80_t *cpu);
+static int otimr(ZilogZ80_t *cpu);
+static int otdm(ZilogZ80_t *cpu);
+static int otdmr(ZilogZ80_t *cpu);
+static int outd(ZilogZ80_t *cpu);
+static int otdr(ZilogZ80_t *cpu);
 
 // TST      -----------------------------------------------------------------------------
-static int tst_b(ZilogZ80_t *cpu, Memory_t *memory);
-static int tst_d(ZilogZ80_t *cpu, Memory_t *memory);
-static int tst_h(ZilogZ80_t *cpu, Memory_t *memory);
-static int tst_c(ZilogZ80_t *cpu, Memory_t *memory);
-static int tst_e(ZilogZ80_t *cpu, Memory_t *memory);
-static int tst_l(ZilogZ80_t *cpu, Memory_t *memory);
-static int tst_a(ZilogZ80_t *cpu, Memory_t *memory);
-static int tst_hl_addr(ZilogZ80_t *cpu, Memory_t *memory);
-static int tst_n(ZilogZ80_t *cpu, Memory_t *memory);
-static int tstio_n(ZilogZ80_t *cpu, Memory_t *memory);
+static int tst_b(ZilogZ80_t *cpu);
+static int tst_d(ZilogZ80_t *cpu);
+static int tst_h(ZilogZ80_t *cpu);
+static int tst_c(ZilogZ80_t *cpu);
+static int tst_e(ZilogZ80_t *cpu);
+static int tst_l(ZilogZ80_t *cpu);
+static int tst_a(ZilogZ80_t *cpu);
+static int tst_hl_addr(ZilogZ80_t *cpu);
+static int tst_n(ZilogZ80_t *cpu);
+static int tstio_n(ZilogZ80_t *cpu);
 
 // MULT     -----------------------------------------------------------------------------
-static int mlt_bc(ZilogZ80_t *cpu, Memory_t *memory);
-static int mlt_de(ZilogZ80_t *cpu, Memory_t *memory);
-static int mlt_hl(ZilogZ80_t *cpu, Memory_t *memory);
-static int mlt_sp(ZilogZ80_t *cpu, Memory_t *memory);
+static int mlt_bc(ZilogZ80_t *cpu);
+static int mlt_de(ZilogZ80_t *cpu);
+static int mlt_hl(ZilogZ80_t *cpu);
+static int mlt_sp(ZilogZ80_t *cpu);
 
 // IM       -----------------------------------------------------------------------------
-static int im_0(ZilogZ80_t *cpu, Memory_t *memory);
-static int im_1(ZilogZ80_t *cpu, Memory_t *memory);
-static int im_2(ZilogZ80_t *cpu, Memory_t *memory);
+static int im_0(ZilogZ80_t *cpu);
+static int im_1(ZilogZ80_t *cpu);
+static int im_2(ZilogZ80_t *cpu);
 
 // EXTRA    -----------------------------------------------------------------------------
-static int cpl(ZilogZ80_t *cpu, Memory_t *memory);
-static int ccf(ZilogZ80_t *cpu, Memory_t *memory);
-static int neg(ZilogZ80_t *cpu, Memory_t *memory);
-static int slp(ZilogZ80_t *cpu, Memory_t *memory);
-static int rld(ZilogZ80_t *cpu, Memory_t *memory);
+static int cpl(ZilogZ80_t *cpu);
+static int ccf(ZilogZ80_t *cpu);
+static int neg(ZilogZ80_t *cpu);
+static int slp(ZilogZ80_t *cpu);
+static int rld(ZilogZ80_t *cpu);
 
 // Instruction table -----------------------------------------------------------------
 static const InstructionHandler_t mainInstructionTable[MAX_INSTRUCTION_COUNT] = 
@@ -522,15 +523,17 @@ static const InstructionHandler_t miscInstructionTable[MAX_INSTRUCTION_COUNT] =
 /*0xF*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_30h,        noFunc,         noFunc,             noFunc,             noFunc,         noFunc,         noFunc,     noFunc,         noFunc,
 };
 
-int executeInstruction(ZilogZ80_t *cpu, Memory_t *memory)
+int executeInstruction(ZilogZ80_t *cpu)
 {
-    byte_t opcode = fetchByte(memory, cpu->PC);
+    byte_t opcode = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC++;
 
-    int cycles = mainInstructionTable[opcode](cpu, memory);
+    int cycles = mainInstructionTable[opcode](cpu);
 
     cpu->currentCycles = cycles;
     cpu->totalCycles += cycles;
+
+    return 0;
 }
 
 
@@ -689,27 +692,27 @@ static void cpWithRegister(ZilogZ80_t *cpu, byte_t value)
     setFlags(cpu, cpu->A, value, result, true);
 }
 
-static void pushWord(ZilogZ80_t *cpu, Memory_t *memory, word_t value)
+static void pushWord(ZilogZ80_t *cpu, word_t value)
 {
-    storeByte(memory, cpu->SP - 1, UPPER_BYTE(value));
-    storeByte(memory, cpu->SP - 2, LOWER_BYTE(value));
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, cpu->SP - 1, UPPER_BYTE(value));
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, cpu->SP - 2, LOWER_BYTE(value));
     cpu->SP -= 2;
 }
-static void popWord(ZilogZ80_t *cpu, Memory_t *memory, byte_t *upperByte, byte_t *lowerByte)
+static void popWord(ZilogZ80_t *cpu, byte_t *upperByte, byte_t *lowerByte)
 {
-    *lowerByte = fetchByte(memory, cpu->SP);
-    *upperByte = fetchByte(memory, cpu->SP + 1);
+    *lowerByte = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->SP);
+    *upperByte = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->SP + 1);
     cpu->SP += 2;
 }
 
-static int returnHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition)
+static int returnHelper(ZilogZ80_t *cpu, bool condition)
 {
     int cycles = 5;
 
     if(condition)
     {
         byte_t lowerByte, upperByte;
-        popWord(cpu, memory, &upperByte, &lowerByte);
+        popWord(cpu, &upperByte, &lowerByte);
         cpu->PC = TO_WORD(upperByte, lowerByte);
 
         cycles = 11;
@@ -717,15 +720,15 @@ static int returnHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition)
 
     return cycles;
 }
-static int callHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition)
+static int callHelper(ZilogZ80_t *cpu, bool condition)
 {
     int cycles = 10;
-    word_t address = fetchWord(memory, cpu->PC);
+    word_t address = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC += 2;
 
     if(condition)
     {
-        pushWord(cpu, memory, cpu->PC);
+        pushWord(cpu, cpu->PC);
         cpu->PC = address;
 
         cycles = 17;
@@ -734,23 +737,23 @@ static int callHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition)
     return cycles;
 }
 
-static int jumpHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition)
+static int jumpHelper(ZilogZ80_t *cpu, bool condition)
 {
     if(condition)
     {
-        word_t address = fetchWord(memory, cpu->PC);
+        word_t address = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
         cpu->PC = address;
     }
 
     return 10;
 }
-static int jumpRelativeHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition)
+static int jumpRelativeHelper(ZilogZ80_t *cpu, bool condition)
 {
     int cycles = 7;
 
     if(condition)
     {
-        byte_t offset = fetchByte(memory, cpu->PC);
+        byte_t offset = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
         cpu->PC += offset;
         cycles = 12;
     }
@@ -758,9 +761,9 @@ static int jumpRelativeHelper(ZilogZ80_t *cpu, Memory_t *memory, bool condition)
     return cycles;
 }
 
-static void rst(ZilogZ80_t *cpu, Memory_t *memory, byte_t address)
+static void rst(ZilogZ80_t *cpu, byte_t address)
 {
-    pushWord(cpu, memory, cpu->PC);
+    pushWord(cpu, cpu->PC);
     cpu->PC = address;
 }
 
@@ -781,20 +784,20 @@ static void ldPair(ZilogZ80_t *cpu, byte_t *upperByte, byte_t *lowerByte, word_t
     *lowerByte = LOWER_BYTE(value);
 }
 // -----------------------------------------------------------------------------
-static int noFunc(ZilogZ80_t *cpu, Memory_t *memory)
+static int noFunc(ZilogZ80_t *cpu)
 {
     setError(C80_ERROR_CPU_INVALID_OPCODE);
     return 0;
 }
 
 // NOP      -----------------------------------------------------------------------------
-static int nop(ZilogZ80_t *cpu, Memory_t *memory)
+static int nop(ZilogZ80_t *cpu)
 {
     return 4;
 }
 
 // HALT     -----------------------------------------------------------------------------
-static int halt(ZilogZ80_t *cpu, Memory_t *memory)
+static int halt(ZilogZ80_t *cpu)
 {
     cpu->isHaltered = true;
     return 4;
@@ -802,68 +805,68 @@ static int halt(ZilogZ80_t *cpu, Memory_t *memory)
 
 
 // ADD      -----------------------------------------------------------------------------
-static int add_hl_bc_imm(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_hl_bc_imm(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int add_hl_de_imm(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_hl_de_imm(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int add_hl_hl_imm(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_hl_hl_imm(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int add_hl_sp_imm(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_hl_sp_imm(ZilogZ80_t *cpu)
 {
     // TODO
 }
 
-static int add_a_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_a_n(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, cpu->PC);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     addToRegister(cpu, &cpu->A, val);
     cpu->PC++;
     return 7;
 }
-static int add_a_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_a_a(ZilogZ80_t *cpu)
 {
     addToRegister(cpu, &cpu->A, cpu->A);
     return 4;
 }
-static int add_a_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_a_b(ZilogZ80_t *cpu)
 {
     addToRegister(cpu, &cpu->A, cpu->B);
     return 4;
 }
-static int add_a_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_a_c(ZilogZ80_t *cpu)
 {
     addToRegister(cpu, &cpu->A, cpu->C);
     return 4;
 }
-static int add_a_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_a_d(ZilogZ80_t *cpu)
 {
     addToRegister(cpu, &cpu->A, cpu->D);
     return 4;
 }
-static int add_a_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_a_e(ZilogZ80_t *cpu)
 {
     addToRegister(cpu, &cpu->A, cpu->E);
     return 4;
 }
-static int add_a_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_a_h(ZilogZ80_t *cpu)
 {
     addToRegister(cpu, &cpu->A, cpu->H);
     return 4;
 }
-static int add_a_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_a_l(ZilogZ80_t *cpu)
 {
     addToRegister(cpu, &cpu->A, cpu->L);
     return 4;
 }
-static int add_a_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int add_a_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     addToRegister(cpu, &cpu->A, val);
     cpu->PC++;
     return 7;
@@ -871,95 +874,95 @@ static int add_a_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
 
 
 // ADC      -----------------------------------------------------------------------------
-static int adc_a_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_a_n(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, cpu->PC);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     addToRegisterWithCarry(cpu, &cpu->A, val);
     cpu->PC++;
     return 7;
 }
-static int adc_a_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_a_a(ZilogZ80_t *cpu)
 {
     addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
     return 4;
 }
-static int adc_a_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_a_b(ZilogZ80_t *cpu)
 {
     addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
     return 4;
 }
-static int adc_a_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_a_c(ZilogZ80_t *cpu)
 {
     addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
     return 4;
 }
-static int adc_a_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_a_d(ZilogZ80_t *cpu)
 {
     addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
     return 4;
 }
-static int adc_a_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_a_e(ZilogZ80_t *cpu)
 {
     addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
     return 4;
 }
-static int adc_a_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_a_h(ZilogZ80_t *cpu)
 {
     addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
     return 4;
 }
-static int adc_a_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_a_l(ZilogZ80_t *cpu)
 {
     addToRegisterWithCarry(cpu, &cpu->A, cpu->A);
     return 4;
 }
-static int adc_a_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_a_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     addToRegisterWithCarry(cpu, &cpu->A, val);
     cpu->PC++;
     return 7;
 }
 
 
-static int adc_hl_bc(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_hl_bc(ZilogZ80_t *cpu)
 {
     addToRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->B, cpu->C));
     return 11;
 }
-static int adc_hl_de(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_hl_de(ZilogZ80_t *cpu)
 {
     addToRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->D, cpu->E));
     return 11;
 }
-static int adc_hl_hl(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_hl_hl(ZilogZ80_t *cpu)
 {
     addToRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->H, cpu->L));
     return 11;
 }
-static int adc_hl_sp(ZilogZ80_t *cpu, Memory_t *memory)
+static int adc_hl_sp(ZilogZ80_t *cpu)
 {
     addToRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), cpu->SP);
     return 11;
 }
 
 // INC      -----------------------------------------------------------------------------
-static int inc_bc(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_bc(ZilogZ80_t *cpu)
 {
     incrementRegisterPair(cpu, &cpu->B, &cpu->C);
     return 6;
 }
-static int inc_de(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_de(ZilogZ80_t *cpu)
 {
     incrementRegisterPair(cpu, &cpu->D, &cpu->E);
     return 6;
 }
-static int inc_hl(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_hl(ZilogZ80_t *cpu)
 {
     incrementRegisterPair(cpu, &cpu->H, &cpu->L);
     return 6;
 }
-static int inc_sp(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_sp(ZilogZ80_t *cpu)
 {
     byte_t upperByte = UPPER_BYTE(cpu->SP);
     byte_t lowerByte = LOWER_BYTE(cpu->SP);
@@ -970,169 +973,169 @@ static int inc_sp(ZilogZ80_t *cpu, Memory_t *memory)
     return 6;
 }
 
-static int inc_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_a(ZilogZ80_t *cpu)
 {
     incrementRegister(cpu, &cpu->A);
     return 4;
 }
-static int inc_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_b(ZilogZ80_t *cpu)
 {
     incrementRegister(cpu, &cpu->B);
     return 4;
 }
-static int inc_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_c(ZilogZ80_t *cpu)
 {
     incrementRegister(cpu, &cpu->C);
     return 4;
 }
-static int inc_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_d(ZilogZ80_t *cpu)
 {
     incrementRegister(cpu, &cpu->D);
     return 4;
 }
-static int inc_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_e(ZilogZ80_t *cpu)
 {
     incrementRegister(cpu, &cpu->E);
     return 4;
 }
-static int inc_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_h(ZilogZ80_t *cpu)
 {
     incrementRegister(cpu, &cpu->H);
     return 4;
 }
-static int inc_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_l(ZilogZ80_t *cpu)
 {
     incrementRegister(cpu, &cpu->L);
     return 4;
 }
-static int inc_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int inc_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->PC++;
     incrementRegister(cpu, &val);
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), val);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), val);
     cpu->PC++;
     return 11;
 }
 
 // SUB      -----------------------------------------------------------------------------
-static int sub_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int sub_n(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, cpu->PC);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     subtractFromRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
-static int sub_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int sub_a(ZilogZ80_t *cpu)
 {
     subtractFromRegister(cpu, cpu->A);
     return 4;
 }
-static int sub_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int sub_b(ZilogZ80_t *cpu)
 {
     subtractFromRegister(cpu, cpu->B);
     return 4;
 }
-static int sub_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int sub_c(ZilogZ80_t *cpu)
 {
     subtractFromRegister(cpu, cpu->C);
     return 4;
 }
-static int sub_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int sub_d(ZilogZ80_t *cpu)
 {
     subtractFromRegister(cpu, cpu->D);
     return 4;
 }
-static int sub_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int sub_e(ZilogZ80_t *cpu)
 {
     subtractFromRegister(cpu, cpu->E);
     return 4;
 }
-static int sub_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int sub_h(ZilogZ80_t *cpu)
 {
     subtractFromRegister(cpu, cpu->H);
     return 4;
 }
-static int sub_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int sub_l(ZilogZ80_t *cpu)
 {
     subtractFromRegister(cpu, cpu->L);
     return 4;
 }
-static int sub_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int sub_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     subtractFromRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
 
 // SBC      -----------------------------------------------------------------------------
-static int sbc_a_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_a_n(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, cpu->PC);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     subtractFromRegisterWithCarry(cpu, val);
     cpu->PC++;
     return 7;
 }
-static int sbc_a_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_a_a(ZilogZ80_t *cpu)
 {
     subtractFromRegisterWithCarry(cpu, cpu->A);
     return 4;
 }
-static int sbc_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_b(ZilogZ80_t *cpu)
 {
     subtractFromRegisterWithCarry(cpu, cpu->B);
     return 4;
 }
-static int sbc_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_c(ZilogZ80_t *cpu)
 {
     subtractFromRegisterWithCarry(cpu, cpu->C);
     return 4;
 }
-static int sbc_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_d(ZilogZ80_t *cpu)
 {
     subtractFromRegisterWithCarry(cpu, cpu->D);
     return 4;
 }
-static int sbc_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_e(ZilogZ80_t *cpu)
 {
     subtractFromRegisterWithCarry(cpu, cpu->E);
     return 4;
 }
-static int sbc_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_h(ZilogZ80_t *cpu)
 {
     subtractFromRegisterWithCarry(cpu, cpu->H);
     return 4;
 }
-static int sbc_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_l(ZilogZ80_t *cpu)
 {
     subtractFromRegisterWithCarry(cpu, cpu->L);
     return 4;
 }
-static int sbc_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     subtractFromRegisterWithCarry(cpu, val);
     cpu->PC++;
     return 7;
 }
 
-static int sbc_hl_bc(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_hl_bc(ZilogZ80_t *cpu)
 {
     subtractFromRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->B, cpu->C));
     return 11;
 }
-static int sbc_hl_de(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_hl_de(ZilogZ80_t *cpu)
 {
     subtractFromRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->D, cpu->E));
     return 11;
 }
-static int sbc_hl_hl(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_hl_hl(ZilogZ80_t *cpu)
 {
     subtractFromRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->H, cpu->L));
     return 11;
 }
-static int sbc_hl_sp(ZilogZ80_t *cpu, Memory_t *memory)
+static int sbc_hl_sp(ZilogZ80_t *cpu)
 {
     subtractFromRegisterPairWithCarry(cpu, TO_WORD(cpu->H, cpu->L), cpu->SP);
     return 11;
@@ -1140,22 +1143,22 @@ static int sbc_hl_sp(ZilogZ80_t *cpu, Memory_t *memory)
 
 
 // SBC      -----------------------------------------------------------------------------
-static int dec_bc(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_bc(ZilogZ80_t *cpu)
 {
     decrementRegisterPair(cpu, &cpu->B, &cpu->C);
     return 6;
 }
-static int dec_de(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_de(ZilogZ80_t *cpu)
 {
     decrementRegisterPair(cpu, &cpu->D, &cpu->E);
     return 6;
 }
-static int dec_hl(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_hl(ZilogZ80_t *cpu)
 {
     decrementRegisterPair(cpu, &cpu->D, &cpu->E);
     return 6;
 }
-static int dec_sp(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_sp(ZilogZ80_t *cpu)
 {
     byte_t s = UPPER_BYTE(cpu->SP);
     byte_t p = LOWER_BYTE(cpu->SP);
@@ -1164,449 +1167,449 @@ static int dec_sp(ZilogZ80_t *cpu, Memory_t *memory)
     return 6;
 }
 
-static int dec_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_a(ZilogZ80_t *cpu)
 {
     decrementRegister(cpu, &cpu->A);
     return 4;
 }
-static int dec_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_b(ZilogZ80_t *cpu)
 {
     decrementRegister(cpu, &cpu->B);
     return 4;
 }
-static int dec_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_c(ZilogZ80_t *cpu)
 {
     decrementRegister(cpu, &cpu->C);
     return 4;
 }
-static int dec_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_d(ZilogZ80_t *cpu)
 {
     decrementRegister(cpu, &cpu->D);
     return 4;
 }
-static int dec_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_e(ZilogZ80_t *cpu)
 {
     decrementRegister(cpu, &cpu->E);
     return 4;
 }
-static int dec_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_h(ZilogZ80_t *cpu)
 {
     decrementRegister(cpu, &cpu->H);
     return 4;
 }
-static int dec_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_l(ZilogZ80_t *cpu)
 {
     decrementRegister(cpu, &cpu->L);
     return 4;
 }
-static int dec_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int dec_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->PC++;
     decrementRegister(cpu, &val);
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), val);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), val);
     cpu->PC++;
     return 11;
 }
 
 // AND      -----------------------------------------------------------------------------
-static int and_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int and_n(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, cpu->PC);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     andWithRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
-static int and_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int and_a(ZilogZ80_t *cpu)
 {
     andWithRegister(cpu, cpu->A);
     return 4;
 }
-static int and_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int and_b(ZilogZ80_t *cpu)
 {
     andWithRegister(cpu, cpu->B);
     return 4;
 }
-static int and_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int and_c(ZilogZ80_t *cpu)
 {
     andWithRegister(cpu, cpu->C);
     return 4;
 }
-static int and_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int and_d(ZilogZ80_t *cpu)
 {
     andWithRegister(cpu, cpu->D);
     return 4;
 }
-static int and_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int and_e(ZilogZ80_t *cpu)
 {
     andWithRegister(cpu, cpu->E);
     return 4;
 }
-static int and_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int and_h(ZilogZ80_t *cpu)
 {
     andWithRegister(cpu, cpu->H);
     return 4;
 }
-static int and_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int and_l(ZilogZ80_t *cpu)
 {
     andWithRegister(cpu, cpu->L);
     return 4;
 }
-static int and_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int and_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     andWithRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
 
 // OR       -----------------------------------------------------------------------------
-static int or_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int or_n(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, cpu->PC);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     orWithRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
-static int or_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int or_a(ZilogZ80_t *cpu)
 {
     orWithRegister(cpu, cpu->A);
     return 4;
 }
-static int or_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int or_b(ZilogZ80_t *cpu)
 {
     orWithRegister(cpu, cpu->B);
     return 4;
 }
-static int or_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int or_c(ZilogZ80_t *cpu)
 {
     orWithRegister(cpu, cpu->C);
     return 4;
 }
-static int or_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int or_d(ZilogZ80_t *cpu)
 {
     orWithRegister(cpu, cpu->D);
     return 4;
 }
-static int or_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int or_e(ZilogZ80_t *cpu)
 {
     orWithRegister(cpu, cpu->E);
     return 4;
 }
-static int or_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int or_h(ZilogZ80_t *cpu)
 {
     orWithRegister(cpu, cpu->H);
     return 4;
 }
-static int or_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int or_l(ZilogZ80_t *cpu)
 {
     orWithRegister(cpu, cpu->L);
     return 4;
 }
-static int or_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int or_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     andWithRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
 
 // XOR      -----------------------------------------------------------------------------
-static int xor_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int xor_n(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, cpu->PC);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     xorWithRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
-static int xor_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int xor_a(ZilogZ80_t *cpu)
 {
     xorWithRegister(cpu, cpu->A);
     return 4;
 }
-static int xor_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int xor_b(ZilogZ80_t *cpu)
 {
     xorWithRegister(cpu, cpu->B);
     return 4;
 }
-static int xor_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int xor_c(ZilogZ80_t *cpu)
 {
     xorWithRegister(cpu, cpu->C);
     return 4;
 }
-static int xor_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int xor_d(ZilogZ80_t *cpu)
 {
     xorWithRegister(cpu, cpu->D);
     return 4;
 }
-static int xor_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int xor_e(ZilogZ80_t *cpu)
 {
     xorWithRegister(cpu, cpu->E);
     return 4;
 }
-static int xor_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int xor_h(ZilogZ80_t *cpu)
 {
     xorWithRegister(cpu, cpu->H);
     return 4;
 }
-static int xor_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int xor_l(ZilogZ80_t *cpu)
 {
     xorWithRegister(cpu, cpu->L);
     return 4;
 }
-static int xor_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int xor_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     xorWithRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
 
 // CP       -----------------------------------------------------------------------------
-static int cp_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int cp_n(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, cpu->PC);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpWithRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
-static int cp_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int cp_a(ZilogZ80_t *cpu)
 {
     cpWithRegister(cpu, cpu->A);
     return 4;
 }
-static int cp_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int cp_b(ZilogZ80_t *cpu)
 {
     cpWithRegister(cpu, cpu->A);
     return 4;
 }
-static int cp_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int cp_c(ZilogZ80_t *cpu)
 {
     cpWithRegister(cpu, cpu->A);
     return 4;
 }
-static int cp_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int cp_d(ZilogZ80_t *cpu)
 {
     cpWithRegister(cpu, cpu->A);
     return 4;
 }
-static int cp_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int cp_e(ZilogZ80_t *cpu)
 {
     cpWithRegister(cpu, cpu->A);
     return 4;
 }
-static int cp_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int cp_h(ZilogZ80_t *cpu)
 {
     cpWithRegister(cpu, cpu->A);
     return 4;
 }
-static int cp_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int cp_l(ZilogZ80_t *cpu)
 {
     cpWithRegister(cpu, cpu->A);
     return 4;
 }
-static int cp_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int cp_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpWithRegister(cpu, val);
     cpu->PC++;
     return 7;
 }
-static int cpi(ZilogZ80_t *cpu, Memory_t *memory)
+static int cpi(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int cpir(ZilogZ80_t *cpu, Memory_t *memory)
+static int cpir(ZilogZ80_t *cpu)
 {
     // TODO
 }
 
 // PUSH     -----------------------------------------------------------------------------
-static int push_bc(ZilogZ80_t *cpu, Memory_t *memory)
+static int push_bc(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, TO_WORD(cpu->B, cpu->C));
+    pushWord(cpu, TO_WORD(cpu->B, cpu->C));
     return 11;
 }
-static int push_de(ZilogZ80_t *cpu, Memory_t *memory)
+static int push_de(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, TO_WORD(cpu->D, cpu->E));
+    pushWord(cpu, TO_WORD(cpu->D, cpu->E));
     return 11;
 }
-static int push_hl(ZilogZ80_t *cpu, Memory_t *memory)
+static int push_hl(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, TO_WORD(cpu->H, cpu->L));
+    pushWord(cpu, TO_WORD(cpu->H, cpu->L));
     return 11;
 }
-static int push_af(ZilogZ80_t *cpu, Memory_t *memory)
+static int push_af(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, TO_WORD(cpu->A, flagsToByte(cpu->F)));
+    pushWord(cpu, TO_WORD(cpu->A, flagsToByte(cpu->F)));
     return 11;
 }
 
 // POP      -----------------------------------------------------------------------------
-static int pop_bc(ZilogZ80_t *cpu, Memory_t *memory)
+static int pop_bc(ZilogZ80_t *cpu)
 {
-    popWord(cpu, memory, &cpu->B, &cpu->C);
+    popWord(cpu, &cpu->B, &cpu->C);
     return 10;
 }
-static int pop_de(ZilogZ80_t *cpu, Memory_t *memory)
+static int pop_de(ZilogZ80_t *cpu)
 {
-    popWord(cpu, memory, &cpu->D, &cpu->E);
+    popWord(cpu, &cpu->D, &cpu->E);
     return 10;
 }
-static int pop_hl(ZilogZ80_t *cpu, Memory_t *memory)
+static int pop_hl(ZilogZ80_t *cpu)
 {
-    popWord(cpu, memory, &cpu->H, &cpu->L);
+    popWord(cpu, &cpu->H, &cpu->L);
     return 10;
 }
-static int pop_af(ZilogZ80_t *cpu, Memory_t *memory)
+static int pop_af(ZilogZ80_t *cpu)
 {
     byte_t f = flagsToByte(cpu->F);
-    popWord(cpu, memory, &cpu->A, &f);
+    popWord(cpu, &cpu->A, &f);
     byteToFlags(&cpu->F, f);
     return 10;
 }
 
 // CALL     -----------------------------------------------------------------------------
-static int call_nz_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int call_nz_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.N == 0;
-    int cycles = callHelper(cpu, memory, condition);
+    int cycles = callHelper(cpu, condition);
 
     return cycles;
 }
-static int call_z_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int call_z_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.Z == 1;
-    int cycles = callHelper(cpu, memory, condition);
+    int cycles = callHelper(cpu, condition);
 
     return cycles;
 }
-static int call_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int call_nn(ZilogZ80_t *cpu)
 {
-    int cycles = callHelper(cpu, memory, true);
+    int cycles = callHelper(cpu, true);
 
     return cycles;
 }
-static int call_nc_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int call_nc_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.C == 0;
-    int cycles = callHelper(cpu, memory, condition);
+    int cycles = callHelper(cpu, condition);
 
     return cycles;
 }
-static int call_c_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int call_c_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.C == 1;
-    int cycles = callHelper(cpu, memory, condition);
+    int cycles = callHelper(cpu, condition);
 
     return cycles;
 }
-static int call_po_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int call_po_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.P == 0;
-    int cycles = callHelper(cpu, memory, condition);
+    int cycles = callHelper(cpu, condition);
 
     return cycles;
 }
-static int call_pe_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int call_pe_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.P == 1;
-    int cycles = callHelper(cpu, memory, condition);
+    int cycles = callHelper(cpu, condition);
 
     return cycles;
 }
-static int call_p_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int call_p_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.S == 0;
-    int cycles = callHelper(cpu, memory, condition);
+    int cycles = callHelper(cpu, condition);
 
     return cycles;
 }
-static int call_m_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int call_m_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.S == 0;
-    int cycles = callHelper(cpu, memory, condition);
+    int cycles = callHelper(cpu, condition);
 
     return cycles;
 }
 
 // RET      -----------------------------------------------------------------------------
-static int ret_nz(ZilogZ80_t *cpu, Memory_t *memory)
+static int ret_nz(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.Z == 0;
-    int cycles = returnHelper(cpu, memory, condition);
+    int cycles = returnHelper(cpu, condition);
 
     return cycles;
 }
-static int ret_z(ZilogZ80_t *cpu, Memory_t *memory)
+static int ret_z(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.Z == 1;
-    int cycles = returnHelper(cpu, memory, condition);
+    int cycles = returnHelper(cpu, condition);
 
     return cycles;
 }
-static int ret_nc(ZilogZ80_t *cpu, Memory_t *memory)
+static int ret_nc(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.C == 0;
-    int cycles = returnHelper(cpu, memory, condition);
+    int cycles = returnHelper(cpu, condition);
 
     return cycles;
 }
-static int ret_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int ret_c(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.C == 1;
-    int cycles = returnHelper(cpu, memory, condition);
+    int cycles = returnHelper(cpu, condition);
 
     return cycles;
 }
-static int ret_po(ZilogZ80_t *cpu, Memory_t *memory)
+static int ret_po(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.P == 0;
-    int cycles = returnHelper(cpu, memory, condition);
+    int cycles = returnHelper(cpu, condition);
 
     return cycles;
 }
-static int ret_pe(ZilogZ80_t *cpu, Memory_t *memory)
+static int ret_pe(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.P == 1;
-    int cycles = returnHelper(cpu, memory, condition);
+    int cycles = returnHelper(cpu, condition);
 
     return cycles;
 }
-static int ret_p(ZilogZ80_t *cpu, Memory_t *memory)
+static int ret_p(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.S == 0;
-    int cycles = returnHelper(cpu, memory, condition);
+    int cycles = returnHelper(cpu, condition);
 
     return cycles;
 }
-static int ret_m(ZilogZ80_t *cpu, Memory_t *memory)
+static int ret_m(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.S == 1;
-    int cycles = returnHelper(cpu, memory, condition);
+    int cycles = returnHelper(cpu, condition);
 
     return cycles;
 }
-static int ret(ZilogZ80_t *cpu, Memory_t *memory)
+static int ret(ZilogZ80_t *cpu)
 {
     byte_t lowerByte, upperByte;
-    popWord(cpu, memory, &upperByte, &lowerByte);
+    popWord(cpu, &upperByte, &lowerByte);
     cpu->PC = TO_WORD(upperByte, lowerByte);
 
     return 10;
 }
-static int retn(ZilogZ80_t *cpu, Memory_t *memory)
+static int retn(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int reti(ZilogZ80_t *cpu, Memory_t *memory)
+static int reti(ZilogZ80_t *cpu)
 {
     // TODO
 }
 
 // ROTATE   -----------------------------------------------------------------------------
-static int rlca(ZilogZ80_t *cpu, Memory_t *memory)
+static int rlca(ZilogZ80_t *cpu)
 {
     byte_t bit7 = (cpu->A & 0b10000000) >> 7;
     cpu->A = (cpu->A << 1) | bit7;
@@ -1615,7 +1618,7 @@ static int rlca(ZilogZ80_t *cpu, Memory_t *memory)
     cpu->F.N = 0;
     return 4;
 }
-static int rrca(ZilogZ80_t *cpu, Memory_t *memory)
+static int rrca(ZilogZ80_t *cpu)
 {
     byte_t bit0 = (cpu->A & 0b00000001);
     cpu->A = (bit0 << 7) | (cpu->A >> 1); 
@@ -1624,7 +1627,7 @@ static int rrca(ZilogZ80_t *cpu, Memory_t *memory)
     cpu->F.N = 0;
     return 4;
 }
-static int rla(ZilogZ80_t *cpu, Memory_t *memory)
+static int rla(ZilogZ80_t *cpu)
 {
     byte_t bit7 = (cpu->A & 0b10000000) >> 7;
     cpu->A = (cpu->A << 1) | cpu->F.C;
@@ -1633,7 +1636,7 @@ static int rla(ZilogZ80_t *cpu, Memory_t *memory)
     cpu->F.N = 0;
     return 4;
 }
-static int rra(ZilogZ80_t *cpu, Memory_t *memory)
+static int rra(ZilogZ80_t *cpu)
 {
     byte_t bit0 = (cpu->A & 0b00000001);
     cpu->A = (cpu->F.C << 7) | (cpu->A >> 1);
@@ -1644,63 +1647,63 @@ static int rra(ZilogZ80_t *cpu, Memory_t *memory)
 }
 
 // RST      -----------------------------------------------------------------------------
-static int rst_00h(ZilogZ80_t *cpu, Memory_t *memory)
+static int rst_00h(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, cpu->PC);
+    pushWord(cpu, cpu->PC);
     cpu->PC = 0x00;
     return 11;
 }
-static int rst_08h(ZilogZ80_t *cpu, Memory_t *memory)
+static int rst_08h(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, cpu->PC);
+    pushWord(cpu, cpu->PC);
     cpu->PC = 0x08;
     return 11;
 }
-static int rst_10h(ZilogZ80_t *cpu, Memory_t *memory)
+static int rst_10h(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, cpu->PC);
+    pushWord(cpu, cpu->PC);
     cpu->PC = 0x10;
     return 11;
 }
-static int rst_18h(ZilogZ80_t *cpu, Memory_t *memory)
+static int rst_18h(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, cpu->PC);
+    pushWord(cpu, cpu->PC);
     cpu->PC = 0x18;
     return 11;
 }
-static int rst_20h(ZilogZ80_t *cpu, Memory_t *memory)
+static int rst_20h(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, cpu->PC);
+    pushWord(cpu, cpu->PC);
     cpu->PC = 0x20;
     return 11;
 }
-static int rst_28h(ZilogZ80_t *cpu, Memory_t *memory)
+static int rst_28h(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, cpu->PC);
+    pushWord(cpu, cpu->PC);
     cpu->PC = 0x28;
     return 11;
 }
-static int rst_30h(ZilogZ80_t *cpu, Memory_t *memory)
+static int rst_30h(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, cpu->PC);
+    pushWord(cpu, cpu->PC);
     cpu->PC = 0x30;
     return 11;
 }
-static int rst_38h(ZilogZ80_t *cpu, Memory_t *memory)
+static int rst_38h(ZilogZ80_t *cpu)
 {
-    pushWord(cpu, memory, cpu->PC);
+    pushWord(cpu, cpu->PC);
     cpu->PC = 0x38;
     return 11;
 }
 
 // JUMP     -----------------------------------------------------------------------------
-static int djnz_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int djnz_d(ZilogZ80_t *cpu)
 {
     int cycles = 8;
     cpu->B--;
     bool condition = cpu->B != 0;
 
-    jumpRelativeHelper(cpu, memory, condition);
+    jumpRelativeHelper(cpu, condition);
 
     if(condition)
     {
@@ -1709,102 +1712,102 @@ static int djnz_d(ZilogZ80_t *cpu, Memory_t *memory)
 
     return cycles;
 }
-static int jr_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int jr_d(ZilogZ80_t *cpu)
 {
-    int cycles = jumpRelativeHelper(cpu, memory, true);
+    int cycles = jumpRelativeHelper(cpu, true);
     return cycles;
 }
-static int jr_nz_d(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    bool condition = cpu->F.Z == 0;
-    int cycles = jumpRelativeHelper(cpu, memory, condition);
-
-    return cycles;
-}
-static int jr_z_b(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    bool condition = cpu->F.Z == 1;
-    int cycles = jumpRelativeHelper(cpu, memory, condition);
-
-    return cycles;
-}
-static int jr_nc_d(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    bool condition = cpu->F.C == 0;
-    int cycles = jumpRelativeHelper(cpu, memory, condition);
-
-    return cycles;
-}
-static int jr_c_b(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    bool condition = cpu->F.C == 1;
-    int cycles = jumpRelativeHelper(cpu, memory, condition);
-
-    return cycles;
-}
-static int jp_nz_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int jr_nz_d(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.Z == 0;
-    int cycles = jumpHelper(cpu, memory, condition);
+    int cycles = jumpRelativeHelper(cpu, condition);
 
     return cycles;
 }
-static int jp_nn(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    int cycles = jumpHelper(cpu, memory, true);
-
-    return cycles;
-}
-static int jp_z_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int jr_z_b(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.Z == 1;
-    int cycles = jumpHelper(cpu, memory, condition);
+    int cycles = jumpRelativeHelper(cpu, condition);
 
     return cycles;
 }
-static int jp_nc_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int jr_nc_d(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.C == 0;
-    int cycles = jumpHelper(cpu, memory, condition);
+    int cycles = jumpRelativeHelper(cpu, condition);
 
     return cycles;
 }
-static int jp_c_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int jr_c_b(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.C == 1;
-    int cycles = jumpHelper(cpu, memory, condition);
+    int cycles = jumpRelativeHelper(cpu, condition);
 
     return cycles;
 }
-static int jp_po_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int jp_nz_nn(ZilogZ80_t *cpu)
+{
+    bool condition = cpu->F.Z == 0;
+    int cycles = jumpHelper(cpu, condition);
+
+    return cycles;
+}
+static int jp_nn(ZilogZ80_t *cpu)
+{
+    int cycles = jumpHelper(cpu, true);
+
+    return cycles;
+}
+static int jp_z_nn(ZilogZ80_t *cpu)
+{
+    bool condition = cpu->F.Z == 1;
+    int cycles = jumpHelper(cpu, condition);
+
+    return cycles;
+}
+static int jp_nc_nn(ZilogZ80_t *cpu)
+{
+    bool condition = cpu->F.C == 0;
+    int cycles = jumpHelper(cpu, condition);
+
+    return cycles;
+}
+static int jp_c_nn(ZilogZ80_t *cpu)
+{
+    bool condition = cpu->F.C == 1;
+    int cycles = jumpHelper(cpu, condition);
+
+    return cycles;
+}
+static int jp_po_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.P == 0;
-    int cycles = jumpHelper(cpu, memory, condition);
+    int cycles = jumpHelper(cpu, condition);
 
     return cycles;
 }
-static int jp_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int jp_hl_addr(ZilogZ80_t *cpu)
 {
     cpu->PC = TO_WORD(cpu->H, cpu->L);
     return 4;
 }
-static int jp_p_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int jp_p_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.S == 0;
-    int cycles = jumpHelper(cpu, memory, condition);
+    int cycles = jumpHelper(cpu, condition);
 
     return cycles;
 }
-static int jp_m_nn(ZilogZ80_t *cpu, Memory_t *memory)
+static int jp_m_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.S == 1;
-    int cycles = jumpHelper(cpu, memory, condition);
+    int cycles = jumpHelper(cpu, condition);
 
     return cycles;
 }
 
 // EXCHANGE -----------------------------------------------------------------------------
-static int exx(ZilogZ80_t *cpu, Memory_t *memory)
+static int exx(ZilogZ80_t *cpu)
 {
     byte_t temp;
 
@@ -1830,7 +1833,7 @@ static int exx(ZilogZ80_t *cpu, Memory_t *memory)
 
     return 4;
 }
-static int ex_af_af_(ZilogZ80_t *cpu, Memory_t *memory)
+static int ex_af_af_(ZilogZ80_t *cpu)
 {
     byte_t temp;
 
@@ -1846,22 +1849,22 @@ static int ex_af_af_(ZilogZ80_t *cpu, Memory_t *memory)
 
     return 4;
 }
-static int ex_sp_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ex_sp_hl_addr(ZilogZ80_t *cpu)
 {
     word_t address = cpu->SP;
 
-    byte_t lowerByte = fetchByte(memory, address);
-    byte_t upperByte = fetchByte(memory, address + 1);
+    byte_t lowerByte = fetchByteAddressSpace(&cpu->ram, &cpu->rom, address);
+    byte_t upperByte = fetchByteAddressSpace(&cpu->ram, &cpu->rom, address + 1);
 
-    storeByte(memory, address, cpu->L);
-    storeByte(memory, address + 1, cpu->H);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, address, cpu->L);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, address + 1, cpu->H);
 
     cpu->H = upperByte;
     cpu->L = lowerByte;
 
     return 19;
 }
-static int ex_de_hl(ZilogZ80_t *cpu, Memory_t *memory)
+static int ex_de_hl(ZilogZ80_t *cpu)
 {
     byte_t temp = cpu->D;
     cpu->D = cpu->H;
@@ -1875,404 +1878,404 @@ static int ex_de_hl(ZilogZ80_t *cpu, Memory_t *memory)
 }
 
 // LD       -----------------------------------------------------------------------------
-static int ld_a_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_n(ZilogZ80_t *cpu)
 {
-    cpu->A = fetchByte(memory, cpu->PC);
+    cpu->A = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC++;
     return 7;
 }
-static int ld_a_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_a(ZilogZ80_t *cpu)
 {
     cpu->A = cpu->A;
     return 4;
 }
-static int ld_a_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_b(ZilogZ80_t *cpu)
 {
     cpu->A = cpu->B;
     return 4;
 }
-static int ld_a_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_c(ZilogZ80_t *cpu)
 {
     cpu->A = cpu->C;
     return 4;
 }
-static int ld_a_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_d(ZilogZ80_t *cpu)
 {
     cpu->A = cpu->D;
     return 4;
 }
-static int ld_a_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_e(ZilogZ80_t *cpu)
 {
     cpu->A = cpu->E;
     return 4;
 }
-static int ld_a_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_h(ZilogZ80_t *cpu)
 {
     cpu->A = cpu->H;
     return 4;
 }
-static int ld_a_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_l(ZilogZ80_t *cpu)
 {
     cpu->A = cpu->L;
     return 4;
 }
-static int ld_a_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->A = val;
     cpu->PC++;
     return 7;
 }
 
-static int ld_b_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_b_n(ZilogZ80_t *cpu)
 {
-    cpu->B = fetchByte(memory, cpu->PC);
+    cpu->B = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC++;
     return 7;
 }
-static int ld_b_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_b_a(ZilogZ80_t *cpu)
 {
     cpu->B = cpu->A;
     return 4;
 }
-static int ld_b_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_b_b(ZilogZ80_t *cpu)
 {
     cpu->B = cpu->B;
     return 4;
 }
-static int ld_b_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_b_c(ZilogZ80_t *cpu)
 {
     cpu->B = cpu->C;
     return 4;
 }
-static int ld_b_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_b_d(ZilogZ80_t *cpu)
 {
     cpu->B = cpu->D;
     return 4;
 }
-static int ld_b_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_b_e(ZilogZ80_t *cpu)
 {
     cpu->B = cpu->E;
     return 4;
 }
-static int ld_b_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_b_h(ZilogZ80_t *cpu)
 {
     cpu->B = cpu->H;
     return 4;
 }
-static int ld_b_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_b_l(ZilogZ80_t *cpu)
 {
     cpu->B = cpu->L;
     return 4;
 }
-static int ld_b_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_b_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->B = val;
     cpu->PC++;
     return 7;
 }
 
-static int ld_c_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_c_n(ZilogZ80_t *cpu)
 {
-    cpu->C = fetchByte(memory, cpu->PC);
+    cpu->C = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC++;
     return 7;
 }
-static int ld_c_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_c_a(ZilogZ80_t *cpu)
 {
     cpu->C = cpu->A;
     return 4;
 }
-static int ld_c_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_c_b(ZilogZ80_t *cpu)
 {
     cpu->C = cpu->B;
     return 4;
 }
-static int ld_c_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_c_c(ZilogZ80_t *cpu)
 {
     cpu->C = cpu->C;
     return 4;
 }
-static int ld_c_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_c_d(ZilogZ80_t *cpu)
 {
     cpu->C = cpu->D;
     return 4;
 }
-static int ld_c_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_c_e(ZilogZ80_t *cpu)
 {
     cpu->C = cpu->E;
     return 4;
 }
-static int ld_c_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_c_h(ZilogZ80_t *cpu)
 {
     cpu->C = cpu->H;
     return 4;
 }
-static int ld_c_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_c_l(ZilogZ80_t *cpu)
 {
     cpu->C = cpu->L;
     return 4;
 }
-static int ld_c_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_c_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->C = val;
     cpu->PC++;
     return 7;
 }
 
-static int ld_d_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_d_n(ZilogZ80_t *cpu)
 {
-    cpu->D = fetchByte(memory, cpu->PC);
+    cpu->D = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC++;
     return 7;
 }
-static int ld_d_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_d_a(ZilogZ80_t *cpu)
 {
     cpu->D = cpu->A;
     return 4;
 }
-static int ld_d_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_d_b(ZilogZ80_t *cpu)
 {
     cpu->D = cpu->B;
     return 4;
 }
-static int ld_d_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_d_c(ZilogZ80_t *cpu)
 {
     cpu->D = cpu->C;
     return 4;
 }
-static int ld_d_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_d_d(ZilogZ80_t *cpu)
 {
     cpu->D = cpu->D;
     return 4;
 }
-static int ld_d_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_d_e(ZilogZ80_t *cpu)
 {
     cpu->D = cpu->E;
     return 4;
 }
-static int ld_d_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_d_h(ZilogZ80_t *cpu)
 {
     cpu->D = cpu->H;
     return 4;
 }
-static int ld_d_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_d_l(ZilogZ80_t *cpu)
 {
     cpu->D = cpu->L;
     return 4;
 }
-static int ld_d_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_d_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->D = val;
     cpu->PC++;
     return 7;
 }
 
-static int ld_e_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_e_n(ZilogZ80_t *cpu)
 {
-    cpu->E = fetchByte(memory, cpu->PC);
+    cpu->E = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC++;
     return 7;
 }
-static int ld_e_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_e_a(ZilogZ80_t *cpu)
 {
     cpu->E = cpu->A;
     return 4;
 }
-static int ld_e_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_e_b(ZilogZ80_t *cpu)
 {
     cpu->E = cpu->B;
     return 4;
 }
-static int ld_e_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_e_c(ZilogZ80_t *cpu)
 {
     cpu->E = cpu->C;
     return 4;
 }
-static int ld_e_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_e_d(ZilogZ80_t *cpu)
 {
     cpu->E = cpu->D;
     return 4;
 }
-static int ld_e_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_e_e(ZilogZ80_t *cpu)
 {
     cpu->E = cpu->E;
     return 4;
 }
-static int ld_e_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_e_h(ZilogZ80_t *cpu)
 {
     cpu->E = cpu->H;
     return 4;
 }
-static int ld_e_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_e_l(ZilogZ80_t *cpu)
 {
     cpu->E = cpu->L;
     return 4;
 }
-static int ld_e_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_e_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->E = val;
     cpu->PC++;
     return 7;
 }
 
-static int ld_h_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_h_n(ZilogZ80_t *cpu)
 {
-    cpu->H = fetchByte(memory, cpu->PC);
+    cpu->H = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC++;
     return 7;
 }
-static int ld_h_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_h_a(ZilogZ80_t *cpu)
 {
     cpu->H = cpu->A;
     return 4;
 }
-static int ld_h_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_h_b(ZilogZ80_t *cpu)
 {
     cpu->H = cpu->B;
     return 4;
 }
-static int ld_h_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_h_c(ZilogZ80_t *cpu)
 {
     cpu->H = cpu->C;
     return 4;
 }
-static int ld_h_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_h_d(ZilogZ80_t *cpu)
 {
     cpu->H = cpu->D;
     return 4;
 }
-static int ld_h_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_h_e(ZilogZ80_t *cpu)
 {
     cpu->H = cpu->E;
     return 4;
 }
-static int ld_h_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_h_h(ZilogZ80_t *cpu)
 {
     cpu->H = cpu->H;
     return 4;
 }
-static int ld_h_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_h_l(ZilogZ80_t *cpu)
 {
     cpu->H = cpu->L;
     return 4;
 }
-static int ld_h_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_h_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->H = val;
     cpu->PC++;
     return 7;
 }
 
-static int ld_l_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_l_n(ZilogZ80_t *cpu)
 {
-    cpu->L = fetchByte(memory, cpu->PC);
+    cpu->L = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC++;
     return 7;
 }
-static int ld_l_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_l_a(ZilogZ80_t *cpu)
 {
     cpu->L = cpu->A;
     return 4;
 }
-static int ld_l_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_l_b(ZilogZ80_t *cpu)
 {
     cpu->L = cpu->B;
     return 4;
 }
-static int ld_l_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_l_c(ZilogZ80_t *cpu)
 {
     cpu->L = cpu->C;
     return 4;
 }
-static int ld_l_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_l_d(ZilogZ80_t *cpu)
 {
     cpu->L = cpu->D;
     return 4;
 }
-static int ld_l_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_l_e(ZilogZ80_t *cpu)
 {
     cpu->L = cpu->E;
     return 4;
 }
-static int ld_l_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_l_h(ZilogZ80_t *cpu)
 {
     cpu->L = cpu->H;
     return 4;
 }
-static int ld_l_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_l_l(ZilogZ80_t *cpu)
 {
     cpu->L = cpu->L;
     return 4;
 }
-static int ld_l_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_l_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->L = val;
     cpu->PC++;
     return 7;
 }
 
-static int ld_hl_n_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_n_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, cpu->PC);
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), val);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), val);
     cpu->PC++;
     return 10;
 }
-static int ld_hl_a_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_a_addr(ZilogZ80_t *cpu)
 {
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->A);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), cpu->A);
     return 7;
 }
-static int ld_hl_b_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_b_addr(ZilogZ80_t *cpu)
 {
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->B);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), cpu->B);
     return 7;
 }
-static int ld_hl_c_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_c_addr(ZilogZ80_t *cpu)
 {
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->C);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), cpu->C);
     return 7;
 }
-static int ld_hl_d_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_d_addr(ZilogZ80_t *cpu)
 {
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->D);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), cpu->D);
     return 7;
 }
-static int ld_hl_e_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_e_addr(ZilogZ80_t *cpu)
 {
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->E);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), cpu->E);
     return 7;
 }
-static int ld_hl_h_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_h_addr(ZilogZ80_t *cpu)
 {
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->H);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), cpu->H);
     return 7;
 }
-static int ld_hl_l_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_l_addr(ZilogZ80_t *cpu)
 {
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), cpu->L);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), cpu->L);
     return 7;
 }
-static int ld_hl_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_hl_addr(ZilogZ80_t *cpu)
 {
-    byte_t val = fetchByte(memory, TO_WORD(cpu->H, cpu->L));
-    storeByte(memory, TO_WORD(cpu->H, cpu->L), val);
+    byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), val);
     return 7;
 }
 
-static int ld_hl_nn_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_nn_addr(ZilogZ80_t *cpu)
 {
-    word_t address = fetchWord(memory, cpu->PC);
+    word_t address = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     
-    byte_t lowerByte = fetchByte(memory, address);
-    byte_t upperByte = fetchByte(memory, address + 1);
+    byte_t lowerByte = fetchByteAddressSpace(&cpu->ram, &cpu->rom, address);
+    byte_t upperByte = fetchByteAddressSpace(&cpu->ram, &cpu->rom, address + 1);
 
     cpu->H = upperByte;
     cpu->L = lowerByte;
@@ -2281,52 +2284,52 @@ static int ld_hl_nn_addr(ZilogZ80_t *cpu, Memory_t *memory)
 
     return 16;
 }
-static int ld_a_nn_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_nn_addr(ZilogZ80_t *cpu)
 {
-    word_t address = fetchWord(memory, cpu->PC);
-    cpu->A = fetchByte(memory, address);
+    word_t address = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    cpu->A = fetchByteAddressSpace(&cpu->ram, &cpu->rom, address);
     cpu->PC += 2;
     return 13;
 }
 
-static int ld_nn_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_nn_hl_addr(ZilogZ80_t *cpu)
 {
-    word_t address = fetchWord(memory, cpu->PC);
-    storeByte(memory, address, cpu->L);
-    storeByte(memory, address + 1, cpu->H);
+    word_t address = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, address, cpu->L);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, address + 1, cpu->H);
     cpu->PC += 2;
     return 16;
 }
-static int ld_nn_a_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_nn_a_addr(ZilogZ80_t *cpu)
 {
-    word_t address = fetchWord(memory, cpu->PC);
-    storeByte(memory, address, cpu->A);
+    word_t address = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, address, cpu->A);
     cpu->PC += 2;
     return 13;
 }
 
-static int ld_de_nn_imm(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_de_nn_imm(ZilogZ80_t *cpu)
 {
-    word_t address = fetchWord(memory, cpu->PC);
-    storeByte(memory, address, cpu->E);
-    storeByte(memory, address + 1, cpu->D);
+    word_t address = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, address, cpu->E);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, address + 1, cpu->D);
     cpu->PC += 2;
     return 16;
 }
-static int ld_de_a_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_de_a_addr(ZilogZ80_t *cpu)
 {
-    storeByte(memory, TO_WORD(cpu->D, cpu->E), cpu->A);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->D, cpu->E), cpu->A);
     return 7;
 }
-static int ld_a_de_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_de_addr(ZilogZ80_t *cpu)
 {
-    cpu->A = fetchByte(memory, TO_WORD(cpu->D, cpu->E));
+    cpu->A = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->D, cpu->E));
     return 7;
 }
 
-static int ld_bc_nn_imm(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_bc_nn_imm(ZilogZ80_t *cpu)
 {
-    word_t immediate = fetchWord(memory, cpu->PC);
+    word_t immediate = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->B = UPPER_BYTE(immediate);
     cpu->C = LOWER_BYTE(immediate);
     cpu->PC += 2;
@@ -2334,20 +2337,20 @@ static int ld_bc_nn_imm(ZilogZ80_t *cpu, Memory_t *memory)
     return 10;
 
 }
-static int ld_bc_a_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_bc_a_addr(ZilogZ80_t *cpu)
 {
-    storeByte(memory, TO_WORD(cpu->B, cpu->C), cpu->A);
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->B, cpu->C), cpu->A);
     return 7;
 }
-static int ld_a_bc_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_a_bc_addr(ZilogZ80_t *cpu)
 {
-    cpu->A = fetchByte(memory, TO_WORD(cpu->B, cpu->C));
+    cpu->A = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->B, cpu->C));
     return 7;
 }
 
-static int ld_hl_nn_imm(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_hl_nn_imm(ZilogZ80_t *cpu)
 {
-    word_t immediate = fetchWord(memory, cpu->PC);
+    word_t immediate = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->H = UPPER_BYTE(immediate);
     cpu->L = LOWER_BYTE(immediate);
     cpu->PC += 2;
@@ -2355,130 +2358,130 @@ static int ld_hl_nn_imm(ZilogZ80_t *cpu, Memory_t *memory)
     return 10;
 }
 
-static int ld_sp_nn_imm(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_sp_nn_imm(ZilogZ80_t *cpu)
 {
-    word_t immediate = fetchWord(memory, cpu->PC);
+    word_t immediate = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->SP = immediate;
     cpu->PC += 2;
 
     return 10;
 }
 
-static int ld_sp_hl(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_sp_hl(ZilogZ80_t *cpu)
 {
     cpu->SP = TO_WORD(cpu->H, cpu->L);
     return 6;
 }
 
-static int ld_bc_nn_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_bc_nn_addr(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int ld_de_nn_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_de_nn_addr(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int ld_sp_nn_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_sp_nn_addr(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int ld_nn_bc_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_nn_bc_addr(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int ld_nn_de_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_nn_de_addr(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int ld_nn_sp_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_nn_sp_addr(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int ldi(ZilogZ80_t *cpu, Memory_t *memory)
+static int ldi(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int ldir(ZilogZ80_t *cpu, Memory_t *memory)
+static int ldir(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int ldd(ZilogZ80_t *cpu, Memory_t *memory)
+static int ldd(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int lddr(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO:
-}
-
-static int ld_nn_bc_imm(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO:
-}
-static int ld_nn_de_imm(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO:
-}
-static int ld_nn_hl_imm(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO:
-}
-static int ld_nn_sp_imm(ZilogZ80_t *cpu, Memory_t *memory)
+static int lddr(ZilogZ80_t *cpu)
 {
     // TODO:
 }
 
-static int ld_r_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_nn_bc_imm(ZilogZ80_t *cpu)
 {
     // TODO:
 }
-static int ld_a_r(ZilogZ80_t *cpu, Memory_t *memory)
+static int ld_nn_de_imm(ZilogZ80_t *cpu)
+{
+    // TODO:
+}
+static int ld_nn_hl_imm(ZilogZ80_t *cpu)
+{
+    // TODO:
+}
+static int ld_nn_sp_imm(ZilogZ80_t *cpu)
+{
+    // TODO:
+}
+
+static int ld_r_a(ZilogZ80_t *cpu)
+{
+    // TODO:
+}
+static int ld_a_r(ZilogZ80_t *cpu)
 {
     // TODO:
 }
 
 // OTHER INSTRUCTION    -----------------------------------------------------------------------------
-static int bit_op(ZilogZ80_t *cpu, Memory_t *memory)
+static int bit_op(ZilogZ80_t *cpu)
 {
     return 0;
 }
-static int ix_op(ZilogZ80_t *cpu, Memory_t *memory)
+static int ix_op(ZilogZ80_t *cpu)
 {
     return 0;
 }
-static int misc_op(ZilogZ80_t *cpu, Memory_t *memory)
+static int misc_op(ZilogZ80_t *cpu)
 {
     return 0;
 }
-static int iy_op(ZilogZ80_t *cpu, Memory_t *memory)
+static int iy_op(ZilogZ80_t *cpu)
 {
     return 0;
 }
 
 // INTERRUPTS           -----------------------------------------------------------------------------
-static int di(ZilogZ80_t *cpu, Memory_t *memory)
+static int di(ZilogZ80_t *cpu)
 {
     // TODO: Interrupts
     return 4;
 }
-static int ei(ZilogZ80_t *cpu, Memory_t *memory)
+static int ei(ZilogZ80_t *cpu)
 {
     // TODO: Interrupts
     return 4;
 }
 
 // PORT     -----------------------------------------------------------------------------
-static int in_a_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int in_a_n(ZilogZ80_t *cpu)
 {
     // TODO: Port
     return 11;
 }
-static int out_n_a_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int out_n_a_addr(ZilogZ80_t *cpu)
 {
     // TODO: Port
     return 11;
 }
-static int daa(ZilogZ80_t *cpu, Memory_t *memory)
+static int daa(ZilogZ80_t *cpu)
 {
     byte_t halfCarry = cpu->F.H;
     byte_t carry = cpu->F.C;
@@ -2526,7 +2529,7 @@ static int daa(ZilogZ80_t *cpu, Memory_t *memory)
 
     return 4;
 }
-static int scf(ZilogZ80_t *cpu, Memory_t *memory)
+static int scf(ZilogZ80_t *cpu)
 {
     cpu->F.C = 1;
     cpu->F.H = 0;
@@ -2534,218 +2537,218 @@ static int scf(ZilogZ80_t *cpu, Memory_t *memory)
 
     return 4;
 }
-static int in_b_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int in_b_c(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int in_d_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int in_d_c(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int in_e_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int in_e_c(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int in_h_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int in_h_c(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int in_l_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int in_l_c(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int ini(ZilogZ80_t *cpu, Memory_t *memory)
+static int ini(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int inir(ZilogZ80_t *cpu, Memory_t *memory)
+static int inir(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int in_c_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int in_c_c(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int in_a_c(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-
-static int in0_c_n(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int in0_e_n(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int in0_l_n(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int in0_a_n(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int out_c_b(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int out_c_d(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int out_c_h(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int out_c_0(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int out_c_c(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int out_c_e(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int out_c_l(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int out_c_a(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int outi(ZilogZ80_t *cpu, Memory_t *memory)
-{
-    // TODO
-}
-static int otir(ZilogZ80_t *cpu, Memory_t *memory)
+static int in_a_c(ZilogZ80_t *cpu)
 {
     // TODO
 }
 
-static int out0_c_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int in0_c_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int out0_e_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int in0_e_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int out0_l_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int in0_l_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int out0_a_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int in0_a_n(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int out_c_b(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int out_c_d(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int out_c_h(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int out_c_0(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int out_c_c(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int out_c_e(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int out_c_l(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int out_c_a(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int outi(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int otir(ZilogZ80_t *cpu)
 {
     // TODO
 }
 
-static int otim(ZilogZ80_t *cpu, Memory_t *memory)
+static int out0_c_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int otimr(ZilogZ80_t *cpu, Memory_t *memory)
+static int out0_e_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int otdm(ZilogZ80_t *cpu, Memory_t *memory)
+static int out0_l_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int otdmr(ZilogZ80_t *cpu, Memory_t *memory)
+static int out0_a_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int outd(ZilogZ80_t *cpu, Memory_t *memory)
+
+static int otim(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int otdr(ZilogZ80_t *cpu, Memory_t *memory)
+static int otimr(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int otdm(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int otdmr(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int outd(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int otdr(ZilogZ80_t *cpu)
 {
     // TODO
 }
 
 // TST      -----------------------------------------------------------------------------
-static int tst_b(ZilogZ80_t *cpu, Memory_t *memory)
+static int tst_b(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
-static int tst_d(ZilogZ80_t *cpu, Memory_t *memory)
+static int tst_d(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
-static int tst_h(ZilogZ80_t *cpu, Memory_t *memory)
+static int tst_h(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
-static int tst_c(ZilogZ80_t *cpu, Memory_t *memory)
+static int tst_c(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
-static int tst_e(ZilogZ80_t *cpu, Memory_t *memory)
+static int tst_e(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
-static int tst_l(ZilogZ80_t *cpu, Memory_t *memory)
+static int tst_l(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
-static int tst_a(ZilogZ80_t *cpu, Memory_t *memory)
+static int tst_a(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
-static int tst_hl_addr(ZilogZ80_t *cpu, Memory_t *memory)
+static int tst_hl_addr(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
-static int tst_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int tst_n(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
-static int tstio_n(ZilogZ80_t *cpu, Memory_t *memory)
+static int tstio_n(ZilogZ80_t *cpu)
 {
     // TODO:    
 }
 
 // MULT     -----------------------------------------------------------------------------
-static int mlt_bc(ZilogZ80_t *cpu, Memory_t *memory)
+static int mlt_bc(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int mlt_de(ZilogZ80_t *cpu, Memory_t *memory)
+static int mlt_de(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int mlt_hl(ZilogZ80_t *cpu, Memory_t *memory)
+static int mlt_hl(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int mlt_sp(ZilogZ80_t *cpu, Memory_t *memory)
+static int mlt_sp(ZilogZ80_t *cpu)
 {
     // TODO
 }
 
 // IM       -----------------------------------------------------------------------------
-static int im_0(ZilogZ80_t *cpu, Memory_t *memory)
+static int im_0(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int im_1(ZilogZ80_t *cpu, Memory_t *memory)
+static int im_1(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int im_2(ZilogZ80_t *cpu, Memory_t *memory)
+static int im_2(ZilogZ80_t *cpu)
 {
     // TODO
 }
 
 // EXTRA    -----------------------------------------------------------------------------
-static int cpl(ZilogZ80_t *cpu, Memory_t *memory)
+static int cpl(ZilogZ80_t *cpu)
 {
     cpu->A = ~cpu->A;
     cpu->F.H = 1;
@@ -2753,7 +2756,7 @@ static int cpl(ZilogZ80_t *cpu, Memory_t *memory)
 
     return 4;
 }
-static int ccf(ZilogZ80_t *cpu, Memory_t *memory)
+static int ccf(ZilogZ80_t *cpu)
 {
     cpu->F.C = !cpu->F.C;
     cpu->F.H = 0;
@@ -2761,15 +2764,15 @@ static int ccf(ZilogZ80_t *cpu, Memory_t *memory)
 
     return 4;
 }
-static int neg(ZilogZ80_t *cpu, Memory_t *memory)
+static int neg(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int slp(ZilogZ80_t *cpu, Memory_t *memory)
+static int slp(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int rld(ZilogZ80_t *cpu, Memory_t *memory)
+static int rld(ZilogZ80_t *cpu)
 {
     // TODO
 }

@@ -4,9 +4,7 @@
 
 #include "cpu/cpu.h"
 #include "memory/mem.h"
-#include "utils/utils.h"
 #include "utils/error_handler.h"
-#include "file_grabber.h"
 
 #if !defined(HEADLESS)
 #include "emulator/graphics_interface.h"
@@ -39,11 +37,10 @@ void emulatorInit(int argc, char** argv);
 void emulatorInit(int argc, char** argv)
 {
     zilogZ80Init(&cpu);
-    memoryInit(&memory);
     errorStackInit();
 
     #if !defined(HEADLESS)
-    graphicsInit(argc, argv, &cpu, &memory);
+    graphicsInit(argc, argv, &cpu);
     #endif
 }
 // -----------------------------------------------------------

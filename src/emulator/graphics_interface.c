@@ -44,7 +44,6 @@
 /*                              Global variables                              */
 /* -------------------------------------------------------------------------- */
 static ZilogZ80_t                *cpu;
-static Memory_t             *memory;
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
@@ -80,7 +79,7 @@ static void checkPriority(RenderObject *renderObjects, size_t *renderObjectsPrio
 /* -------------------------------------------------------------------------- */
 /*                            Function definitions                            */
 /* -------------------------------------------------------------------------- */
-int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu, Memory_t *memory)
+int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
 {
     int status;
 
@@ -151,8 +150,11 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu, Memory_t *memory)
             createFilePath(fileDialogState.dirPathText, fileDialogState.fileNameText, selectedFileBuffer, sizeof(selectedFileBuffer));
 
             fileDialogState.windowActive = false;
-            bool fileLoaded = loadFile(selectedFileBuffer, memory->data, memory->memorySize);
+            byte_t data[cpu->rom.memorySize];
 
+            bool fileLoaded = loadFile(selectedFileBuffer, data, cpu->rom.memorySize);
+            loadProgramToRom(&cpu->rom, data, cpu->rom.memorySize);
+            uint8_t *ptr = (cpu->memory.data);
             if(fileLoaded == true)
             {
                 zilogZ80Reset(cpu);
@@ -190,7 +192,7 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu, Memory_t *memory)
             {
                 GuiToastDisplayMessage(&toastState, "CPU step.", 2000, GUI_TOAST_MESSAGE);
             }
-            zilogZ80Step(cpu, memory); 
+            zilogZ80Step(cpu); 
 
             GuiMemoryViewUpdate(&memoryViewState, true);
             GuiCpuViewUpdate(&cpuViewState, true);
@@ -203,7 +205,7 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu, Memory_t *memory)
         /* -------------------------------------------------------------------------- */
 
         /* --------------------------- Memory view update --------------------------- */
-        GuiMemoryViewAddressUpdate(&memoryViewState, memory->data, memory->memorySize);
+        GuiMemoryViewAddressUpdate(&memoryViewState, cpu->memory.data, cpu->memory.memorySize);
         /* -------------------------------------------------------------------------- */
 
         /* ------------------------------ Begin Drawing ----------------------------- */

@@ -47,8 +47,9 @@ typedef struct ZilogZ80_t
 
     bool isHaltered;
 
-    Memory_t rom;
+    Memory_t memory;
     Memory_t ram;
+    Memory_t rom;
 } ZilogZ80_t;
 
 /**
@@ -71,7 +72,7 @@ void zilogZ80Reset(ZilogZ80_t* cpu);
  * @param cpu 
  * @param memory 
  */
-void zilogZ80Step(ZilogZ80_t* cpu, Memory_t* memory);
+void zilogZ80Step(ZilogZ80_t* cpu);
 
 #endif
 

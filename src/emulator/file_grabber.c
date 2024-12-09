@@ -13,6 +13,8 @@ bool loadFile(const char *filename, byte_t *buffer, size_t bufferSize)
     {
         return false;
     }
+    
+    memset(buffer, 0, bufferSize);
 
     fread(buffer, sizeof(byte_t), bufferSize, file);
     fclose(file);
