@@ -533,7 +533,7 @@ int executeInstruction(ZilogZ80_t *cpu)
     cpu->currentCycles = cycles;
     cpu->totalCycles += cycles;
 
-        return 0;
+    return 0;
 }
 
 
@@ -1923,7 +1923,6 @@ static int ld_a_hl_addr(ZilogZ80_t *cpu)
 {
     byte_t val = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
     cpu->A = val;
-    cpu->PC++;
     return 7;
 }
 
