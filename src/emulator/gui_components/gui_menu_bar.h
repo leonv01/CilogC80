@@ -33,6 +33,7 @@ typedef struct
     GuiMenuButton pauseEmulationButton;
     GuiMenuButton stepEmulationButton;
     GuiMenuButton stopEmulationButton;
+    GuiMenuButton restartEmulationButton;
 
     GuiMenuButton settingsButton;
     GuiMenuButton aboutButton;
@@ -52,6 +53,7 @@ typedef struct
     bool pauseEmulationButtonActive;
     bool stepEmulationButtonActive;
     bool stopEmulationButtonActive;
+    bool restartEmulationButtonActive;
 
     bool settingsButtonActive;
     bool aboutButtonActive;
@@ -71,7 +73,7 @@ typedef struct
     bool pauseEmulationButtonHover;
     bool stepEmulationButtonHover;
     bool stopEmulationButtonHover;
-
+    bool restartEmulationButtonHover;
 
     bool settingsButtonHover;
     bool aboutButtonHover;
@@ -194,6 +196,13 @@ void GuiMenuBar(GuiMenuBarState *state)
         state->buttonSize,
         state->buttonSize
     }, GuiIconText(ICON_PLAYER_STOP, ""));
+    state->restartEmulationButtonActive = GuiButton((Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 10),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    }, GuiIconText(ICON_RESTART, ""));
     /* -------------------------------------------------------------------------- */
 
     /* ----------------------------- Check on hover ----------------------------- */
@@ -265,6 +274,13 @@ void GuiMenuBar(GuiMenuBarState *state)
         state->buttonSize,
         state->buttonSize
     });
+    state->restartEmulationButtonHover = CheckCollisionPointRec(GetMousePosition(), (Rectangle)
+    {
+        state->openButton.position.x + BUTTON_SPACING(state->buttonSize, state->buttonPadding, 10),
+        state->openButton.position.y,
+        state->buttonSize,
+        state->buttonSize
+    });
     /* -------------------------------------------------------------------------- */
 }
 
@@ -280,6 +296,7 @@ char *GuiMenuBarGetTooltip(GuiMenuBarState *state, bool *isAnyHovered)
     else if(state->pauseEmulationButtonHover) text = "Pause emulation";
     else if(state->stepEmulationButtonHover) text = "Step emulation";
     else if(state->stopEmulationButtonHover) text = "Stop emulation";
+    else if(state->restartEmulationButtonHover) text = "Restart emulation";
 
 
     if(state->openButtonHover 
@@ -291,6 +308,7 @@ char *GuiMenuBarGetTooltip(GuiMenuBarState *state, bool *isAnyHovered)
     || state->pauseEmulationButtonHover
     || state->stepEmulationButtonHover
     || state->stopEmulationButtonHover
+    || state->restartEmulationButtonHover
     )
     {
         *isAnyHovered = true;

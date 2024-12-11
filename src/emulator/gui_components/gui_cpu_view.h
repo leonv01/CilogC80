@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 #include <stdint.h>
+#include <string.h>
 
 #define CPU_VIEW_SPACING(size, padding, count) ((size + padding) * count)
 
@@ -96,6 +97,9 @@ typedef struct
 
     Rectangle resizerBounds;
 
+    int displayTypeComboBoxElement;
+    bool displayTypeComboBoxEditable;
+
     bool isWindowActive;
     bool isWindowMinimized;
 
@@ -121,11 +125,23 @@ void GuiCpuViewUpdatePointers(GuiCpuViewState *state, const uint16_t pc, const u
 void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize);
 void GuiCpuViewUpdate(GuiCpuViewState *state, bool update);
 
+static void GuiCpuViewRefresh(GuiCpuViewState *state);
+
 #endif // GUI_CPU_VIEW_H
 
+#define GUI_CPU_VIEW_IMPLEMENTATION     
 #ifdef GUI_CPU_VIEW_IMPLEMENTATION
 
 #include "raygui.h"
+
+typedef enum 
+{
+    CPU_TO_HEX = 0, 
+    CPU_TO_DEC,
+    CPU_TO_ASCII
+} CPU_OUTPUT_TYPE;
+
+static CPU_OUTPUT_TYPE outputType = CPU_TO_HEX;
 
 GuiCpuViewState InitGuiCpuView(void)
 {
@@ -212,6 +228,9 @@ GuiCpuViewState InitGuiCpuView(void)
     state.pointerPcTextActive = false;
     state.pointerSpTextActive = false;
     /* -------------------------------------------------------------------------- */
+
+    state.displayTypeComboBoxElement = 0;
+    state.displayTypeComboBoxEditable = false;
 
     state.supportDrag = true;
     state.dragMode = false;
@@ -716,6 +735,18 @@ void GuiCpuView(GuiCpuViewState *state)
             state->pointerSpTextActive = !state->pointerSpTextActive;
         }
         GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+
+        if(GuiDropdownBox((Rectangle)
+        { 
+            labelStartPos.x + CPU_VIEW_SPACING(state->registerLabelWidth, state->padding, 1), 
+            labelStartPos.y + CPU_VIEW_SPACING(state->registerLabelHeight, state->padding, 0), 
+            state->registerLabelWidth, 
+            state->registerLabelHeight 
+        }, "HEX;DEC;ASCII", &state->displayTypeComboBoxElement, state->displayTypeComboBoxEditable) == true)
+        {
+            state->displayTypeComboBoxEditable = !state->displayTypeComboBoxEditable;
+        }
+
         /* -------------------------------------------------------------------------- */
 
         /* -------------------------------------------------------------------------- */
@@ -758,30 +789,28 @@ void GuiCpuViewUpdatePointers(GuiCpuViewState *state, const uint16_t pc, const u
     }
 }
 
-void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize)
-{
-    /*
-    state->fontSize = fontSize;
-
-    state->registerLabelHeight = fontSize + 10;
-    state->flagLabelHeight = fontSize + 10;
-    state->pointerLabelHeight = fontSize + 10;
-
-    state->registerTextWidth = 50 + (fontSize * 2);
-    state->flagLabelWidth = 25 + (fontSize);
-    state->pointerTextWidth = 50 + (fontSize * 2);
-
-    state->registerLabelWidth = 100 + (fontSize * 2);
-    state->flagLabelWidth = 25 + (fontSize * 2);
-    state->pointerLabelWidth = 100 + (fontSize * 2);
-
-    state->padding = 12 + (.5 * fontSize);
-    */
-}
-
 void GuiCpuViewUpdate(GuiCpuViewState *state, bool update)
 {
     state->updateCpuView = update;
+}
+
+static void GuiCpuViewRefresh(GuiCpuViewState *state)
+{
+    switch(state->displayTypeComboBoxElement)
+    {
+        case CPU_TO_HEX:
+        {
+
+        }break;
+        case CPU_TO_DEC:
+        {
+
+        }break;
+        case CPU_TO_ASCII:
+        {
+
+        }break;
+    }
 }
 
 #endif // GUI_CPU_VIEW_IMPLEMENTATION

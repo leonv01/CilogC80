@@ -59,6 +59,14 @@ typedef struct RenderObject
     void (*renderFunction)(void* state);
     size_t priority;
 } RenderObject;
+
+typedef enum EmulationState
+{
+    EMULATION_RUNNING,
+    EMULATION_STEP,
+    EMULATION_PAUSED,
+    EMULATION_STOPPED
+} EmulationState;
 /* -------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------- */
@@ -121,6 +129,8 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
     {
         renderObjectsPriority[i] = i; // Store indices
     }
+
+    EmulationState emulationState = EMULATION_PAUSED;
 
     /* -------------------------------- Main loop ------------------------------- */
     while (WindowShouldClose() == false)
@@ -208,6 +218,39 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
             GuiRamMemoryViewUpdate(&ramMemoryViewState, true);
             GuiRomMemoryViewUpdate(&romMemoryViewState, true);
             GuiCpuViewUpdate(&cpuViewState, true);
+        }
+        if(menuBarState.startEmulationButtonActive == true)
+        {
+            emulationState = EMULATION_RUNNING;
+        }
+
+        if(emulationState == EMULATION_RUNNING)
+        {
+            if(cpu->isHaltered == true)
+            {
+                emulationState = EMULATION_STOPPED;
+            }
+            else
+            {
+                if(isProgramLoaded == false)
+                {
+                    GuiToastDisplayMessage(&toastState, "No program is loaded into memory.", 10000, GUI_TOAST_WARNING);
+                }
+                else
+                {
+                    GuiToastDisplayMessage(&toastState, "CPU running.", 2000, GUI_TOAST_MESSAGE);
+                }
+                zilogZ80Step(cpu); 
+
+                GuiRamMemoryViewUpdate(&ramMemoryViewState, true);
+                GuiRomMemoryViewUpdate(&romMemoryViewState, true);
+                GuiCpuViewUpdate(&cpuViewState, true);
+            }
+        }
+
+        if(menuBarState.restartEmulationButtonActive == true)
+        {
+            zilogZ80Reset(cpu);
         }
 
         /* ----------------------------- CPU view update ---------------------------- */

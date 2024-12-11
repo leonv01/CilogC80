@@ -1,6 +1,7 @@
 #include "emulator.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "cpu/cpu.h"
 #include "memory/mem.h"
@@ -30,6 +31,7 @@ static C80_EmulationState_t emulationState = EMULATION_STATE_STOPPED;
 // Emulator functions
 // -----------------------------------------------------------
 void emulatorInit(int argc, char** argv);
+void outputPrint(byte_t port, byte_t value);
 // -----------------------------------------------------------
 
 // Emulator function definitions
@@ -37,10 +39,16 @@ void emulatorInit(int argc, char** argv);
 void emulatorInit(int argc, char** argv)
 {
     zilogZ80Init(&cpu);
+    cpu.outputCallback = &outputPrint;
     errorStackInit();
 
     #if !defined(HEADLESS)
     graphicsInit(argc, argv, &cpu);
     #endif
+}
+
+void outputPrint(byte_t port, byte_t value)
+{
+    printf("Port: 0x%02X -> %c | 0x%02X\n", port, (char)value, value);
 }
 // -----------------------------------------------------------

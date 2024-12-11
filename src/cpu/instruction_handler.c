@@ -2478,6 +2478,8 @@ static int in_a_n(ZilogZ80_t *cpu)
 static int out_n_a_addr(ZilogZ80_t *cpu)
 {
     // TODO: Port
+    byte_t port = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    cpu->outputCallback(port, cpu->A);
     cpu->PC++;
     return 11;
 }

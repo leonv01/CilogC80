@@ -39,6 +39,8 @@ typedef struct ZilogZ80_t
     word_t IX, IY;
     byte_t I, R;
 
+    void (*outputCallback)(byte_t port, byte_t value);
+
     int cyclesInFrame;
     float frequency;
 
