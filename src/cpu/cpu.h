@@ -29,16 +29,56 @@ typedef struct F_t
  */
 typedef struct ZilogZ80_t
 {   
-    byte_t A, B, C, D, E, H, L;
-    byte_t A_, B_, C_, D_, E_, H_, L_;
+    /** @brief Accumulator / Register A */
+    byte_t A;
+    /** @brief Register B */
+    byte_t B;
+    /** @brief Register C */
+    byte_t C;
+    /** @brief Register D */
+    byte_t D;
+    /** @brief Register E */
+    byte_t E;
+    /** @brief Register H */
+    byte_t H;
+    /** @brief Register L */
+    byte_t L;
 
+    /** @brief Shadow Accumulator / Register A */
+    byte_t A_;
+    /** @brief Shadow Register B */
+    byte_t B_;
+    /** @brief Shadow Register C */
+    byte_t C_;
+    /** @brief Shadow Register D */
+    byte_t D_;
+    /** @brief Shadow Register E */
+    byte_t E_;
+    /** @brief Shadow Register H */
+    byte_t H_;
+    /** @brief Shadow Register L */
+    byte_t L_;  
+
+    /** @brief Flags */
     F_t F;
+    /** @brief Shadow Flags */
     F_t F_;
-    word_t SP, PC;
 
-    word_t IX, IY;
+    /** @brief Stack Pointer */
+    word_t SP;
+    /** @brief Program Counter */           
+    word_t PC;
+
+    /** @brief Index Register X */
+    word_t IX;
+    /** @brief Index Register Y */
+    word_t IY;
+
     byte_t I, R;
 
+    /** @brief Input callback */
+    void (*inputCallback[256])(byte_t* value);
+    /** @brief Output callback */
     void (*outputCallback[256])(byte_t value);
 
     int cyclesInFrame;
@@ -49,8 +89,9 @@ typedef struct ZilogZ80_t
 
     bool isHaltered;
 
-    Memory_t memory;
+    /** @brief RAM memory */
     Memory_t ram;
+    /** @brief ROM memory */
     Memory_t rom;
 } ZilogZ80_t;
 

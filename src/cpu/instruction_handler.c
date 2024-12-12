@@ -14,377 +14,2161 @@
  */
 typedef int (*InstructionHandler_t)(ZilogZ80_t *);
 
-// CPU helper functions -------------------------------------------------------
+/* -------------------------- CPU helper functions -------------------------- */
+/**
+ * @brief Transforms the values of the flags into a byte
+ * 
+ * @param flags 
+ * @return byte_t Flags as a byte
+ */
 static byte_t flagsToByte(F_t flags);
+/**
+ * @brief Takes a byte and sets the corresponding flags
+ * 
+ * @param flags 
+ * @param value Byte with values for the flags
+ */
 static void byteToFlags(F_t *flags, byte_t value);
 
-static int calculateParity(word_t value);
+/**
+ * @brief Calculates the parity of a value.
+ * If the number of bits set to 1 is even, the parity is true, otherwise it is false
+ * 
+ * @param value 
+ * @return bool 
+ */
+static bool calculateParity(word_t value);
+/**
+ * @brief Set the Flags of the CPU depending on the result of an operation with a byte
+ * 
+ * @param cpu 
+ * @param regA 
+ * @param operand Operand of the operation
+ * @param result Result to set the flags
+ * @param isSubstraction Flag to indicate if the operation is a substraction
+ */
 static void setFlags(ZilogZ80_t *cpu, byte_t regA, byte_t operand, word_t result, bool isSubstraction);
+/**
+ * @brief Set the Flags of the CPU depending on the result of an operation with a word
+ * 
+ * @param cpu 
+ * @param reg1 
+ * @param reg2 
+ * @param result 
+ */
 static void setFlagsWord(ZilogZ80_t *cpu, word_t reg1, word_t reg2, dword_t result);
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 
-// Helper functions ------------------------------------------------------------
+/* ---------------------------- Helper functions ---------------------------- */
+/**
+ * @brief Helper function to add a value to a register and set the flags
+ * 
+ * @param cpu 
+ * @param reg 
+ * @param value 
+ */
 static void addToRegister(ZilogZ80_t *cpu, byte_t *reg, byte_t value);
+/**
+ * @brief Helper function to add two values to a register pair and set the flags
+ * 
+ * @param cpu 
+ * @param value1
+ * @param value2 
+ */
 static void addToRegisterPair(ZilogZ80_t *cpu, word_t value1, word_t value2);
+/**
+ * @brief Helper function to add a value to a register with carry bit and set the flags
+ * 
+ * @param cpu 
+ * @param reg 
+ * @param value 
+ */
 static void addToRegisterWithCarry(ZilogZ80_t *cpu, byte_t *reg, byte_t value);
+/**
+ * @brief Helper function to increment a register and set the flags
+ * 
+ * @param cpu 
+ * @param reg 
+ */
 static void incrementRegister(ZilogZ80_t *cpu, byte_t *reg);
+/**
+ * @brief Helper function to increment a register pair and set the flags
+ * 
+ * @param cpu 
+ * @param upperByte 
+ * @param lowerByte 
+ */
 static void incrementRegisterPair(ZilogZ80_t *cpu, byte_t* upperByte, byte_t* lowerByte);
 
+/**
+ * @brief Helper function to subtract a value from a register and set the flags
+ * 
+ * @param cpu 
+ * @param reg 
+ * @param value 
+ */
 static void subtractFromRegister(ZilogZ80_t *cpu, byte_t value);
+/**
+ * @brief Helper function to subtract two values from a register pair and set the flags
+ * 
+ * @param cpu 
+ * @param value1 
+ * @param value2 
+ */
 static void subtractFromRegisterWithCarry(ZilogZ80_t *cpu, byte_t value);
+/**
+ * @brief Helper function to decrement a register and set the flags
+ * 
+ * @param cpu 
+ * @param reg 
+ */
 static void decrementRegister(ZilogZ80_t *cpu, byte_t *reg);
+/**
+ * @brief Helper function to decrement a register pair and set the flags
+ * 
+ * @param cpu 
+ * @param upperByte 
+ * @param lowerByte 
+ */
 static void decrementRegisterPair(ZilogZ80_t *cpu, byte_t* upperByte, byte_t* lowerByte);
 
+/**
+ * @brief Helper function to and a value with a register and set the flags
+ * 
+ * @param cpu 
+ * @param value 
+ */
 static void andWithRegister(ZilogZ80_t *cpu, byte_t value);
+/**
+ * @brief Helper function to or a value with a register and set the flags
+ * 
+ * @param cpu 
+ * @param value 
+ */
 static void orWithRegister(ZilogZ80_t *cpu, byte_t value);
+/**
+ * @brief Helper function to xor a value with a register and set the flags
+ * 
+ * @param cpu 
+ * @param value 
+ */
 static void xorWithRegister(ZilogZ80_t *cpu, byte_t value);
+/**
+ * @brief Helper function to compare a value with a register and set the flags
+ * 
+ * @param cpu 
+ * @param value 
+ */
 static void cpWithRegister(ZilogZ80_t *cpu, byte_t value);
 
+/**
+ * @brief Helper function to push a word to the stack
+ * 
+ * @param cpu 
+ * @param value 
+ */
 static void pushWord(ZilogZ80_t *cpu, word_t value);
+/**
+ * @brief Helper function to pop a word from the stack
+ * 
+ * @param cpu 
+ * @param upperByte 
+ * @param lowerByte 
+ */
 static void popWord(ZilogZ80_t *cpu, byte_t *upperByte, byte_t *lowerByte);
 
+/**
+ * @brief Helper function to return if a condition is met
+ * 
+ * @param cpu 
+ * @param address 
+ */
 static int returnHelper(ZilogZ80_t *cpu, bool condition);
+/**
+ * @brief Helper function to call a function if a condition is met
+ * 
+ * @param cpu 
+ * @param condition 
+ */
 static int callHelper(ZilogZ80_t *cpu, bool condition);
+/**
+ * @brief Helper function to jump to an address if a condition is met
+ * 
+ * @param cpu 
+ * @param condition 
+ * @return int 
+ */
 static int jumpHelper(ZilogZ80_t *cpu, bool condition);
+/**
+ * @brief Helper function to jump to a relative address if a condition is met
+ * 
+ * @param cpu 
+ * @param condition 
+ * @return int 
+ */
 static int jumpRelativeHelper(ZilogZ80_t *cpu, bool condition);
 
+// TODO: Document this function
 static void rst(ZilogZ80_t *cpu, byte_t address);
 
-static void exWord(ZilogZ80_t *cpu, word_t *reg1, word_t *reg2);
+/**
+ * @brief Helper function to exchange two registers
+ * 
+ * @param cpu 
+ * @param reg1 
+ * @param reg2 
+ */
+static void exWordHelper(ZilogZ80_t *cpu, word_t *reg1, word_t *reg2);
 
+// TODO: Document this function
 static void ld(ZilogZ80_t *cpu, byte_t *reg, byte_t value);
 static void ldPair(ZilogZ80_t *cpu, byte_t *upperByte, byte_t *lowerByte, word_t value);
-// -----------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
 
-// NO Func  -----------------------------------------------------------------------------
-static int noFunc(ZilogZ80_t *cpu);
+/* ---------------------------- Instruction functions ---------------------------- */
 
-// NOP      -----------------------------------------------------------------------------
+/**
+ * @brief Instruction function that reports an invalid opcode
+ * 
+ * @param cpu 
+ * @return int Cycle count (-1)
+ */
+static int no_func(ZilogZ80_t *cpu);
+
+/* ----------------------------------- NOP ---------------------------------- */
+/**
+ * @brief Instruction function that does nothing
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int nop(ZilogZ80_t *cpu);
 
-// HALT     -----------------------------------------------------------------------------
+/* ---------------------------------- HALT ---------------------------------- */
+/**
+ * @brief Instruction function that halts the CPU
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int halt(ZilogZ80_t *cpu);
 
-// ADD  -----------------------------------------------------------------------------
+/* ----------------------------------- ADD ---------------------------------- */
+/**
+ * @brief Instruction function that adds to register pair HL the value of BC
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int add_hl_bc_imm(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register pair HL the value of DE
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int add_hl_de_imm(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register pair HL the value of HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int add_hl_hl_imm(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register pair HL the value of SP
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int add_hl_sp_imm(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that adds to register A an immediate value
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int add_a_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int add_a_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int add_a_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int add_a_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int add_a_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int add_a_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int add_a_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int add_a_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int add_a_hl_addr(ZilogZ80_t *cpu);
 
-// ADC      -----------------------------------------------------------------------------
+/* ----------------------------------- ADC ---------------------------------- */
+/**
+ * @brief Instruction function that adds to register A an immediate value with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int adc_a_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register A with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int adc_a_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register B with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int adc_a_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register C with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int adc_a_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register D with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int adc_a_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register E with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int adc_a_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register H with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int adc_a_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of register L with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int adc_a_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register A the value of the memory address in HL with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int adc_a_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that adds to register pair HL the value of BC with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int adc_hl_bc(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register pair HL the value of DE with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int adc_hl_de(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register pair HL the value of HL with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int adc_hl_hl(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds to register pair HL the value of SP with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int adc_hl_sp(ZilogZ80_t *cpu);
 
-// INC      -----------------------------------------------------------------------------
+/* ----------------------------------- INC ---------------------------------- */
+/**
+ * @brief Instruction function that increments register pair BC
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int inc_bc(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments register pair DE
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int inc_de(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments register pair HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int inc_hl(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments register pair SP
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int inc_sp(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that increments register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int inc_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int inc_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int inc_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int inc_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int inc_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int inc_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int inc_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that increments the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int inc_hl_addr(ZilogZ80_t *cpu);
 
-// SUB      -----------------------------------------------------------------------------
+/* ----------------------------------- SUB ---------------------------------- */
+/**
+ * @brief Instruction function that subtracts from register A an immediate value
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int sub_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sub_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sub_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sub_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sub_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sub_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sub_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sub_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int sub_hl_addr(ZilogZ80_t *cpu);
 
-// SBC      -----------------------------------------------------------------------------
+/* ----------------------------------- SBC ---------------------------------- */
+/**
+ * @brief Instruction function that subtracts from register A an immediate value with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int sbc_a_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register A with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sbc_a_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register B with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sbc_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register C with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sbc_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register D with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sbc_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register E with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sbc_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register H with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sbc_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of register L with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int sbc_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register A the value of the memory address in HL with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int sbc_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that subtracts from register pair HL the value of BC with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int sbc_hl_bc(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register pair HL the value of DE with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int sbc_hl_de(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register pair HL the value of HL with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int sbc_hl_hl(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that subtracts from register pair HL the value of SP with carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int sbc_hl_sp(ZilogZ80_t *cpu);
 
-// DEC      -----------------------------------------------------------------------------
+/* ----------------------------------- DEC ---------------------------------- */
+/**
+ * @brief Instruction function that decrements register pair BC
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int dec_bc(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements register pair DE
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int dec_de(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements register pair HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int dec_hl(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements register pair SP
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int dec_sp(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that decrements register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int dec_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int dec_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int dec_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int dec_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int dec_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int dec_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int dec_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int dec_hl_addr(ZilogZ80_t *cpu);
 
-// AND      -----------------------------------------------------------------------------
+/* ----------------------------------- AND ---------------------------------- */
+/**
+ * @brief Instruction function that ands register A with an immediate value
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int and_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ands register A with register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int and_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ands register A with register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int and_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ands register A with register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int and_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ands register A with register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int and_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ands register A with register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int and_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ands register A with register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int and_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ands register A with register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int and_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ands register A with the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int and_hl_addr(ZilogZ80_t *cpu);
 
-// OR       -----------------------------------------------------------------------------
+/* ----------------------------------- OR ----------------------------------- */
+/**
+ * @brief Instruction function that ors register A with an immediate value
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int or_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ors register A with register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int or_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ors register A with register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int or_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ors register A with register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int or_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ors register A with register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int or_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ors register A with register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int or_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ors register A with register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int or_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ors register A with register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int or_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that ors register A with the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int or_hl_addr(ZilogZ80_t *cpu);
 
-// XOR      -----------------------------------------------------------------------------
+/* ----------------------------------- XOR ---------------------------------- */
+/**
+ * @brief Instruction function that xors register A with an immediate value
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int xor_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that xors register A with register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int xor_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that xors register A with register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int xor_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that xors register A with register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int xor_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that xors register A with register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int xor_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that xors register A with register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int xor_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that xors register A with register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int xor_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that xors register A with register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int xor_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that xors register A with the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int xor_hl_addr(ZilogZ80_t *cpu);
 
-// CP       -----------------------------------------------------------------------------
+/* ----------------------------------- CP ----------------------------------- */
+/**
+ * @brief Instruction function that compares register A with an immediate value
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int cp_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int cp_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int cp_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int cp_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int cp_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int cp_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int cp_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int cp_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int cp_hl_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with the memory address in HL and increments HL and decrements BC. If BC is not zero, it repeats the process
+ * ! This function is not implemented
+ * 
+ * @param cpu 
+ * @return int Cycle count (16)
+ */
 static int cpi(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that compares register A with the memory address in HL and increments HL and decrements BC. If BC is not zero and the value of A is different from the value in the memory address, it repeats the process
+ * ! This function is not implemented
+ * 
+ * @param cpu 
+ * @return int Cycle count (21/16)
+ */
 static int cpir(ZilogZ80_t *cpu);
 
-// PUSH     -----------------------------------------------------------------------------
+/* ---------------------------------- PUSH ---------------------------------- */
+/**
+ * @brief Instruction function that pushes the register pair BC to the stack
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int push_bc(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that pushes the register pair DE to the stack
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int push_de(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that pushes the register pair HL to the stack
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int push_hl(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that pushes the register pair AF to the stack
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int push_af(ZilogZ80_t *cpu);
 
-// POP      -----------------------------------------------------------------------------
+/* ----------------------------------- POP ---------------------------------- */
+/**
+ * @brief Instruction function that pops the stack to the register pair BC
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int pop_bc(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that pops the stack to the register pair DE
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int pop_de(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that pops the stack to the register pair HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int pop_hl(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that pops the stack to the register pair AF
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int pop_af(ZilogZ80_t *cpu);
 
-// CALL     -----------------------------------------------------------------------------
+/* ---------------------------------- CALL ---------------------------------- */
+/**
+ * @brief Instruction function that calls a function if the zero flag is not set
+ * 
+ * @param cpu 
+ * @return int Cycle count (10/17)
+ */
 static int call_nz_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls a function if the zero flag is set
+ * 
+ * @param cpu 
+ * @return int Cycle count (10/17)
+ */
 static int call_z_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls a function if the carry flag is not set
+ * 
+ * @param cpu 
+ * @return int Cycle count (10/17)
+ */
 static int call_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls a function if the carry flag is set
+ * 
+ * @param cpu 
+ * @return int Cycle count (10/17)
+ */
 static int call_nc_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls a function if the parity flag is odd
+ * 
+ * @param cpu 
+ * @return int Cycle count (10/17)
+ */
 static int call_c_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls a function if the parity flag is even
+ * 
+ * @param cpu 
+ * @return int Cycle count (10/17)
+ */
 static int call_po_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls a function if the parity flag is odd
+ * 
+ * @param cpu 
+ * @return int Cycle count (10/17)
+ */
 static int call_pe_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls a function if the sign flag is positive
+ * 
+ * @param cpu 
+ * @return int Cycle count (10/17)
+ */
 static int call_p_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls a function if the sign flag is negative
+ * 
+ * @param cpu 
+ * @return int Cycle count (10/17)
+ */
 static int call_m_nn(ZilogZ80_t *cpu);
 
-// RET      -----------------------------------------------------------------------------
+/* ----------------------------------- RET ---------------------------------- */
+/**
+ * @brief Instruction function that returns if the zero flag is not set
+ * 
+ * @param cpu 
+ * @return int Cycle count (5/11)
+ */
 static int ret_nz(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the zero flag is set
+ * 
+ * @param cpu 
+ * @return int Cycle count (5/11)
+ */
 static int ret_z(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the carry flag is not set
+ * 
+ * @param cpu 
+ * @return int Cycle count (5/11)
+ */
 static int ret_nc(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the carry flag is set
+ * 
+ * @param cpu 
+ * @return int Cycle count (5/11)
+ */
 static int ret_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the parity flag is odd
+ * 
+ * @param cpu 
+ * @return int Cycle count (5/11)
+ */
 static int ret_po(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the parity flag is even
+ * 
+ * @param cpu 
+ * @return int Cycle count (5/11)
+ */
 static int ret_pe(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the sign flag is positive
+ * 
+ * @param cpu 
+ * @return int Cycle count (5/11)
+ */
 static int ret_p(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the sign flag is negative
+ * 
+ * @param cpu 
+ * @return int Cycle count (5/11)
+ */
 static int ret_m(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the interrupt is enabled
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int ret(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the interrupt is enabled and enables the interrupt
+ * 
+ * @param cpu 
+ * @return int Cycle count (14)
+ */
 static int retn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that returns if the interrupt is enabled and enables the interrupt
+ * 
+ * @param cpu 
+ * @return int Cycle count (14)
+ */
 static int reti(ZilogZ80_t *cpu);
 
-// ROTATE   -----------------------------------------------------------------------------
+/* --------------------------------- ROTATE --------------------------------- */
+/**
+ * @brief Instruction function that rotates register A to the left
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int rlca(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that rotates register A to the right
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int rrca(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that rotates register A to the left through the carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int rla(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that rotates register A to the right through the carry
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int rra(ZilogZ80_t *cpu);
 
-// RST      -----------------------------------------------------------------------------
+/* ----------------------------------- RST ---------------------------------- */
+/**
+ * @brief Instruction function that calls the function at address 0x00
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int rst_00h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls the function at address 0x08
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int rst_08h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls the function at address 0x10
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int rst_10h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls the function at address 0x18
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int rst_18h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls the function at address 0x20
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int rst_20h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls the function at address 0x28
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int rst_28h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls the function at address 0x30
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int rst_30h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that calls the function at address 0x38
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int rst_38h(ZilogZ80_t *cpu);
 
-// JUMP     -----------------------------------------------------------------------------
+/* ---------------------------------- JUMP ---------------------------------- */
+
+/**
+ * @brief Instruction function that decrements register B and jumps to an address if B is not zero
+ * 
+ * @param cpu 
+ * @return int Cycle count (13/8)
+ */
 static int djnz_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds an immediate value to the program counter and jumps to the new address
+ * 
+ * @param cpu 
+ * @return int Cycle count (12)
+ */ 
 static int jr_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds an immediate value to the program counter and jumps to the new address if the zero flag is not set
+ * 
+ * @param cpu 
+ * @return int Cycle count (12/7)
+ */
 static int jr_nz_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds an immediate value to the program counter and jumps to the new address if the zero flag is set
+ * 
+ * @param cpu 
+ * @return int Cycle count (12/7)
+ */
 static int jr_z_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds an immediate value to the program counter and jumps to the new address if the carry flag is not set
+ * 
+ * @param cpu 
+ * @return int Cycle count (12/7)
+ */
 static int jr_nc_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that adds an immediate value to the program counter and jumps to the new address if the carry flag is set
+ * 
+ * @param cpu 
+ * @return int Cycle count (12/7)
+ */
 static int jr_c_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads an immediate value to the program counter if the zero flag is not set
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int jp_nz_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads an immediate value to the program counter
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int jp_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads an immediate value to the program counter if the zero flag is set
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int jp_z_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads an immediate value to the program counter if the carry flag is not set
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int jp_nc_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads an immediate value to the program counter if the carry flag is set
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int jp_c_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads an immediate value to the program counter if the parity flag is odd
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int jp_po_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads an immediate value to the program counter if the parity flag is even
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
+static int jp_pe_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of address HL to the program counter
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int jp_hl_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads an immediate value to the program counter if the sign flag is positive
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int jp_p_nn(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads an immediate value to the program counter if the sign flag is set
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int jp_m_nn(ZilogZ80_t *cpu);
 
-// EXCHANGE -----------------------------------------------------------------------------
+/* -------------------------------- EXCHANGE -------------------------------- */
+/**
+ * @brief Instruction function that exchanges the values of register pairs BC, DE and HL with BC', DE' and HL'
+ * 
+ * @param cpu 
+ * @return int Cycle count (4) 
+ */
 static int exx(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that exchanges the values of register pairs AF and AF'
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ex_af_af_(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that exchanges the values at address SP with L and SP+1 with H       
+ * 
+ * @param cpu 
+ * @return int Cycle count (19)
+ */
 static int ex_sp_hl_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that exchanges the values of register pairs DE and HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ex_de_hl(ZilogZ80_t *cpu);
 
-// LD       -----------------------------------------------------------------------------
+/* ----------------------------------- LD ----------------------------------- */
+/**
+ * @brief Instruction function that loads an immediate value to register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_a_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_a_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_a_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_a_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_a_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_a_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_a_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_a_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */     
 static int ld_a_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads an immediate value to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_b_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_b_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register B to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_b_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register C to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_b_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register D to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_b_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register E to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_b_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register H to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_b_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register L to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_b_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in HL to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_b_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads an immediate value to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_c_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_c_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register B to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_c_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register C to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_c_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register D to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_c_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register E to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_c_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register H to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_c_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register L to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_c_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in HL to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_c_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads an immediate value to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_d_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_d_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register B to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_d_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register C to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_d_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register D to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_d_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register E to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_d_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register H to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_d_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register L to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_d_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in HL to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_d_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads an immediate value to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_e_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_e_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register B to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_e_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register C to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_e_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register D to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_e_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register E to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_e_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register H to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_e_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register L to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_e_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in HL to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_e_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads an immediate value to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_h_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_h_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register B to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_h_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register C to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_h_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register D to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_h_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register E to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_h_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register H to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_h_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register L to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_h_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in HL to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_h_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads an immediate value to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_l_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_l_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register B to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_l_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register C to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_l_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register D to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_l_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register E to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_l_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register H to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_l_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register L to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int ld_l_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in HL to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_l_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads an immediate value to the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int ld_hl_n_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_hl_a_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register B to the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_hl_b_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register C to the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_hl_c_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register D to the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_hl_d_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register E to the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_hl_e_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register H to the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_hl_h_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register L to the memory address in HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_hl_l_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in HL to register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */ 
 static int ld_hl_hl_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads the value of the memory address in NN to register BC
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int ld_hl_nn_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in NN to register DE
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int ld_a_nn_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in NN to register HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int ld_bc_nn_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in NN to register SP
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int ld_de_nn_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in NN to register SP
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int ld_sp_nn_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads the value of register HL to the memory address in NN
+ * 
+ * @param cpu 
+ * @return int Cycle count (13)
+ */
 static int ld_nn_hl_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to the memory address in NN
+ * 
+ * @param cpu 
+ * @return int Cycle count (13)
+ */
 static int ld_nn_a_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register BC to the memory address in NN
+ * 
+ * @param cpu 
+ * @return int Cycle count (13)
+ */
 static int ld_nn_bc_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register DE to the memory address in NN
+ * 
+ * @param cpu 
+ * @return int Cycle count (13)
+ */
 static int ld_nn_de_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register SP to the memory address in NN
+ * 
+ * @param cpu 
+ * @return int Cycle count (13)
+ */
 static int ld_nn_sp_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads the value of register A to the memory address in DE
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_de_nn_imm(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in DE to register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_de_a_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to the memory address in DE
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_a_de_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads the value of register A to the memory address in BC
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_bc_nn_imm(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of the memory address in BC to register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_bc_a_addr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register A to the memory address in BC
+ * 
+ * @param cpu 
+ * @return int Cycle count (7)
+ */
 static int ld_a_bc_addr(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads an immediate value to register SP
+ * 
+ * @param cpu 
+ * @return int Cycle count (10)
+ */
 static int ld_hl_nn_imm(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads the value of register SP to register HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int ld_sp_nn_imm(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads the value of register SP to register HL
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int ld_sp_hl(ZilogZ80_t *cpu);
 
+/**
+ * @brief Instruction function that loads the value of memory address in HL to memory address in DE. Then HL and DE are incremented and BC is decremented. If BC is zero, flag p/v is reset
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int ldi(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of memory address in HL to memory address in DE. Then HL and DE are incremented and BC is decremented. If BC is not zero, the function is repeated (Interrupts are still processed)
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int ldir(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of memory address in HL to memory address in DE. Then HL and DE are decremented and BC is decremented. If BC is zero, flag p/v is reset
+ * !Check if this is correct
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int ldd(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that loads the value of register SP to register HL
+ * !Check if this is correct
+ * 
+ * @param cpu 
+ * @return int Cycle count (6)
+ */
 static int lddr(ZilogZ80_t *cpu);
 
 static int ld_nn_bc_imm(ZilogZ80_t *cpu);
@@ -396,7 +2180,7 @@ static int ld_r_a(ZilogZ80_t *cpu);
 static int ld_a_r(ZilogZ80_t *cpu);
 
 
-// OTHER INSTRUCTION    -----------------------------------------------------------------------------
+/* ---------------------------- OTHER INSTRUCTION --------------------------- */
 static int bit_op(ZilogZ80_t *cpu);
 static int ix_op(ZilogZ80_t *cpu);
 static int misc_op(ZilogZ80_t *cpu);
@@ -406,16 +2190,76 @@ static int iy_op(ZilogZ80_t *cpu);
 static int di(ZilogZ80_t *cpu);
 static int ei(ZilogZ80_t *cpu);
 
-// PORT     -----------------------------------------------------------------------------
+/* ---------------------------------- PORTS --------------------------------- */
+/**
+ * @brief Instruction function that reads a byte from an I/O port and loads it to register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int in_a_n(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from an I/O port and loads it to register B
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int in_b_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from an I/O port and loads it to register D
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int in_d_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from an I/O port and loads it to register E
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int in_e_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from an I/O port and loads it to register H
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int in_h_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from an I/O port and loads it to register L
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int in_l_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from I/O port C to the memory address in HL and increments HL and decrements B
+ * 
+ * @param cpu 
+ * @return int Cycle count (16)
+ */
 static int ini(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from I/O port C to the memory address in HL and increments HL and decrements B. If B is not zero, this function is repeated (Interrupts are still processed)
+ * 
+ * @param cpu 
+ * @return int Cycle count (21/16)
+ */
 static int inir(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from I/O port C to register C
+ * 
+ * @param cpu 
+ * @return int Cycle count (12)
+ */
 static int in_c_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from I/O port C to register A
+ * 
+ * @param cpu 
+ * @return int Cycle count (12)
+ */
 static int in_a_c(ZilogZ80_t *cpu);
 
 static int in0_c_n(ZilogZ80_t *cpu);
@@ -498,29 +2342,29 @@ static const InstructionHandler_t mainInstructionTable[MAX_INSTRUCTION_COUNT] =
 /*0xB*/ or_b,           or_c,           or_d,           or_e,           or_h,           or_l,           or_hl_addr,     or_a,           cp_b,           cp_c,               cp_d,               cp_e,           cp_h,           cp_l,       cp_hl_addr,     cp_a,
 /*0xC*/ ret_nz,         pop_bc,         jp_nz_nn,       jp_nn,          call_nz_nn,     push_bc,        add_a_n,        rst_00h,        ret_z,          ret,                jp_z_nn,            bit_op,         call_z_nn,      call_nn,    adc_a_n,        rst_08h,
 /*0xD*/ ret_nc,         pop_de,         jp_nc_nn,       out_n_a_addr,   call_nc_nn,     push_de,        sub_n,          rst_10h,        ret_c,          exx,                jp_c_nn,            in_a_n,         call_c_nn,      ix_op,      sbc_a_n,        rst_18h,
-/*0xE*/ ret_po,         pop_hl,         jp_po_nn,       ex_sp_hl_addr,  call_po_nn,     push_hl,        and_n,          rst_20h,        ret_pe,         ret,                jp_hl_addr,         ex_de_hl,       call_pe_nn,     misc_op,    xor_n,          rst_28h,
+/*0xE*/ ret_po,         pop_hl,         jp_po_nn,       ex_sp_hl_addr,  call_po_nn,     push_hl,        and_n,          rst_20h,        ret_pe,         jp_hl_addr,         jp_pe_nn,           ex_de_hl,       call_pe_nn,     misc_op,    xor_n,          rst_28h,
 /*0xF*/ ret_p,          pop_af,         jp_p_nn,        di,             call_p_nn,      push_af,        or_n,           rst_30h,        ret_m,          ld_sp_hl,           jp_m_nn,            ei,             call_m_nn,      iy_op,      cp_n,           rst_38h
 };
 
 static const InstructionHandler_t miscInstructionTable[MAX_INSTRUCTION_COUNT] =
 {
 /*      0               1               2               3               4               5               6               7               8               9                   A                   B               C               D           E               F*/
-/*0x0*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_b,          noFunc,         noFunc,         noFunc,         in0_c_n,        out0_c_n,           noFunc,             noFunc,         tst_c,          noFunc,     noFunc,         noFunc,
-/*0x1*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_d,          noFunc,         noFunc,         rla,            in0_e_n,        out0_e_n,           noFunc,             noFunc,         tst_e,          noFunc,     noFunc,         noFunc,
-/*0x2*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_h,          noFunc,         noFunc,         daa,            in0_l_n,        out0_l_n,           noFunc,             noFunc,         tst_l,          noFunc,     noFunc,         noFunc,
-/*0x3*/ noFunc,         noFunc,         noFunc,         noFunc,         tst_hl_addr,    noFunc,         noFunc,         scf,            in0_a_n,        out0_a_n,           noFunc,             noFunc,         tst_a,          noFunc,     noFunc,         noFunc,
-/*0x4*/ in_b_c,         out_c_b,        sbc_hl_bc,      ld_nn_bc_addr,  neg,            retn,           im_0,           ld_b_a,         in_c_c,         out_c_c,            adc_hl_bc,          ld_bc_nn_addr,  mlt_bc,         reti,       noFunc,         ld_r_a,
-/*0x5*/ in_d_c,         out_c_d,        sbc_hl_de,      ld_nn_de_addr,  noFunc,         noFunc,         im_1,           ld_d_a,         in_e_c,         out_c_e,            adc_hl_de,          ld_de_nn_addr,  mlt_de,         noFunc,     im_2,           ld_a_r,
-/*0x6*/ in_h_c,         out_c_h,        sbc_hl_hl,      ld_nn_hl_addr,  tst_n,          noFunc,         noFunc,         ld_h_a,         in_l_c,         out_c_l,            adc_hl_hl,          ld_hl_nn_addr,  mlt_hl,         noFunc,     noFunc,         rld,
-/*0x7*/ noFunc,         out_c_0,        sbc_hl_sp,      ld_nn_sp_addr,  tstio_n,        noFunc,         slp,            ld_hl_a_addr,   in_a_c,         out_c_a,            adc_hl_sp,          ld_sp_nn_addr,  mlt_sp,         noFunc,     noFunc,         noFunc,
-/*0x8*/ noFunc,         noFunc,         noFunc,         otim,           noFunc,         noFunc,         noFunc,         add_a_a,        noFunc,         noFunc,             noFunc,             adc_a_e,        noFunc,         noFunc,     noFunc,         noFunc,
-/*0x9*/ noFunc,         noFunc,         noFunc,         otimr,          noFunc,         noFunc,         noFunc,         sub_hl_addr,    noFunc,         noFunc,             noFunc,             otdm,           noFunc,         noFunc,     noFunc,         noFunc,
-/*0xA*/ ldi,            cpi,            ini,            outi,           noFunc,         noFunc,         noFunc,         and_a,          noFunc,         ldd,                noFunc,             otdmr,          noFunc,         noFunc,     noFunc,         noFunc,
-/*0xB*/ ldir,           cpir,           inir,           otir,           noFunc,         noFunc,         noFunc,         or_a,           noFunc,         lddr,               noFunc,             outd,           noFunc,         noFunc,     noFunc,         noFunc,
-/*0xC*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_00h,        noFunc,         noFunc,             noFunc,             otdr,           noFunc,         noFunc,     noFunc,         noFunc,
-/*0xD*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_10h,        noFunc,         noFunc,             noFunc,             noFunc,         noFunc,         noFunc,     noFunc,         noFunc,
-/*0xE*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_20h,        noFunc,         noFunc,             noFunc,             noFunc,         noFunc,         noFunc,     noFunc,         noFunc,
-/*0xF*/ noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         noFunc,         rst_30h,        noFunc,         noFunc,             noFunc,             noFunc,         noFunc,         noFunc,     noFunc,         noFunc,
+/*0x0*/ no_func,         no_func,         no_func,         no_func,         tst_b,          no_func,         no_func,         no_func,         in0_c_n,        out0_c_n,           no_func,             no_func,         tst_c,          no_func,     no_func,         no_func,
+/*0x1*/ no_func,         no_func,         no_func,         no_func,         tst_d,          no_func,         no_func,         rla,            in0_e_n,        out0_e_n,           no_func,             no_func,         tst_e,          no_func,     no_func,         no_func,
+/*0x2*/ no_func,         no_func,         no_func,         no_func,         tst_h,          no_func,         no_func,         daa,            in0_l_n,        out0_l_n,           no_func,             no_func,         tst_l,          no_func,     no_func,         no_func,
+/*0x3*/ no_func,         no_func,         no_func,         no_func,         tst_hl_addr,    no_func,         no_func,         scf,            in0_a_n,        out0_a_n,           no_func,             no_func,         tst_a,          no_func,     no_func,         no_func,
+/*0x4*/ in_b_c,         out_c_b,        sbc_hl_bc,      ld_nn_bc_addr,  neg,            retn,           im_0,           ld_b_a,         in_c_c,         out_c_c,            adc_hl_bc,          ld_bc_nn_addr,  mlt_bc,         reti,       no_func,         ld_r_a,
+/*0x5*/ in_d_c,         out_c_d,        sbc_hl_de,      ld_nn_de_addr,  no_func,         no_func,         im_1,           ld_d_a,         in_e_c,         out_c_e,            adc_hl_de,          ld_de_nn_addr,  mlt_de,         no_func,     im_2,           ld_a_r,
+/*0x6*/ in_h_c,         out_c_h,        sbc_hl_hl,      ld_nn_hl_addr,  tst_n,          no_func,         no_func,         ld_h_a,         in_l_c,         out_c_l,            adc_hl_hl,          ld_hl_nn_addr,  mlt_hl,         no_func,     no_func,         rld,
+/*0x7*/ no_func,         out_c_0,        sbc_hl_sp,      ld_nn_sp_addr,  tstio_n,        no_func,         slp,            ld_hl_a_addr,   in_a_c,         out_c_a,            adc_hl_sp,          ld_sp_nn_addr,  mlt_sp,         no_func,     no_func,         no_func,
+/*0x8*/ no_func,         no_func,         no_func,         otim,           no_func,         no_func,         no_func,         add_a_a,        no_func,         no_func,             no_func,             adc_a_e,        no_func,         no_func,     no_func,         no_func,
+/*0x9*/ no_func,         no_func,         no_func,         otimr,          no_func,         no_func,         no_func,         sub_hl_addr,    no_func,         no_func,             no_func,             otdm,           no_func,         no_func,     no_func,         no_func,
+/*0xA*/ ldi,            cpi,            ini,            outi,           no_func,         no_func,         no_func,         and_a,          no_func,         ldd,                no_func,             otdmr,          no_func,         no_func,     no_func,         no_func,
+/*0xB*/ ldir,           cpir,           inir,           otir,           no_func,         no_func,         no_func,         or_a,           no_func,         lddr,               no_func,             outd,           no_func,         no_func,     no_func,         no_func,
+/*0xC*/ no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         rst_00h,        no_func,         no_func,             no_func,             otdr,           no_func,         no_func,     no_func,         no_func,
+/*0xD*/ no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         rst_10h,        no_func,         no_func,             no_func,             no_func,         no_func,         no_func,     no_func,         no_func,
+/*0xE*/ no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         rst_20h,        no_func,         no_func,             no_func,             no_func,         no_func,         no_func,     no_func,         no_func,
+/*0xF*/ no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         rst_30h,        no_func,         no_func,             no_func,             no_func,         no_func,         no_func,     no_func,         no_func,
 };
 
 int executeInstruction(ZilogZ80_t *cpu)
@@ -563,16 +2407,23 @@ static void byteToFlags(F_t *flags, byte_t value)
     flags->C = (value & 0x01);
 }
 
-static int calculateParity(word_t value)
+static bool calculateParity(word_t value)
 {
     int count = 0;
+    bool parity = false;
+
     while (value)
     {
         count += value & 1;
         value >>= 1;
     }
 
-    return (count % 2) == 0;
+    if(count % 2 == 0)
+    {
+        parity = true;
+    }
+    
+    return parity;
 }
 
 static void setFlags(ZilogZ80_t *cpu, byte_t regA, byte_t operand, word_t result, bool isSubstraction)
@@ -767,7 +2618,7 @@ static void rst(ZilogZ80_t *cpu, byte_t address)
     cpu->PC = address;
 }
 
-static void exWord(ZilogZ80_t *cpu, word_t *reg1, word_t *reg2)
+static void exWordHelper(ZilogZ80_t *cpu, word_t *reg1, word_t *reg2)
 {
     word_t temp = *reg1;
     *reg1 = *reg2;
@@ -784,7 +2635,7 @@ static void ldPair(ZilogZ80_t *cpu, byte_t *upperByte, byte_t *lowerByte, word_t
     *lowerByte = LOWER_BYTE(value);
 }
 // -----------------------------------------------------------------------------
-static int noFunc(ZilogZ80_t *cpu)
+static int no_func(ZilogZ80_t *cpu)
 {
     setError(C80_ERROR_CPU_INVALID_OPCODE);
     return 0;
@@ -1782,6 +3633,13 @@ static int jp_c_nn(ZilogZ80_t *cpu)
 static int jp_po_nn(ZilogZ80_t *cpu)
 {
     bool condition = cpu->F.P == 0;
+    int cycles = jumpHelper(cpu, condition);
+
+    return cycles;
+}
+static int jp_pe_nn(ZilogZ80_t *cpu)
+{
+    bool condition = cpu->F.P == 1;
     int cycles = jumpHelper(cpu, condition);
 
     return cycles;

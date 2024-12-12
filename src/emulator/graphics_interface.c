@@ -174,7 +174,6 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
 
             bool fileLoaded = loadFile(selectedFileBuffer, data, cpu->rom.memorySize);
             loadProgramToRom(&cpu->rom, data, cpu->rom.memorySize);
-            uint8_t *ptr = (cpu->memory.data);
             if(fileLoaded == true)
             {
                 zilogZ80Reset(cpu);

@@ -7,3 +7,7 @@
 # Ignore Build folder
 build/*
 .fake
+
+# Ignore Doxygen generated files
+doc/html/
+doc/latex/
