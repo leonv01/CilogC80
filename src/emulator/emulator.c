@@ -31,7 +31,7 @@ static C80_EmulationState_t emulationState = EMULATION_STATE_STOPPED;
 // Emulator functions
 // -----------------------------------------------------------
 void emulatorInit(int argc, char** argv);
-void outputPrint(byte_t port, byte_t value);
+void outputPrint(byte_t value);
 // -----------------------------------------------------------
 
 // Emulator function definitions
@@ -39,7 +39,7 @@ void outputPrint(byte_t port, byte_t value);
 void emulatorInit(int argc, char** argv)
 {
     zilogZ80Init(&cpu);
-    cpu.outputCallback = &outputPrint;
+    cpu.outputCallback[0x01] = &outputPrint;
     errorStackInit();
 
     #if !defined(HEADLESS)
@@ -47,8 +47,8 @@ void emulatorInit(int argc, char** argv)
     #endif
 }
 
-void outputPrint(byte_t port, byte_t value)
+void outputPrint(byte_t value)
 {
-    printf("Port: 0x%02X -> %c | 0x%02X\n", port, (char)value, value);
+    printf("Port: 0x01X -> %c | 0x%02X\n", (char)value, value);
 }
 // -----------------------------------------------------------

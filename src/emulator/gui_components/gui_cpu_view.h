@@ -133,6 +133,7 @@ static void GuiCpuViewRefresh(GuiCpuViewState *state);
 #ifdef GUI_CPU_VIEW_IMPLEMENTATION
 
 #include "raygui.h"
+#include <string.h>
 
 typedef enum 
 {

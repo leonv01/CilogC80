@@ -40,7 +40,6 @@ void zilogZ80Init(ZilogZ80_t *cpu)
 
     cpu->isHaltered = false;
 
-    cpu->outputCallback = NULL;
 
     memoryInit(&cpu->memory, 0x0000, 0x10000);
     memoryInit(&cpu->rom, 0x0000, 0x4000);
