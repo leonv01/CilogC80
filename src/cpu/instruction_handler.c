@@ -2262,37 +2262,134 @@ static int in_c_c(ZilogZ80_t *cpu);
  */
 static int in_a_c(ZilogZ80_t *cpu);
 
-static int in0_c_n(ZilogZ80_t *cpu);
-static int in0_e_n(ZilogZ80_t *cpu);
-static int in0_l_n(ZilogZ80_t *cpu);
 static int in0_a_n(ZilogZ80_t *cpu);
+static int in0_b_n(ZilogZ80_t *cpu);
+static int in0_c_n(ZilogZ80_t *cpu);
+static int in0_d_n(ZilogZ80_t *cpu);
+static int in0_e_n(ZilogZ80_t *cpu);
+static int in0_h_n(ZilogZ80_t *cpu);
+static int in0_l_n(ZilogZ80_t *cpu);
+static int in_c(ZilogZ80_t *cpu);
 
 static int out_n_a_addr(ZilogZ80_t *cpu);
-static int out_c_b(ZilogZ80_t *cpu);
-static int out_c_d(ZilogZ80_t *cpu);
-static int out_c_h(ZilogZ80_t *cpu);
-static int out_c_0(ZilogZ80_t *cpu);
-static int out_c_c(ZilogZ80_t *cpu);
-static int out_c_e(ZilogZ80_t *cpu);
-static int out_c_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that writes a byte from register A to I/O port n
+ * 
+ * @param cpu 
+ * @return int Cycle count (11)
+ */
 static int out_c_a(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that writes a byte from register B to I/O port C
+ * 
+ * @param cpu 
+ * @return int Cycle count (12)
+ */
+static int out_c_b(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that writes a byte from register C to I/O port C
+ * 
+ * @param cpu 
+ * @return int Cycle count (12)
+ */
+static int out_c_c(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that writes a byte from register D to I/O port C
+ * 
+ * @param cpu 
+ * @return int Cycle count (12)
+ */
+static int out_c_d(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that writes a byte from register E to I/O port C
+ * 
+ * @param cpu 
+ * @return int Cycle count (12)
+ */
+static int out_c_e(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that writes a byte from register H to I/O port C
+ * 
+ * @param cpu 
+ * @return int Cycle count (12)
+ */
+static int out_c_h(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that writes a byte from register L to I/O port C
+ * 
+ * @param cpu 
+ * @return int Cycle count (12)
+ */
+static int out_c_l(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements B and writes a byte from memory location HL to I/O port C. Then HL is incremented
+ * 
+ * @param cpu 
+ * @return int Cycle count (16)
+ */
 static int outi(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements B and writes a byte from memory location HL to I/O port C. Then HL is incremented. If B is not zero, this function is repeated (Interrupts are still processed)
+ * 
+ * @param cpu 
+ * @return int Cycle count (21/16)
+ */
 static int otir(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements B and writes a byte from memory address HL to I/O port C. Then HL and C are incremented
+ * 
+ * @param cpu 
+ * @return int Cycle count (14)
+ */
+static int otim(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements B and writes a byte from memory address HL to I/O port C. Then HL and C are incremented. If B is not zero, this function is repeated (Interrupts are still processed)
+ * 
+ * @param cpu 
+ * @return int Cycle count (16/14)
+ */
+static int otimr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements B and writes a byte from memory address HL to I/O port C. Then HL and C are decremented
+ * 
+ * @param cpu 
+ * @return int Cycle count (14)
+ */
+static int otdm(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements B and writes a byte from memory address HL to I/O port C. Then HL and C are decremented. If B is not zero, this function is repeated (Interrupts are still processed)
+ * 
+ * @param cpu 
+ * @return int Cycle count (16/14)
+ */
+static int otdmr(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements B and writes a byte from memory location HL to I/O port C. Then HL is decremented
+ * 
+ * @param cpu 
+ * @return int Cycle count (16)
+ */
+static int outd(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that decrements B and writes a byte from memory location HL to I/O port C. Then HL is decremented. If B is not zero, this function is repeated (Interrupts are still processed)
+ * 
+ * @param cpu 
+ * @return int Cycle count (21/16)
+ */
+static int otdr(ZilogZ80_t *cpu);
+
+static int out_c_0(ZilogZ80_t *cpu);
 
 static int out0_c_n(ZilogZ80_t *cpu);
 static int out0_e_n(ZilogZ80_t *cpu);
 static int out0_l_n(ZilogZ80_t *cpu);
 static int out0_a_n(ZilogZ80_t *cpu);
+static int out0_n_b(ZilogZ80_t *cpu);
+static int out0_n_d(ZilogZ80_t *cpu);
+static int out0_n_h(ZilogZ80_t *cpu);
 
 static int daa(ZilogZ80_t *cpu);
 static int scf(ZilogZ80_t *cpu);
-
-static int otim(ZilogZ80_t *cpu);
-static int otimr(ZilogZ80_t *cpu);
-static int otdm(ZilogZ80_t *cpu);
-static int otdmr(ZilogZ80_t *cpu);
-static int outd(ZilogZ80_t *cpu);
-static int otdr(ZilogZ80_t *cpu);
 
 // TST      -----------------------------------------------------------------------------
 static int tst_b(ZilogZ80_t *cpu);
@@ -2349,22 +2446,22 @@ static const InstructionHandler_t mainInstructionTable[MAX_INSTRUCTION_COUNT] =
 static const InstructionHandler_t miscInstructionTable[MAX_INSTRUCTION_COUNT] =
 {
 /*      0               1               2               3               4               5               6               7               8               9                   A                   B               C               D           E               F*/
-/*0x0*/ no_func,         no_func,         no_func,         no_func,         tst_b,          no_func,         no_func,         no_func,         in0_c_n,        out0_c_n,           no_func,             no_func,         tst_c,          no_func,     no_func,         no_func,
-/*0x1*/ no_func,         no_func,         no_func,         no_func,         tst_d,          no_func,         no_func,         rla,            in0_e_n,        out0_e_n,           no_func,             no_func,         tst_e,          no_func,     no_func,         no_func,
-/*0x2*/ no_func,         no_func,         no_func,         no_func,         tst_h,          no_func,         no_func,         daa,            in0_l_n,        out0_l_n,           no_func,             no_func,         tst_l,          no_func,     no_func,         no_func,
-/*0x3*/ no_func,         no_func,         no_func,         no_func,         tst_hl_addr,    no_func,         no_func,         scf,            in0_a_n,        out0_a_n,           no_func,             no_func,         tst_a,          no_func,     no_func,         no_func,
-/*0x4*/ in_b_c,         out_c_b,        sbc_hl_bc,      ld_nn_bc_addr,  neg,            retn,           im_0,           ld_b_a,         in_c_c,         out_c_c,            adc_hl_bc,          ld_bc_nn_addr,  mlt_bc,         reti,       no_func,         ld_r_a,
-/*0x5*/ in_d_c,         out_c_d,        sbc_hl_de,      ld_nn_de_addr,  no_func,         no_func,         im_1,           ld_d_a,         in_e_c,         out_c_e,            adc_hl_de,          ld_de_nn_addr,  mlt_de,         no_func,     im_2,           ld_a_r,
-/*0x6*/ in_h_c,         out_c_h,        sbc_hl_hl,      ld_nn_hl_addr,  tst_n,          no_func,         no_func,         ld_h_a,         in_l_c,         out_c_l,            adc_hl_hl,          ld_hl_nn_addr,  mlt_hl,         no_func,     no_func,         rld,
-/*0x7*/ no_func,         out_c_0,        sbc_hl_sp,      ld_nn_sp_addr,  tstio_n,        no_func,         slp,            ld_hl_a_addr,   in_a_c,         out_c_a,            adc_hl_sp,          ld_sp_nn_addr,  mlt_sp,         no_func,     no_func,         no_func,
-/*0x8*/ no_func,         no_func,         no_func,         otim,           no_func,         no_func,         no_func,         add_a_a,        no_func,         no_func,             no_func,             adc_a_e,        no_func,         no_func,     no_func,         no_func,
-/*0x9*/ no_func,         no_func,         no_func,         otimr,          no_func,         no_func,         no_func,         sub_hl_addr,    no_func,         no_func,             no_func,             otdm,           no_func,         no_func,     no_func,         no_func,
-/*0xA*/ ldi,            cpi,            ini,            outi,           no_func,         no_func,         no_func,         and_a,          no_func,         ldd,                no_func,             otdmr,          no_func,         no_func,     no_func,         no_func,
-/*0xB*/ ldir,           cpir,           inir,           otir,           no_func,         no_func,         no_func,         or_a,           no_func,         lddr,               no_func,             outd,           no_func,         no_func,     no_func,         no_func,
-/*0xC*/ no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         rst_00h,        no_func,         no_func,             no_func,             otdr,           no_func,         no_func,     no_func,         no_func,
-/*0xD*/ no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         rst_10h,        no_func,         no_func,             no_func,             no_func,         no_func,         no_func,     no_func,         no_func,
-/*0xE*/ no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         rst_20h,        no_func,         no_func,             no_func,             no_func,         no_func,         no_func,     no_func,         no_func,
-/*0xF*/ no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         no_func,         rst_30h,        no_func,         no_func,             no_func,             no_func,         no_func,         no_func,     no_func,         no_func,
+/*0x0*/ in0_b_n,        out0_n_b,       no_func,        no_func,        tst_b,          no_func,        no_func,        no_func,        in0_c_n,        out0_c_n,           no_func,            no_func,        tst_c,          no_func,    no_func,        no_func,
+/*0x1*/ in0_d_n,        out0_n_d,       no_func,        no_func,        tst_d,          no_func,        no_func,        no_func,        in0_e_n,        out0_e_n,           no_func,            no_func,        tst_e,          no_func,    no_func,        no_func,
+/*0x2*/ in0_h_n,        out0_n_h,       no_func,        no_func,        tst_h,          no_func,        no_func,        no_func,        in0_l_n,        out0_l_n,           no_func,            no_func,        tst_l,          no_func,    no_func,        no_func,
+/*0x3*/ no_func,        no_func,        no_func,        no_func,        tst_hl_addr,    no_func,        no_func,        no_func,        in0_a_n,        out0_a_n,           no_func,            no_func,        tst_a,          no_func,    no_func,        no_func,
+/*0x4*/ in_b_c,         out_c_b,        sbc_hl_bc,      ld_nn_bc_addr,  neg,            retn,           im_0,           ld_i_a,         in_c_c,         out_c_c,            adc_hl_bc,          ld_bc_nn_addr,  mlt_bc,         reti,       no_func,        ld_r_a,
+/*0x5*/ in_d_c,         out_c_d,        sbc_hl_de,      ld_nn_de_addr,  no_func,        no_func,        im_1,           ld_a_i,         in_e_c,         out_c_e,            adc_hl_de,          ld_de_nn_addr,  mlt_de,         no_func,    im_2,           ld_a_r,
+/*0x6*/ in_h_c,         out_c_h,        sbc_hl_hl,      ld_nn_hl_addr,  tst_n,          no_func,        no_func,        rrd,            in_l_c,         out_c_l,            adc_hl_hl,          ld_hl_nn_addr,  mlt_hl,         no_func,    no_func,        rld,
+/*0x7*/ in_c,           out_c_0,        sbc_hl_sp,      ld_nn_sp_addr,  tstio_n,        no_func,        slp,            no_func,        in_a_c,         out_c_a,            adc_hl_sp,          ld_sp_nn_addr,  mlt_sp,         no_func,    no_func,        no_func,
+/*0x8*/ no_func,        no_func,        no_func,        otim,           no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            otdm,           no_func,        no_func,    no_func,        no_func,
+/*0x9*/ no_func,        no_func,        no_func,        otimr,          no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            otdmr,          no_func,        no_func,    no_func,        no_func,
+/*0xA*/ ldi,            cpi,            ini,            outi,           no_func,        no_func,        no_func,        no_func,        ldd,            cpd,                ind,                outd,           no_func,        no_func,    no_func,        no_func,
+/*0xB*/ ldir,           cpir,           inir,           otir,           no_func,        no_func,        no_func,        no_func,        lddr,           cpdr,               indr,               outdr,          no_func,        no_func,    no_func,        no_func,
+/*0xC*/ no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            otdr,           no_func,        no_func,    no_func,        no_func,
+/*0xD*/ no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            no_func,        no_func,        no_func,    no_func,        no_func,
+/*0xE*/ no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            no_func,        no_func,        no_func,    no_func,        no_func,
+/*0xF*/ no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            no_func,        no_func,        no_func,    no_func,        no_func,
 };
 
 int executeInstruction(ZilogZ80_t *cpu)
@@ -4330,7 +4427,10 @@ static int ei(ZilogZ80_t *cpu)
 // PORT     -----------------------------------------------------------------------------
 static int in_a_n(ZilogZ80_t *cpu)
 {
-    // TODO: Port
+    byte_t port = fetchByteAddressSpace(&cpu->ram, &cpu->rom, (word_t) cpu->PC);
+    cpu->inputCallback[port](&cpu->A);
+    cpu->PC++;
+    
     return 11;
 }
 static int out_n_a_addr(ZilogZ80_t *cpu)
@@ -4397,44 +4497,104 @@ static int scf(ZilogZ80_t *cpu)
 
     return 4;
 }
+
+static int in_a_c(ZilogZ80_t *cpu)
+{
+    cpu->inputCallback[cpu->C](&cpu->A);
+
+    return 12;
+}
 static int in_b_c(ZilogZ80_t *cpu)
 {
-    // TODO
-}
-static int in_d_c(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int in_e_c(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int in_h_c(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int in_l_c(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int ini(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int inir(ZilogZ80_t *cpu)
-{
-    // TODO
+    cpu->inputCallback[cpu->C](&cpu->B);
+    
+    return 12;
 }
 static int in_c_c(ZilogZ80_t *cpu)
 {
-    // TODO
+    cpu->inputCallback[cpu->C](&cpu->C);
+    
+    return 12;
 }
-static int in_a_c(ZilogZ80_t *cpu)
+static int in_d_c(ZilogZ80_t *cpu)
+{
+    cpu->inputCallback[cpu->C](&cpu->D);
+    
+    return 12;
+}
+static int in_e_c(ZilogZ80_t *cpu)
+{
+    cpu->inputCallback[cpu->C](&cpu->E);
+    
+    return 12;
+}
+static int in_h_c(ZilogZ80_t *cpu)
+{
+    cpu->inputCallback[cpu->C](&cpu->H);
+    
+    return 12;
+}
+static int in_l_c(ZilogZ80_t *cpu)
+{
+    cpu->inputCallback[cpu->C](&cpu->L);
+    
+    return 12;
+}
+static int ini(ZilogZ80_t *cpu)
+{
+    byte_t value;
+
+    // Get value of I/O pointed by register C
+    cpu->inputCallback[cpu->C](&value);
+    
+    // Store value in memory address (HL)
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), value);
+
+    // Increment HL
+    incrementRegisterPair(cpu, &cpu->H, &cpu->L);
+    // Decrement B
+    cpu->B--;
+
+    return 16;
+}
+static int inir(ZilogZ80_t *cpu)
+{
+    byte_t cycles = 16;
+    byte_t value;
+
+    do
+    {        
+        cpu->inputCallback[cpu->C](&value);
+        
+        storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), value);
+
+        incrementRegisterPair(cpu, &cpu->H, &cpu->L);
+        cpu->B--;
+
+        if(cpu->B > 0)
+        {
+            cycles = 21;
+        }
+
+        //TODO: Handle interrupts
+    } while (cpu->B != 0);
+
+    return 16;
+}
+
+static int in0_a_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
-
+static int in0_b_n(ZilogZ80_t *cpu)
+{
+    // TODO
+}
 static int in0_c_n(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int in0_d_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
@@ -4442,55 +4602,114 @@ static int in0_e_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
+static int in0_h_n(ZilogZ80_t *cpu)
+{
+    // TODO
+}
 static int in0_l_n(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int in0_a_n(ZilogZ80_t *cpu)
+static int in_c(ZilogZ80_t *cpu)
 {
     // TODO
 }
-static int out_c_b(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int out_c_d(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int out_c_h(ZilogZ80_t *cpu)
-{
-    // TODO
-}
+
 static int out_c_0(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int out_c_c(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int out_c_e(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int out_c_l(ZilogZ80_t *cpu)
 {
     // TODO
 }
 static int out_c_a(ZilogZ80_t *cpu)
 {
-    // TODO
+    cpu->outputCallback[cpu->C](cpu->A);
+    return 12;
+}
+static int out_c_b(ZilogZ80_t *cpu)
+{
+    cpu->outputCallback[cpu->C](cpu->B);
+    return 12;
+}
+static int out_c_c(ZilogZ80_t *cpu)
+{
+    cpu->outputCallback[cpu->C](cpu->C);
+    return 12;
+}
+static int out_c_d(ZilogZ80_t *cpu)
+{
+    cpu->outputCallback[cpu->C](cpu->D);
+    return 12;
+}
+static int out_c_e(ZilogZ80_t *cpu)
+{
+    cpu->outputCallback[cpu->C](cpu->E);
+    return 12;
+}
+static int out_c_h(ZilogZ80_t *cpu)
+{
+    cpu->outputCallback[cpu->C](cpu->H);
+    return 12;
+}
+static int out_c_l(ZilogZ80_t *cpu)
+{
+    cpu->outputCallback[cpu->C](cpu->L);
+    return 12;
 }
 static int outi(ZilogZ80_t *cpu)
 {
-    // TODO
+    // Decrement register B
+    cpu->B--;
+
+    // Get byte pointed by (HL)
+    byte_t portValue = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
+
+    // Write value to port pointed by C
+    cpu->outputCallback[cpu->C](portValue);
+
+    // Increment HL
+    incrementRegisterPair(cpu, &cpu->H, &cpu->L);
+
+    return 16;
 }
 static int otir(ZilogZ80_t *cpu)
 {
-    // TODO
+    int cycles = 16;
+    do
+    {
+        // Decrement register B
+        cpu->B--;
+
+        // Get byte pointed by (HL)
+        byte_t portValue = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
+
+        // Write value to port pointed by C
+        cpu->outputCallback[cpu->C](portValue);
+
+        // Increment HL
+        incrementRegisterPair(cpu, &cpu->H, &cpu->L);
+
+        if(cpu->B > 0)
+        {
+            cycles = 21;
+        }
+
+        // TODO: Handle interrupts
+    } while(cpu->B != 0);
+
+    return cycles;
 }
 
+static int out0_n_b(ZilogZ80_t *cpu)
+{
+
+}
+static int out0_n_d(ZilogZ80_t *cpu)
+{
+
+}
+static int out0_n_h(ZilogZ80_t *cpu)
+{
+
+}
 static int out0_c_n(ZilogZ80_t *cpu)
 {
     // TODO
@@ -4526,11 +4745,46 @@ static int otdmr(ZilogZ80_t *cpu)
 }
 static int outd(ZilogZ80_t *cpu)
 {
-    // TODO
+    // Decrement register B
+    cpu->B++;
+
+    // Get byte pointed by (HL)
+    byte_t portValue = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
+
+    // Write value to port pointed by C
+    cpu->outputCallback[cpu->C](portValue);
+
+    // Decrement HL
+    decrementRegisterPair(cpu, &cpu->H, &cpu->L);
+    
+    return 16;
 }
 static int otdr(ZilogZ80_t *cpu)
 {
-    // TODO
+    int cycles = 16;
+    do
+    {
+        // Decrement register B
+        cpu->B--;
+
+        // Get byte pointed by (HL)
+        byte_t portValue = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
+
+        // Write value to port pointed by C
+        cpu->outputCallback[cpu->C](portValue);
+
+        // Decrement HL
+        decrementRegisterPair(cpu, &cpu->H, &cpu->L);
+
+        if(cpu->B > 0)
+        {
+            cycles = 21;
+        }
+        
+        // TODO: Handle interrupts
+    } while(cpu->B != 0);
+
+    return cycles;
 }
 
 // TST      -----------------------------------------------------------------------------
