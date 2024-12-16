@@ -3118,7 +3118,7 @@ static int dec_de(ZilogZ80_t *cpu)
 }
 static int dec_hl(ZilogZ80_t *cpu)
 {
-    decrementRegisterPair(cpu, &cpu->D, &cpu->E);
+    decrementRegisterPair(cpu, &cpu->H, &cpu->L);
     return 6;
 }
 static int dec_sp(ZilogZ80_t *cpu)
@@ -3386,6 +3386,10 @@ static int cpi(ZilogZ80_t *cpu)
 
     incrementRegisterPair(cpu, &cpu->H, &cpu->L);
 
+    decrementRegisterPair(cpu, &cpu->B, &cpu->C);
+
+    cpu->F.P = calculateParity(TO_WORD(cpu->B, cpu->C));
+
     return 16;
 }
 static int cpir(ZilogZ80_t *cpu)
@@ -3395,7 +3399,17 @@ static int cpir(ZilogZ80_t *cpu)
 }
 static int cpd(ZilogZ80_t *cpu)
 {
-    // TODO
+    byte_t value = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
+
+    andWithRegister(cpu, value);
+
+    decrementRegisterPair(cpu, &cpu->H, &cpu->L);
+
+    decrementRegisterPair(cpu, &cpu->B, &cpu->C);
+
+    cpu->F.P = calculateParity(TO_WORD(cpu->B, cpu->C));
+
+    return 16;
 }
 static int cpdr(ZilogZ80_t *cpu)
 {
