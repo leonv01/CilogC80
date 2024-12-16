@@ -2386,7 +2386,6 @@ static int outd(ZilogZ80_t *cpu);
 static int otdr(ZilogZ80_t *cpu);
 
 static int out_c_0(ZilogZ80_t *cpu);
-
 static int out0_c_n(ZilogZ80_t *cpu);
 static int out0_e_n(ZilogZ80_t *cpu);
 static int out0_l_n(ZilogZ80_t *cpu);
@@ -2763,19 +2762,27 @@ static int halt(ZilogZ80_t *cpu)
 // ADD      -----------------------------------------------------------------------------
 static int add_hl_bc_imm(ZilogZ80_t *cpu)
 {
-    // TODO
+    addToRegisterPair(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->B, cpu->C));
+
+    return 7;
 }
 static int add_hl_de_imm(ZilogZ80_t *cpu)
 {
-    // TODO
+    addToRegisterPair(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->D, cpu->E));
+
+    return 7;
 }
 static int add_hl_hl_imm(ZilogZ80_t *cpu)
 {
-    // TODO
+    addToRegisterPair(cpu, TO_WORD(cpu->H, cpu->L), TO_WORD(cpu->H, cpu->L));
+
+    return 7;
 }
 static int add_hl_sp_imm(ZilogZ80_t *cpu)
 {
-    // TODO
+    addToRegisterPair(cpu, TO_WORD(cpu->H, cpu->L), cpu->SP);
+
+    return 7;
 }
 
 static int add_a_n(ZilogZ80_t *cpu)
@@ -3373,11 +3380,18 @@ static int cp_hl_addr(ZilogZ80_t *cpu)
 }
 static int cpi(ZilogZ80_t *cpu)
 {
-    // TODO
+    byte_t value = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
+
+    andWithRegister(cpu, value);
+
+    incrementRegisterPair(cpu, &cpu->H, &cpu->L);
+
+    return 16;
 }
 static int cpir(ZilogZ80_t *cpu)
 {
     // TODO
+    return 16;
 }
 static int cpd(ZilogZ80_t *cpu)
 {
@@ -4266,9 +4280,10 @@ static int ld_a_nn_addr(ZilogZ80_t *cpu)
 static int ld_nn_hl_addr(ZilogZ80_t *cpu)
 {
     word_t address = fetchWordAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
-    storeByteAddressSpace(&cpu->ram, &cpu->rom, address, cpu->L);
-    storeByteAddressSpace(&cpu->ram, &cpu->rom, address + 1, cpu->H);
+    storeWordAddressSpace(&cpu->ram, &cpu->rom, address, TO_WORD(cpu->H, cpu->L));
+
     cpu->PC += 2;
+
     return 16;
 }
 static int ld_nn_a_addr(ZilogZ80_t *cpu)
@@ -4346,27 +4361,63 @@ static int ld_sp_hl(ZilogZ80_t *cpu)
 
 static int ld_bc_nn_addr(ZilogZ80_t *cpu)
 {
-    // TODO:
+    word_t address = (word_t) fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    cpu->PC += 2;
+    
+    word_t value = (word_t) fetchWordAddressSpace(&cpu->ram, &cpu->rom, address);
+
+    cpu->B = UPPER_BYTE(value);
+    cpu->C = UPPER_BYTE(value);
+
+    return 20;
 }
 static int ld_de_nn_addr(ZilogZ80_t *cpu)
 {
-    // TODO:
+    word_t address = (word_t) fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    cpu->PC += 2;
+    
+    word_t value = (word_t) fetchWordAddressSpace(&cpu->ram, &cpu->rom, address);
+
+    cpu->D = UPPER_BYTE(value);
+    cpu->E = UPPER_BYTE(value);
+
+    return 20;
 }
 static int ld_sp_nn_addr(ZilogZ80_t *cpu)
 {
-    // TODO:
+    word_t address = (word_t) fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    cpu->PC += 2;
+    
+    cpu->SP = (word_t) fetchWordAddressSpace(&cpu->ram, &cpu->rom, address);
+
+    return 20;
 }
 static int ld_nn_bc_addr(ZilogZ80_t *cpu)
 {
-    // TODO:
+    word_t address = (word_t) fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    cpu->PC += 2;
+    
+    storeWordAddressSpace(&cpu->ram, &cpu->rom, address, TO_WORD(cpu->B, cpu->C));
+
+    return 20;
 }
 static int ld_nn_de_addr(ZilogZ80_t *cpu)
 {
-    // TODO:
+    word_t address = (word_t) fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    cpu->PC += 2;
+    
+    storeWordAddressSpace(&cpu->ram, &cpu->rom, address, TO_WORD(cpu->D, cpu->E));
+
+    return 20;
 }
 static int ld_nn_sp_addr(ZilogZ80_t *cpu)
 {
-    // TODO:
+    word_t address = (word_t) fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    cpu->PC += 2;
+    
+    storeWordAddressSpace(&cpu->ram, &cpu->rom, address, cpu->SP);
+
+    return 20;
 }
 static int ldi(ZilogZ80_t *cpu)
 {
