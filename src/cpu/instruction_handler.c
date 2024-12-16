@@ -1049,6 +1049,8 @@ static int cpi(ZilogZ80_t *cpu);
  * @return int Cycle count (21/16)
  */
 static int cpir(ZilogZ80_t *cpu);
+static int cpd(ZilogZ80_t *cpu);
+static int cpdr(ZilogZ80_t *cpu);
 
 /* ---------------------------------- PUSH ---------------------------------- */
 /**
@@ -2179,6 +2181,8 @@ static int ld_nn_sp_imm(ZilogZ80_t *cpu);
 static int ld_r_a(ZilogZ80_t *cpu);
 static int ld_a_r(ZilogZ80_t *cpu);
 
+static int ld_i_a(ZilogZ80_t *cpu);
+static int ld_a_i(ZilogZ80_t *cpu);
 
 /* ---------------------------- OTHER INSTRUCTION --------------------------- */
 static int bit_op(ZilogZ80_t *cpu);
@@ -2261,6 +2265,8 @@ static int in_c_c(ZilogZ80_t *cpu);
  * @return int Cycle count (12)
  */
 static int in_a_c(ZilogZ80_t *cpu);
+static int ind(ZilogZ80_t *cpu);
+static int indr(ZilogZ80_t *cpu);
 
 static int in0_a_n(ZilogZ80_t *cpu);
 static int in0_b_n(ZilogZ80_t *cpu);
@@ -2270,6 +2276,7 @@ static int in0_e_n(ZilogZ80_t *cpu);
 static int in0_h_n(ZilogZ80_t *cpu);
 static int in0_l_n(ZilogZ80_t *cpu);
 static int in_c(ZilogZ80_t *cpu);
+
 
 static int out_n_a_addr(ZilogZ80_t *cpu);
 /**
@@ -2420,6 +2427,7 @@ static int ccf(ZilogZ80_t *cpu);
 static int neg(ZilogZ80_t *cpu);
 static int slp(ZilogZ80_t *cpu);
 static int rld(ZilogZ80_t *cpu);
+static int rrd(ZilogZ80_t *cpu);
 
 // Instruction table -----------------------------------------------------------------
 static const InstructionHandler_t mainInstructionTable[MAX_INSTRUCTION_COUNT] = 
@@ -2457,7 +2465,7 @@ static const InstructionHandler_t miscInstructionTable[MAX_INSTRUCTION_COUNT] =
 /*0x8*/ no_func,        no_func,        no_func,        otim,           no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            otdm,           no_func,        no_func,    no_func,        no_func,
 /*0x9*/ no_func,        no_func,        no_func,        otimr,          no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            otdmr,          no_func,        no_func,    no_func,        no_func,
 /*0xA*/ ldi,            cpi,            ini,            outi,           no_func,        no_func,        no_func,        no_func,        ldd,            cpd,                ind,                outd,           no_func,        no_func,    no_func,        no_func,
-/*0xB*/ ldir,           cpir,           inir,           otir,           no_func,        no_func,        no_func,        no_func,        lddr,           cpdr,               indr,               outdr,          no_func,        no_func,    no_func,        no_func,
+/*0xB*/ ldir,           cpir,           inir,           otir,           no_func,        no_func,        no_func,        no_func,        lddr,           cpdr,               indr,               otdr,           no_func,        no_func,    no_func,        no_func,
 /*0xC*/ no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            otdr,           no_func,        no_func,    no_func,        no_func,
 /*0xD*/ no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            no_func,        no_func,        no_func,    no_func,        no_func,
 /*0xE*/ no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,        no_func,            no_func,            no_func,        no_func,        no_func,    no_func,        no_func,
@@ -3371,6 +3379,15 @@ static int cpir(ZilogZ80_t *cpu)
 {
     // TODO
 }
+static int cpd(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int cpdr(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+
 
 // PUSH     -----------------------------------------------------------------------------
 static int push_bc(ZilogZ80_t *cpu)
@@ -4393,6 +4410,14 @@ static int ld_a_r(ZilogZ80_t *cpu)
 {
     // TODO:
 }
+static int ld_i_a(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int ld_a_i(ZilogZ80_t *cpu)
+{
+    // TODO
+}
 
 // OTHER INSTRUCTION    -----------------------------------------------------------------------------
 static int bit_op(ZilogZ80_t *cpu)
@@ -4611,6 +4636,14 @@ static int in0_l_n(ZilogZ80_t *cpu)
     // TODO
 }
 static int in_c(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int ind(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int indr(ZilogZ80_t *cpu)
 {
     // TODO
 }
@@ -4887,6 +4920,10 @@ static int slp(ZilogZ80_t *cpu)
     // TODO
 }
 static int rld(ZilogZ80_t *cpu)
+{
+    // TODO
+}
+static int rrd(ZilogZ80_t *cpu)
 {
     // TODO
 }
