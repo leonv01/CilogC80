@@ -9,23 +9,47 @@
 #include "memory/mem.h"
 
 /**
- * @brief Flag struct
- * 
+ * @brief Flag struct containing all flags as bitfield
  */
 typedef struct F_t
 {
+    /** @brief Carry flag (1 bit) */
     byte_t C : 1;
+    /** @brief Add/Subtract flag (1 bit) */
     byte_t N : 1;
+    /** @brief Parity flag (1 bit)*/
     byte_t P : 1;
+    /** @brief Empty bits (2 bits) */
     byte_t _ : 2;
+    /** @brief Half-Carry flag (1 bit) */
     byte_t H : 1;
+    /** @brief Zero flag (1 bit) */
     byte_t Z : 1;
+    /** @brief Sign flag (1 bit) */
     byte_t S : 1;
 } F_t;
 
 /**
- * @brief CPU struct
- * 
+ * @brief Enum struct for defining the interrupt status
+ */
+typedef enum InterruptStatus
+{
+    INTERRUPTS_ENABLED = 0,
+    INTERRUPTS_DISABLED
+} InterruptStatus;
+
+/**
+ * @brief Enum struct for defining all interrupt modes
+ */
+typedef enum InterruptMode
+{
+    INTERRUPT_MODE_0 = 0,
+    INTERRUPT_MODE_1,
+    INTERRUPT_MODE_2
+} InterruptMode;
+
+/**
+ * @brief Zilog Z80 processor struct containing all registers and flags
  */
 typedef struct ZilogZ80_t
 {   
@@ -81,6 +105,11 @@ typedef struct ZilogZ80_t
     /** @brief Output callback */
     void (*outputCallback[256])(byte_t value);
 
+    InterruptStatus interruptStatus;
+    InterruptMode interruptMode;
+
+    byte_t currentOpcode;
+
     int cyclesInFrame;
     float frequency;
 
@@ -88,6 +117,7 @@ typedef struct ZilogZ80_t
     int totalCycles;
 
     bool isHaltered;
+
 
     /** @brief RAM memory */
     Memory_t ram;
@@ -117,5 +147,5 @@ void zilogZ80Reset(ZilogZ80_t* cpu);
  */
 void zilogZ80Step(ZilogZ80_t* cpu);
 
-#endif
+#endif // CILOG_C80_CPU_H
 

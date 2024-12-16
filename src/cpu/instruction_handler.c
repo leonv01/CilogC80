@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include "cpu/cpu.h"
 #include "utils/utils.h"
 
 #include "utils/error_handler.h"
@@ -2146,14 +2147,14 @@ static int ld_sp_hl(ZilogZ80_t *cpu);
  * @brief Instruction function that loads the value of memory address in HL to memory address in DE. Then HL and DE are incremented and BC is decremented. If BC is zero, flag p/v is reset
  * 
  * @param cpu 
- * @return int Cycle count (6)
+ * @return int Cycle count (16)
  */
 static int ldi(ZilogZ80_t *cpu);
 /**
  * @brief Instruction function that loads the value of memory address in HL to memory address in DE. Then HL and DE are incremented and BC is decremented. If BC is not zero, the function is repeated (Interrupts are still processed)
  * 
  * @param cpu 
- * @return int Cycle count (6)
+ * @return int Cycle count (21/16)
  */
 static int ldir(ZilogZ80_t *cpu);
 /**
@@ -2191,8 +2192,21 @@ static int misc_op(ZilogZ80_t *cpu);
 static int iy_op(ZilogZ80_t *cpu);
 
 // INTERRUPTS           -----------------------------------------------------------------------------
+
+/**
+ * @brief Enables interrupts
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
+static int ei(ZilogZ80_t *cpu);         
+/**
+ * @brief Disables interrupts
+ * 
+ * @param cpu 
+ * @return int Cycle count (4)
+ */
 static int di(ZilogZ80_t *cpu);
-static int ei(ZilogZ80_t *cpu);
 
 /* ---------------------------------- PORTS --------------------------------- */
 /**
@@ -2252,6 +2266,20 @@ static int ini(ZilogZ80_t *cpu);
  */
 static int inir(ZilogZ80_t *cpu);
 /**
+ * @brief Instruction function that reads a byte from I/O port C to the memory address in HL and decrements HL and B
+ * 
+ * @param cpu 
+ * @return int Cycle count (16)
+ */
+static int ind(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function that reads a byte from I/O port C to the memory address in HL and decrements HL and B. If B is not zero, this function is repeated (Interrupts are still processed)
+ * 
+ * @param cpu 
+ * @return int Cycle count (16)
+ */
+static int indr(ZilogZ80_t *cpu);
+/**
  * @brief Instruction function that reads a byte from I/O port C to register C
  * 
  * @param cpu 
@@ -2265,8 +2293,6 @@ static int in_c_c(ZilogZ80_t *cpu);
  * @return int Cycle count (12)
  */
 static int in_a_c(ZilogZ80_t *cpu);
-static int ind(ZilogZ80_t *cpu);
-static int indr(ZilogZ80_t *cpu);
 
 static int in0_a_n(ZilogZ80_t *cpu);
 static int in0_b_n(ZilogZ80_t *cpu);
@@ -2416,8 +2442,26 @@ static int mlt_hl(ZilogZ80_t *cpu);
 static int mlt_sp(ZilogZ80_t *cpu);
 
 // IM       -----------------------------------------------------------------------------
+/**
+ * @brief Instruction function to set the interrupt mode 0
+ * 
+ * @param cpu 
+ * @return int Cycle count (8)
+ */
 static int im_0(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function to set the interrupt mode 1
+ * 
+ * @param cpu 
+ * @return int Cycle count (8)
+ */
 static int im_1(ZilogZ80_t *cpu);
+/**
+ * @brief Instruction function to set the interrupt mode 2
+ * 
+ * @param cpu 
+ * @return int Cycle count (8)
+ */
 static int im_2(ZilogZ80_t *cpu);
 
 // EXTRA    -----------------------------------------------------------------------------
@@ -2473,10 +2517,10 @@ static const InstructionHandler_t miscInstructionTable[MAX_INSTRUCTION_COUNT] =
 
 int executeInstruction(ZilogZ80_t *cpu)
 {
-    byte_t opcode = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
+    cpu->currentOpcode = fetchByteAddressSpace(&cpu->ram, &cpu->rom, cpu->PC);
     cpu->PC++;
 
-    int cycles = mainInstructionTable[opcode](cpu);
+    int cycles = mainInstructionTable[cpu->currentOpcode](cpu);
 
     cpu->currentCycles = cycles;
     cpu->totalCycles += cycles;
@@ -4435,7 +4479,16 @@ static int ld_nn_sp_addr(ZilogZ80_t *cpu)
 }
 static int ldi(ZilogZ80_t *cpu)
 {
-    // TODO:
+    byte_t value = fetchByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L));
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->B, cpu->C), value);
+
+    incrementRegisterPair(cpu, &cpu->H, &cpu->L);
+    incrementRegisterPair(cpu, &cpu->E, &cpu->E);
+    decrementRegisterPair(cpu, &cpu->B, &cpu->C);
+
+    cpu->F.P = calculateParity(TO_WORD(cpu->B, cpu->C));
+
+    return 16;
 }
 static int ldir(ZilogZ80_t *cpu)
 {
@@ -4503,14 +4556,14 @@ static int iy_op(ZilogZ80_t *cpu)
 }
 
 // INTERRUPTS           -----------------------------------------------------------------------------
-static int di(ZilogZ80_t *cpu)
-{
-    // TODO: Interrupts
-    return 4;
-}
 static int ei(ZilogZ80_t *cpu)
 {
-    // TODO: Interrupts
+    cpu->interruptStatus = INTERRUPTS_ENABLED;
+    return 4;
+}
+static int di(ZilogZ80_t *cpu)
+{
+    cpu->interruptStatus = INTERRUPTS_DISABLED;
     return 4;
 }
 
@@ -4630,7 +4683,7 @@ static int in_l_c(ZilogZ80_t *cpu)
     
     return 12;
 }
-static int ini(ZilogZ80_t *cpu)
+static int ini(ZilogZ80_t *cpu)    
 {
     byte_t value;
 
@@ -4659,6 +4712,47 @@ static int inir(ZilogZ80_t *cpu)
         storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), value);
 
         incrementRegisterPair(cpu, &cpu->H, &cpu->L);
+        cpu->B--;
+
+        if(cpu->B > 0)
+        {
+            cycles = 21;
+        }
+
+        //TODO: Handle interrupts
+    } while (cpu->B != 0);
+
+    return 16;
+}
+static int ind(ZilogZ80_t *cpu)
+{
+    byte_t   value;
+
+    // Get value of I/O pointed by register C
+    cpu->inputCallback[cpu->C](&value);
+    
+    // Store value in memory address (HL)
+    storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), value);
+
+    // Increment HL
+    decrementRegisterPair(cpu, &cpu->H, &cpu->L);
+    // Decrement B
+    cpu->B--;
+
+    return 16;
+}
+static int indr(ZilogZ80_t *cpu)
+{
+    byte_t cycles = 16;
+    byte_t value;
+
+    do
+    {        
+        cpu->inputCallback[cpu->C](&value);
+        
+        storeByteAddressSpace(&cpu->ram, &cpu->rom, TO_WORD(cpu->H, cpu->L), value);
+
+        decrementRegisterPair(cpu, &cpu->H, &cpu->L);
         cpu->B--;
 
         if(cpu->B > 0)
@@ -4701,14 +4795,6 @@ static int in0_l_n(ZilogZ80_t *cpu)
     // TODO
 }
 static int in_c(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int ind(ZilogZ80_t *cpu)
-{
-    // TODO
-}
-static int indr(ZilogZ80_t *cpu)
 {
     // TODO
 }
@@ -4948,15 +5034,21 @@ static int mlt_sp(ZilogZ80_t *cpu)
 // IM       -----------------------------------------------------------------------------
 static int im_0(ZilogZ80_t *cpu)
 {
-    // TODO
+    cpu->interruptMode = INTERRUPT_MODE_0;
+
+    return 8;
 }
 static int im_1(ZilogZ80_t *cpu)
 {
-    // TODO
+    cpu->interruptMode = INTERRUPT_MODE_1;
+
+    return 8;
 }
 static int im_2(ZilogZ80_t *cpu)
 {
-    // TODO
+    cpu->interruptMode = INTERRUPT_MODE_2;
+
+    return 8;
 }
 
 // EXTRA    -----------------------------------------------------------------------------
