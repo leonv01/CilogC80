@@ -1,0 +1,35 @@
+@startuml
+
+left to right direction
+
+actor User as U
+
+package "Zilog Z80 Emulator System" {
+    usecase "Start Emulator" as UC1
+    usecase "Load Program" as UC2
+    usecase "Control Execution" as UC3
+    usecase "Pause Execution" as UC4
+    usecase "Terminate Emulation" as UC5
+
+    usecase "Fetch Instruction" as UC6
+    usecase "Decode Instruction" as UC7
+    usecase "Execute Instruction" as UC8
+    usecase "Update Program Counter" as UC9
+    usecase "Handle Invalid Instruction" as UC10
+    usecase "Handle Interrupt" as UC11
+}
+
+U --> UC1
+U --> UC2
+U --> UC3
+U --> UC4
+U --> UC5
+
+UC3 --> UC6 : includes
+UC6 --> UC7 : includes
+UC7 --> UC8 : includes
+UC8 --> UC9 : includes
+UC8 --> UC10 : includes
+UC8 --> UC11 : includes
+
+@enduml
