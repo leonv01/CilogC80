@@ -1,0 +1,68 @@
+@startuml DomainModel
+
+skinparam style strictuml
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 16
+skinparam DefaultFontStyle bold
+skinparam ArrowThickness 2.2
+skinparam ArrowColor #gray
+hide empty members
+
+class CPU as "CPU" #lightgreen
+{
+    registers
+    pc
+    sp
+}
+
+class Memory as "Memory" #lightgreen
+{
+    data
+    memorySize
+}
+
+class InstructionHandler as "InstructionHandler" #yellow
+{
+    instructionSet
+}
+
+class Instruction as "Instruction" #lightgreen
+{
+    opcode
+    operands
+}
+
+class Program as "Program" #lightgreen
+{
+    instructions
+}
+
+class Interrupt as "Interrupt" #pink
+{
+    interruptType
+}
+
+class IO as "IO" #yellow
+{
+    port
+}
+
+class Flags as "Flags" #lightblue
+{
+    carry
+    zero
+    halfCarry
+    sign
+    parity
+    overflow
+}
+
+Program "1" -down- "1" CPU : "controls >"
+CPU "1" -left- "1" Memory : "accesses >"
+CPU "1" -right- "1" InstructionHandler : "delegates instruction execution to >"
+InstructionHandler "1" -down- "1..*" Instruction : "manages >"
+CPU "1" -down- "1..*" Interrupt : "triggers >"
+CPU "1" -- "1" IO : "accesses >"
+CPU "1" -down- "1" Flags : "updates >"
+
+@enduml
