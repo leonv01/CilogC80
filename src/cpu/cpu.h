@@ -112,6 +112,7 @@ typedef struct ZilogZ80_t
 
     int cyclesInFrame;
     float frequency;
+    long frequencyFactor;
 
     int currentCycles;
     int totalCycles;

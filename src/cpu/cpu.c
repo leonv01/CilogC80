@@ -40,6 +40,9 @@ void zilogZ80Init(ZilogZ80_t *cpu)
 
     cpu->isHaltered = false;
 
+    cpu->frequency = 3.5f;
+    cpu->frequencyFactor = 1000000; // 1MHz
+
     memoryInit(&cpu->rom, 0x0000, 0x4000);
     memoryInit(&cpu->ram, 0x8000, 0x8000);
 }

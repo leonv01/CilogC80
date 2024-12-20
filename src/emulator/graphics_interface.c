@@ -135,6 +135,8 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
     /* -------------------------------- Main loop ------------------------------- */
     while (WindowShouldClose() == false)
     {
+
+
         /* -------------------------- Handle window resize -------------------------- */
         if(IsWindowResized())
         {
@@ -239,7 +241,12 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
                 {
                     GuiToastDisplayMessage(&toastState, "CPU running.", 2000, GUI_TOAST_MESSAGE);
                 }
-                zilogZ80Step(cpu); 
+                int cyclesPerFrame = (cpu->frequency * cpu->frequencyFactor) / 60; // Cycles per 60Hz frame (TODO: Make this configurable)
+                while(cpu->totalCycles < cyclesPerFrame && cpu->isHaltered == false)
+                {
+                    zilogZ80Step(cpu);
+                }
+                cpu->totalCycles = 0;
 
                 GuiRamMemoryViewUpdate(&ramMemoryViewState, true);
                 GuiRomMemoryViewUpdate(&romMemoryViewState, true);
