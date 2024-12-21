@@ -108,7 +108,7 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
     GuiMenuBarState menuBarState = InitGuiMenuBar((Vector2){ 0, 0 }, screenWidth);
     GuiWindowFileDialogState fileDialogState = InitGuiWindowFileDialog(GetWorkingDirectory());
     GuiTooltipTextState tooltipTextState = InitGuiToolTipText("Tooltip text", (Rectangle){ 0, 0, 100, 20 });
-    GuiCpuViewState cpuViewState = InitGuiCpuView();
+    GuiCpuViewState cpuViewState = InitGuiCpuView(cpu->frequency);
     GuiRamMemoryViewState ramMemoryViewState = InitGuiRamMemoryView();
     GuiRomMemoryViewState romMemoryViewState = InitGuiRomMemoryView();
     GuiPreferencesState preferencesState = InitGuiPreferences((Vector2){ screenWidth / 2, screenHeight / 2 }, 400, 300);   
@@ -225,6 +225,22 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
             emulationState = EMULATION_RUNNING;
         }
 
+        switch(emulationState)
+        {
+            case EMULATION_RUNNING:
+                GuiCpuViewUpdateEmulatorStatus(&cpuViewState, "Running");
+                break;
+            case EMULATION_STEP:
+                GuiCpuViewUpdateEmulatorStatus(&cpuViewState, "Step");
+                break;
+            case EMULATION_PAUSED:
+                GuiCpuViewUpdateEmulatorStatus(&cpuViewState, "Paused");
+                break;
+            case EMULATION_STOPPED:
+                GuiCpuViewUpdateEmulatorStatus(&cpuViewState, "Stopped / Halted");
+                break;
+        }
+
         if(emulationState == EMULATION_RUNNING)
         {
             if(cpu->isHaltered == true)
@@ -248,6 +264,11 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
                 }
                 cpu->totalCycles = 0;
 
+                if(cpu->isHaltered == true)
+                {
+                    GuiToastDisplayMessage(&toastState, "CPU halted.", 2000, GUI_TOAST_WARNING);
+                }
+
                 GuiRamMemoryViewUpdate(&ramMemoryViewState, true);
                 GuiRomMemoryViewUpdate(&romMemoryViewState, true);
                 GuiCpuViewUpdate(&cpuViewState, true);
@@ -263,6 +284,7 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
         GuiCpuViewUpdateRegisters(&cpuViewState, cpu->A, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L);
         GuiCpuViewUpdateFlags(&cpuViewState, cpu->F.C, cpu->F.N, cpu->F.P, cpu->F.H, cpu->F.Z, cpu->F.S);
         GuiCpuViewUpdatePointers(&cpuViewState, cpu->PC, cpu->SP);
+        GuiCpuViewUpdateFrequency(&cpuViewState, &cpu->frequency);
         /* -------------------------------------------------------------------------- */
 
         /* --------------------------- Memory view update --------------------------- */

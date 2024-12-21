@@ -4,6 +4,8 @@
 #include "raylib.h"
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define CPU_VIEW_SPACING(size, padding, count) ((size + padding) * count)
 
@@ -95,6 +97,17 @@ typedef struct
     bool pointerSpTextActive;
     /* -------------------------------------------------------------------------- */
 
+    /* ----------------------------- CPU information ---------------------------- */
+    const char *emulatorStatusLabelText;
+    const char *totalCyclesLabelText;
+    char emulatorStatusLabelValue[32];
+    char totalCyclesLabelValue[32];
+    char frequencyValue[8];
+
+    bool updateFrequency;
+    bool frequencyActive;
+    /* -------------------------------------------------------------------------- */
+
     Rectangle resizerBounds;
 
     int displayTypeComboBoxElement;
@@ -117,11 +130,14 @@ typedef struct
     bool updateCpuView;
 } GuiCpuViewState;
 
-GuiCpuViewState InitGuiCpuView(void);
+GuiCpuViewState InitGuiCpuView(float frequency);
 void GuiCpuView(GuiCpuViewState *state);
 void GuiCpuViewUpdateRegisters(GuiCpuViewState *state, const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d, const uint8_t e, const uint8_t h, const uint8_t l);
 void GuiCpuViewUpdateFlags(GuiCpuViewState *state, const uint8_t c, const uint8_t n, const uint8_t p, const uint8_t h, const uint8_t z, const uint8_t s);
 void GuiCpuViewUpdatePointers(GuiCpuViewState *state, const uint16_t pc, const uint16_t sp);
+void GuiCpuViewUpdateEmulatorStatus(GuiCpuViewState *state, const char *status);
+void GuiCpuViewUpdateCycleCount(GuiCpuViewState *state, const uint64_t cycles);
+void GuiCpuViewUpdateFrequency(GuiCpuViewState *state, float *frequency);
 void GuiCpuViewUpdateFontSize(GuiCpuViewState *state, const int fontSize);
 void GuiCpuViewUpdate(GuiCpuViewState *state, bool update);
 
@@ -144,7 +160,7 @@ typedef enum
 
 static CPU_OUTPUT_TYPE outputType = CPU_TO_HEX;
 
-GuiCpuViewState InitGuiCpuView(void)
+GuiCpuViewState InitGuiCpuView(float frequency)
 {
     GuiCpuViewState state = { 0 };  
 
@@ -230,6 +246,16 @@ GuiCpuViewState InitGuiCpuView(void)
     state.pointerSpTextActive = false;
     /* -------------------------------------------------------------------------- */
 
+    /* ----------------------------- CPU information ---------------------------- */
+    state.emulatorStatusLabelText = "CPU status: ";
+    state.totalCyclesLabelText = "Total cycles: ";
+    strcpy(state.emulatorStatusLabelValue, "");
+    strcpy(state.totalCyclesLabelValue, "0");
+    sprintf(state.frequencyValue, "%.2f", frequency);
+    state.updateFrequency = false;
+    state.frequencyActive = false;
+    /* -------------------------------------------------------------------------- */
+
     state.displayTypeComboBoxElement = 0;
     state.displayTypeComboBoxEditable = false;
 
@@ -249,7 +275,8 @@ GuiCpuViewState InitGuiCpuView(void)
     state.bounds.width = CPU_VIEW_SPACING(state.registerLabelWidth / 2, state.padding, 4) + (state.padding * 3);
     state.bounds.height = CPU_VIEW_SPACING(state.registerLabelHeight, state.padding, 4) + 
                             CPU_VIEW_SPACING(state.flagLabelHeight, state.padding, 2) + 
-                            CPU_VIEW_SPACING(state.pointerLabelHeight, state.padding, 2) + 
+                            CPU_VIEW_SPACING(state.pointerLabelHeight, state.padding, 3) + 
+                            CPU_VIEW_SPACING(state.padding, state.padding, 4) +
                             (state.padding * 7) + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT;
     state.bounds.x = GetScreenWidth() / 2 - state.bounds.width / 2;
     state.bounds.y = GetScreenHeight() / 2 - state.bounds.height / 2;
@@ -747,10 +774,91 @@ void GuiCpuView(GuiCpuViewState *state)
         {
             state->displayTypeComboBoxEditable = !state->displayTypeComboBoxEditable;
         }
-
         /* -------------------------------------------------------------------------- */
 
-        /* -------------------------------------------------------------------------- */
+        /* ----------------------------- CPU information ---------------------------- */
+        const Vector2 informationStartPos = (Vector2)
+        { 
+            state->bounds.x + ( state->padding * 2 ), 
+            pointerStartPos.y + pointerGroupBoxHeight + state->padding
+        };
+        const int informationGroupBoxWidth = state->bounds.width - (state->padding * 2);
+        const int informationGroupBoxHeight = CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 3);
+
+        GuiGroupBox((Rectangle)
+        {
+            informationStartPos.x - state->padding,
+            informationStartPos.y - state->padding,
+            informationGroupBoxWidth,
+            informationGroupBoxHeight
+        }, "CPU information");
+
+        GuiLabel((Rectangle)
+        {
+            informationStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 0),
+            informationStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 0),
+            state->pointerLabelWidth,
+            state->pointerLabelHeight
+        }, "CPU frequency");
+
+        GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+        if(GuiTextBox((Rectangle)
+        {
+            informationStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 2) + state->padding,
+            informationStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 0),
+            state->pointerTextWidth,
+            state->pointerLabelHeight
+        }, state->frequencyValue, 1, state->frequencyActive))
+        {
+            state->frequencyActive = !state->frequencyActive;
+        }
+        GuiDropdownBox((Rectangle)
+        {
+            informationStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 3),
+            informationStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 0),
+            state->pointerLabelWidth / 2,
+            state->pointerLabelHeight
+        }, "MHz;kHz;Hz", &state->displayTypeComboBoxElement, state->displayTypeComboBoxEditable);
+        if(GuiButton((Rectangle)
+        {
+            informationStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 2) + state->padding,
+            informationStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 0) + state->pointerLabelHeight,
+            state->pointerLabelWidth * 1,
+            state->pointerLabelHeight
+        }, "Set") == true)
+        {
+            state->updateFrequency = true;
+        }
+
+        GuiLabel((Rectangle)
+        {
+            informationStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 0),
+            informationStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 1) + state->padding,
+            state->pointerLabelWidth,
+            state->pointerLabelHeight
+        }, state->emulatorStatusLabelText);
+        GuiLabel((Rectangle)
+        {
+            informationStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 2) + state->padding,
+            informationStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 1) + state->padding,
+            state->pointerLabelWidth,
+            state->pointerLabelHeight
+        }, state->emulatorStatusLabelValue);
+
+        GuiLabel((Rectangle)
+        {
+            informationStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 0),
+            informationStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 2),
+            state->pointerLabelWidth,
+            state->pointerLabelHeight
+        }, state->totalCyclesLabelText);
+        GuiLabel((Rectangle)
+        {
+            informationStartPos.x + CPU_VIEW_SPACING(state->pointerLabelWidth / 2, state->padding, 2) + state->padding,
+            informationStartPos.y + CPU_VIEW_SPACING(state->pointerLabelHeight, state->padding, 2),
+            state->pointerLabelWidth,
+            state->pointerLabelHeight
+        }, state->totalCyclesLabelValue);
     }
 }
 
@@ -789,6 +897,35 @@ void GuiCpuViewUpdatePointers(GuiCpuViewState *state, const uint16_t pc, const u
         sprintf(state->stackPointerValue, "0x%04X", sp);
     }
 }
+
+void GuiCpuViewUpdateEmulatorStatus(GuiCpuViewState *state, const char *status)
+{
+    if(state->updateCpuView == true)
+    {
+        strcpy(state->emulatorStatusLabelValue, status);
+    }
+}
+
+void GuiCpuViewUpdateCycleCount(GuiCpuViewState *state, const uint64_t cycles)
+{
+    if(state->updateCpuView == true)
+    {
+        sprintf(state->totalCyclesLabelValue, "%llu", cycles);
+    }
+}
+
+void GuiCpuViewUpdateFrequency(GuiCpuViewState *state, float *frequency)
+{
+    if(state->updateCpuView == true)
+    {
+        if(state->updateFrequency == true)
+        {
+            *frequency = atof(state->frequencyValue);
+            state->updateFrequency = false;
+        }
+    }
+}
+
 
 void GuiCpuViewUpdate(GuiCpuViewState *state, bool update)
 {
