@@ -910,7 +910,7 @@ void GuiCpuViewUpdateCycleCount(GuiCpuViewState *state, const uint64_t cycles)
 {
     if(state->updateCpuView == true)
     {
-        sprintf(state->totalCyclesLabelValue, "%llu", cycles);
+        sprintf(state->totalCyclesLabelValue, "%lu", cycles);
     }
 }
 

@@ -285,6 +285,7 @@ int graphicsInit(int argc, char **argv, ZilogZ80_t *cpu)
         GuiCpuViewUpdateFlags(&cpuViewState, cpu->F.C, cpu->F.N, cpu->F.P, cpu->F.H, cpu->F.Z, cpu->F.S);
         GuiCpuViewUpdatePointers(&cpuViewState, cpu->PC, cpu->SP);
         GuiCpuViewUpdateFrequency(&cpuViewState, &cpu->frequency);
+        GuiCpuViewUpdateCycleCount(&cpuViewState, cpu->totalCycles);
         /* -------------------------------------------------------------------------- */
 
         /* --------------------------- Memory view update --------------------------- */
